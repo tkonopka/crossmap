@@ -1,0 +1,24 @@
+# ignore local files (IDE)
+.idea
+.project
+.pydevproject
+.coverage
+htmlcov
+
+# ignore temporary files in python code
+*/*pyc
+*/*json
+*/__pycache*
+
+# ignore python compiled code and job logs
+*pyc
+*/*pyc
+*/*/*pyc
+
+# ignore local scripts and log output
+*bash
+*out
+
+# ignore protege temporary files
+*catalog*xml
+
