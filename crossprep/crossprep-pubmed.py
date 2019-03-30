@@ -40,9 +40,9 @@ parser.add_argument("--year", action="store",
 parser.add_argument("--length", action="store",
                     help="minimum number of characters in primary data",
                     default=200)
-parser.add_argument("--name", action="store", required=True,
+parser.add_argument("--name", action="store",
                     help="name of output dataset",
-                    default="crossmap-bg-pubmed")
+                    default="pubmed")
 
 # outputs
 parser.add_argument("--outdir", action="store", required=True,

@@ -25,6 +25,7 @@ class Article():
         self.year = ""
         self.keywords = []
         self.abstract = ""
+        self.valid = True
 
         for c in medlinenode.getchildren():
             if c.tag == "PMID":
@@ -33,6 +34,9 @@ class Article():
                 self._parse_article(c)
             elif c.tag == "MeshHeadingList":
                 self._parse_mesh(c)
+
+        if self.title is None or self.abstract is None or self.year is None:
+            self.valid = False
 
     def _parse_pmid(self, xmlnode):
         """Parse metadata from a <PMID> node."""
@@ -63,7 +67,7 @@ class Article():
         for c in xmlnode.getchildren():
             if c.tag == "AbstractText":
                 if self.abstract != "":
-                    self.abstract += "\n\n"
+                    self.abstract += " "
                 if c.text is not None:
                     self.abstract += c.text
 
@@ -99,11 +103,20 @@ def build_pubmed_one(config, xmlnode):
     """
 
     article = Article(xmlnode)
+    if not article.valid:
+        return None, None
 
     # abort early if year is undesired
     if config.year is not None:
         if article.year not in config.year:
             return None, None
+    if article.title is None:
+        print("title is None "+str(article.pmid))
+        print(str(article))
+    if article.abstract is None:
+        print("abstract is None "+str(article.pmid))
+        print(str(article))
+
     data = article.title + " " + article.abstract
     if len(data) < config.length:
         return None, None

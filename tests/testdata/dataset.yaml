@@ -1,0 +1,18 @@
+A:
+  data: This is data.
+  auxiliary: Simple data entry.
+  metadata: 1
+B:
+  data: Another entry.
+  auxiliary: Simple data entry.
+  metadata: 2
+C:
+  data: Entry without metadata.
+  auxiliary: Without metadata.
+D:
+  data: Minimal data entry.
+U:
+  data: Entry with a unique token, ABCDEFG.
+ZZ:
+  data: Last data entry in file.
+  auxiliary: This should be at the end of the file, to check complete reading.
