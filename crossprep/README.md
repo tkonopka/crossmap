@@ -18,20 +18,20 @@ python3 crossprep-pubmed.py download --outdir /output/dir
 This create an output directory and a subdirectory `baseline`, then attempts to download all baseline files from the NCBI servers. It is possible to restrict the downloads via file indexes, e.g.  
 
 ```
-python3 crossprep-pubmed.py download --outdir /output/dir --indexes 1-10
+python3 prep_pubmed.py download --outdir /output/dir --indexes 1-10
 ```
 
 
 The second utility scans the baseline files and builds yaml datasets.
 
 ```
-python3 crossprep-pubmed.py build --outdir /output/dir --name pubmed-all 
+python3 prep_pubmed.py build --outdir /output/dir --name pubmed-all 
 ```
 
 It is possible to tune the output dataset using year ranges, pattern matches, and size threholds, e.g.
 
 ```
-python3 crossprep-pubmed.py build --outdir /output/dir --name pubmed-recent-human
+python3 prep_pubmed.py build --outdir /output/dir --name pubmed-recent-human
          --year 2010-2019 --pattern humam --length 500
 ``` 
 

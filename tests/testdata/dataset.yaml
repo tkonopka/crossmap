@@ -1,18 +1,19 @@
 A:
-  data: This is data.
-  auxiliary: Simple data entry.
+  data: Alice.
+  auxiliary: Alice starts with A
   metadata: 1
 B:
-  data: Another entry.
-  auxiliary: Simple data entry.
+  data: Bob
+  auxiliary: Bob starts with B
   metadata: 2
 C:
-  data: Entry without metadata.
-  auxiliary: Without metadata.
+  data: Catherine
+  auxiliary: Catherine starts with C
 D:
-  data: Minimal data entry.
+  data: Daniel
+  auxiliary: Daniel starts with D
 U:
-  data: Entry with a unique token, ABCDEFG.
+  data: Entry that has a unique token, ABCDEFG.
 ZZ:
   data: Last data entry in file.
   auxiliary: This should be at the end of the file, to check complete reading.

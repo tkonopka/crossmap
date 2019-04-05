@@ -55,32 +55,41 @@ class TokenizerTests(unittest.TestCase):
 
         tokenizer = Tokenizer(exclude=exclude_file)
         tokens = tokenizer.tokenize(dataset_file)
-        # look at one entry "D"
         result = tokens["D"]
         self.assertEqual(len(result), 3)
-        self.assertTrue("minimal" in result)
-        self.assertEqual(result["data"], 1)
-        self.assertEqual(result["entry"], 1)
+        self.assertTrue("with" in result)
+        # auxiliary data is weighted at 0.5
+        self.assertEqual(result["with"], 0.5)
+        # count sums primary data and auxiliary counts
+        self.assertEqual(result["daniel"], 1.5)
+
+    def test_token_min_length(self):
+        """configure whether to keep short tokens"""
+
+        lenient = Tokenizer(exclude=exclude_file, min_length=1)
+        strict = Tokenizer(exclude=exclude_file, min_length=8)
+        tok_lenient = lenient.tokenize(dataset_file)["B"]
+        tok_strict = strict.tokenize(dataset_file)["B"]
+        self.assertGreater(len(tok_lenient), len(tok_strict))
+        self.assertEqual(len(tok_strict), 0)
 
     def test_tokenize_entry_aux(self):
         """obtain relevant tokens, including from auxiliary field"""
 
-        tokenizer = Tokenizer(exclude=exclude_file)
+        tokenizer = Tokenizer(exclude=exclude_file, min_length=2)
         tokens = tokenizer.tokenize(dataset_file)
-        # look at one entry "B"
         result = tokens["B"]
-        self.assertTrue("simple" in result)
-        self.assertLess(result["simple"], 1)
+        self.assertTrue("bob" in result)
+        self.assertLess(result["start"], 1)
 
     def test_tokenize_entry_aux_weight(self):
         """obtain relevant tokens, including from auxiliary field"""
 
         tokenizer = Tokenizer(exclude=exclude_file, aux_weight=0.2)
         tokens = tokenizer.tokenize(dataset_file)
-        # entry "A" has "Simple" in it auxiliary field
         result = tokens["A"]
-        self.assertTrue("simple" in result)
-        self.assertEqual(result["simple"], 0.2)
+        self.assertTrue("alice" in result)
+        self.assertEqual(result["with"], 0.2)
 
 
     def test_tokenize_case_sensitive(self):
@@ -88,7 +97,6 @@ class TokenizerTests(unittest.TestCase):
 
         tokenizer = Tokenizer(case_sensitive=True)
         tokens = tokenizer.tokenize(dataset_file)
-        # entry "A" has "Simple" in it auxiliary field
         result = tokens["U"]
         self.assertTrue("ABCDEFG" in result)
         self.assertEqual(result["ABCDEFG"], 1)
@@ -98,7 +106,6 @@ class TokenizerTests(unittest.TestCase):
 
         tokenizer = Tokenizer(case_sensitive=False)
         tokens = tokenizer.tokenize(dataset_file)
-        # entry "A" has "Simple" in it auxiliary field
         result = tokens["U"]
         self.assertFalse("ABCDEFG" in result)
         self.assertTrue("abcdefg" in result)
@@ -111,5 +118,5 @@ class TokenizerTests(unittest.TestCase):
         tokens = tokenizer.tokenize(dataset_file)
         result = token_counts(tokens)
         self.assertTrue("data" in result)
-        self.assertGreater(result["data"], 2)
+        self.assertGreater(result["with"], 1)
         self.assertEqual(result["abcdefg"], 1)

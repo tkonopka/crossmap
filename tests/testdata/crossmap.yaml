@@ -1,0 +1,6 @@
+name: crossmap0
+comment: a minimal standard configuration object
+target:
+  - dataset.yaml
+universe:
+  - universe.yaml

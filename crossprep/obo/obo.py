@@ -5,7 +5,7 @@
 @author: Tomasz Konopka
 """
 
-from obo.oboterm import OboTerm, MinimalOboTerm
+from .oboterm import OboTerm, MinimalOboTerm
 
 
 ## ##################################################################

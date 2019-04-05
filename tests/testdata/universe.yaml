@@ -1,0 +1,21 @@
+U:A:
+  data: A
+  auxiliary: B
+U:B:
+  data: B
+  auxiliary: A C
+U:C:
+  data: C
+  auxiliary: B D
+U:D:
+  data: D
+  auxiliary: C E
+U:E:
+  data: E
+  auxiliary: D F
+U:F:
+  data: F
+  auxiliary: E G
+U:G:
+  data: G
+  auxiliary: F

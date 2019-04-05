@@ -5,7 +5,7 @@
 
 import time
 from os.path import join
-from pubmed.tools import parse_indexes, ensure_dir, download_one
+from .tools import parse_indexes, ensure_dir, download_one
 
 
 def template_format(template):

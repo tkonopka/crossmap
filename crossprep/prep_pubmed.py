@@ -32,13 +32,13 @@ parser.add_argument("--sleep", action="store",
 
 # inputs for utility: build
 parser.add_argument("--pattern", action="store",
-                    help="pattern match",
+                    help="filtering by pattern",
                     default=None)
 parser.add_argument("--year", action="store",
-                    help="Publishing year",
+                    help="filtering by publishing year",
                     default=None)
 parser.add_argument("--length", action="store",
-                    help="minimum number of characters in primary data",
+                    help="filtering by minimum number of characters in primary data",
                     default=200)
 parser.add_argument("--name", action="store",
                     help="name of output dataset",

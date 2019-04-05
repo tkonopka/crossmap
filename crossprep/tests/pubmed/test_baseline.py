@@ -5,7 +5,7 @@
 
 
 import unittest
-from pubmed.baseline import template_format
+from crossprep.pubmed.baseline import template_format
 
 
 class BaselineTests(unittest.TestCase):

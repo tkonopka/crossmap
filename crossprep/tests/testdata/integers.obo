@@ -1,0 +1,45 @@
+format-version: 1.2
+data-version: releases/2019-04-05
+date: 06:02:2018 13:00
+default-namespace: integers
+remark: This small ontology contains just a few terms and is meant for testing software.
+ontology: small
+
+[Term]
+id: int:0
+name: integer
+def: "integer."
+
+[Term]
+id: int:1
+name: zero
+def: "zero"
+is_a: int:0
+
+[Term]
+id: int:2
+name: positive integer
+def: "integer greater than zero."
+is_a: int:0
+
+[Term]
+id: int:3
+name: negative integer
+def: "integer less than zero."
+is_a: int:0
+
+[Term]
+id: int:4
+name: one
+def: "smallest of the positive integers."
+is_a: int:2
+
+[Term]
+id: int:4
+name: prime
+def: "integer that is divisible only by one and by itself."
+is_a: int:2
+
+[Typedef]
+id: is_a
+name: is_a

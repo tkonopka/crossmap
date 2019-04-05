@@ -35,11 +35,15 @@ class Tokenizer():
         # weighting of auxiliary/primary tokens
         self.aux_weight = aux_weight
         # get sets of tokens to include/exclude
-        self.include = read_tokens(include)
-        self.exclude = read_tokens(exclude)
+        self.include = read_set(include)
+        self.exclude = read_set(exclude)
 
     def tokenize(self, filepath):
-        """scan context of a dataset file and return a tokens dict"""
+        """scan context of a dataset file and return a tokens dict
+
+        Returns:
+            dict mapping object ids to Counter object with token counts
+        """
 
         result = dict()
         open_fn = gzip.open if filepath.endswith(".gz") else open
@@ -50,7 +54,7 @@ class Tokenizer():
         return result
 
     def _tokens(self, doc):
-        """obtain tokens from a single document"""
+        """obtain token counts from a single document"""
 
         # get tokens from primary and auxiliary fields
         data, aux = Counter(), Counter()
@@ -77,7 +81,7 @@ class Tokenizer():
         # process tokens for length
         minlen = self.min_length
         exclude = self.exclude
-        tokens = [_ for _ in tokens if len(_) > minlen]
+        tokens = [_ for _ in tokens if len(_) >= minlen]
         if not self.case_sensitive:
             tokens = [_.lower() for _ in tokens]
         tokens = [_ for _ in tokens if _ not in exclude]
@@ -97,7 +101,7 @@ class Tokenizer():
 # Helper functions used within the tokenizer
 
 
-def read_tokens(filepaths):
+def read_set(filepaths):
     """read lines from a plain text file or files.
 
     Arguments:

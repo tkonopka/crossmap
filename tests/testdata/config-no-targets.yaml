@@ -1,0 +1,3 @@
+name: no_targets
+universe:
+  - dataset.yaml

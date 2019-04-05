@@ -1,0 +1,7 @@
+name: default0
+target:
+  - dataset.yaml
+universe:
+  - dataset.yaml
+tokens:
+  min_length: 0

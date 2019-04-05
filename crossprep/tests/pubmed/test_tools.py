@@ -5,7 +5,7 @@
 
 
 import unittest
-from pubmed.tools import parse_indexes
+from crossprep.pubmed.tools import parse_indexes
 
 
 class ParseIndexesTests(unittest.TestCase):
