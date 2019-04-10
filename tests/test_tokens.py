@@ -8,9 +8,9 @@ from os.path import join
 from crossmap.tokens import Tokenizer, token_counts
 
 data_dir = join("tests", "testdata")
-include_file = join(data_dir, "test_include.txt")
-exclude_file = join(data_dir, "test_exclude.txt")
-exclude_file2 = join(data_dir, "test_exclude_2.txt")
+include_file = join(data_dir, "include.txt")
+exclude_file = join(data_dir, "exclude.txt")
+exclude_file2 = join(data_dir, "exclude_2.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
 

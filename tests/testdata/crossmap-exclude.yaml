@@ -1,8 +1,8 @@
 name: crossmap0
 comment: fairly minimal configuration, with exclusion of certain tokens
-target:
+targets:
   - dataset.yaml
-universe:
-  - universe.yaml
+documents:
+  - documents.yaml
 exclude:
-  - test_exclude.txt
+  - exclude.txt

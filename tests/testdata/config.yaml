@@ -1,7 +1,13 @@
 name: default0
-target:
+targets:
   - dataset.yaml
-universe:
-  - dataset.yaml
+documents:
+  - documents.yaml
 tokens:
   min_length: 0
+max_features: 200
+aux_weight: 0.5
+umap:
+  n_neighbors: 5
+  n_components: 1
+  metric: euclidean

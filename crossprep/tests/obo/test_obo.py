@@ -32,4 +32,4 @@ class BuildOboDatasetTests(unittest.TestCase):
         num_ids = len(self.obo.ids())
         result = build_dataset(int_file, "int:2")
         self.assertLess(len(result), num_ids)
-
+        self.assertTrue("int:2" in result)

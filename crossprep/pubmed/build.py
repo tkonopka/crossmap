@@ -131,7 +131,7 @@ def build_pubmed_one(config, xmlnode):
         if not config.pattern.search(str(result)):
             return None, None
 
-    return article.pmid, result
+    return "PMID:" + str(article.pmid), result
 
 
 def build_pubmed_items(config, xmlnode):
@@ -159,9 +159,8 @@ def build_pubmed_items(config, xmlnode):
 
 
 def build_config(config):
-    """prepare raw settings into a proper format"""
+    """prepare raw settings into sets and integers"""
 
-    # prepare the settings for build
     if config.year is not None:
         config.year = set(parse_indexes(config.year))
     if config.pattern is not None:

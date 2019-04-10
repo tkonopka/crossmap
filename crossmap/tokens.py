@@ -5,9 +5,9 @@
 
 
 import gzip
-import yaml
 import re
 from collections import Counter
+from .tools import read_set, yaml_document
 
 
 class Tokenizer():
@@ -27,7 +27,7 @@ class Tokenizer():
 
         # for cleaning raw tokens
         self.cleaning = ["/|\\.|\\[|]|,|:|;|!|<|>|%|'|\\?|\"", "\\(|\\)",
-                         "±|·|=|\+", "[0-9]+", "^_|_$", "s$"]
+                         "±|·|=|\+", "[0-9]+", "^_|_$", "s$", "-$|^-"]
         # minimum/maximum number of characters (longer token will be split)
         self.min_length = min_length
         self.max_length = max_length
@@ -59,9 +59,9 @@ class Tokenizer():
         # get tokens from primary and auxiliary fields
         data, aux = Counter(), Counter()
         if "data" in doc:
-            data = Counter(self._parse(doc["data"]))
+            data = Counter(self.parse(doc["data"]))
         if "auxiliary" in doc:
-            aux = Counter(self._parse(doc["auxiliary"]))
+            aux = Counter(self.parse(doc["auxiliary"]))
 
         # assemble weighted tokens into a single element
         result = dict()
@@ -74,7 +74,7 @@ class Tokenizer():
             result[k] += v * aux_weight
         return result
 
-    def _parse(self, s):
+    def parse(self, s):
         """parse a long string into tokens"""
 
         tokens = self._clean_tokens(s.split())
@@ -94,55 +94,8 @@ class Tokenizer():
         resub = re.sub
         for p in patterns:
             tokens = [resub(p, "", _) for _ in tokens]
+        tokens = [resub("--", "-", _) for _ in tokens]
         return tokens
-
-
-# ############################################################################
-# Helper functions used within the tokenizer
-
-
-def read_set(filepaths):
-    """read lines from a plain text file or files.
-
-    Arguments:
-        filepath   string with file path, or iterable with many file paths
-
-    Returns:
-        set with file contents
-    """
-
-    if filepaths is None:
-        return set()
-    if type(filepaths) is str:
-        filepaths = [filepaths]
-
-    result = set()
-    for filepath in filepaths:
-        with open(filepath, "r") as f:
-            for line in f:
-                result.add(line.strip())
-    return result
-
-
-def yaml_document(stream):
-    """generator to read one yaml document at a time from a stream"""
-
-    def parse_doc(d):
-        doc = yaml.load("".join(d))
-        doc_id = list(doc.keys())[0]
-        return doc_id, doc[doc_id]
-
-    data = []
-    for line in stream:
-        if line.startswith(" ") or line.startswith("\t"):
-            data.append(line)
-        elif len(data) == 0:
-            data.append(line)
-        else:
-            yield parse_doc(data)
-            data = [line]
-    if len(data) > 0:
-        yield parse_doc(data)
 
 
 def token_counts(docs):

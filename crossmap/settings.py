@@ -6,14 +6,72 @@
 import yaml
 import logging
 from os import getcwd
-from os.path import join, exists, dirname, basename, isdir, realpath
+from os.path import join, exists, dirname, basename, isdir
 from .tokens import Tokenizer
 
-# a dummy variable that initiates a tokenizer with default parameters
+# a tokenizer with default parameters
 default_tokenizer = Tokenizer()
 
 
-class CrossmapSettings():
+class CrossmapTokenSettings():
+    """Container for settings for tokenizer"""
+
+    def __init__(self, config=None):
+        self.min_length = 3
+        self.max_length = 10
+
+        if config is not None:
+            for k, v in config.items():
+                if k == "min_length":
+                    self.min_length = v
+                if k == "max_length":
+                    self.max_length = v
+
+    def valid(self):
+        return True
+
+
+class CrossmapUmapSettings():
+    """Container for umap settings"""
+
+    def __init__(self, config=None):
+        self.n_components = 2
+        self.n_neighbors = 15
+        self.metric = "cosine"
+
+        if config is not None:
+            for k, v in config.items():
+                if k == "n_components":
+                    self.n_components = v
+                if k == "n_neighbors":
+                    self.n_neighbors = v
+                if k == "metric":
+                    self.metric = v
+
+    def valid(self):
+        return True
+
+
+class CrossmapSettingsDefaults:
+    """Container defining all settings for a crossmap project"""
+
+    def __init__(self):
+        self.name = "crossmap"
+        self.dir = getcwd()
+        self.file = "crossmap.yaml"
+        self.targets = []
+        self.documents = []
+        self.exclude = []
+        self.valid = False
+        # tuning
+        self.max_features = 0
+        self.aux_weight = 0.5
+        # sub-settings for components: tokens and embedding
+        self.tokens = CrossmapTokenSettings()
+        self.umap = CrossmapUmapSettings()
+
+
+class CrossmapSettings(CrossmapSettingsDefaults):
     """Container keeping and validating settings for a Crossmap project"""
 
     def __init__(self, config):
@@ -23,17 +81,7 @@ class CrossmapSettings():
             config    directory or filepath to configuration
         """
 
-        # set defaults
-        self.name = "crossmap"
-        self.dir = getcwd()
-        self.file = "crossmap.yaml"
-        self.target = []
-        self.universe = []
-        self.exclude = []
-        self.valid = False
-        self.tokens = None
-
-        # change defaults given the input
+        super().__init__()
         if config is not None:
             if isdir(config):
                 self.dir = config
@@ -58,7 +106,12 @@ class CrossmapSettings():
         with open(filepath, "r") as f:
             result = yaml.safe_load(f)
         for k, v in result.items():
-            self.__dict__[k] = v
+            if k == "tokens":
+                self.tokens = CrossmapTokenSettings(v)
+            elif k == "umap":
+                self.umap = CrossmapUmapSettings(v)
+            else:
+                self.__dict__[k] = v
         return True
 
     def _validate(self):
@@ -80,9 +133,9 @@ class CrossmapSettings():
             logging.error(emsg + "valid name")
 
         # target objects to map toward
-        targets = query_files(self.target, "target", dir=dir)
-        result["target"] = all(targets) if len(targets)>0 else False
-        if not result["target"]:
+        targets = query_files(self.targets, "targets", dir=dir)
+        result["targets"] = all(targets) if len(targets) > 0 else False
+        if not result["targets"]:
             logging.error(emsg + "target objects")
 
         # tokens to exclude
@@ -92,35 +145,33 @@ class CrossmapSettings():
             logging.error(emsg + "exclude")
 
         # universe (not required, so missing value generates only warning)
-        universe = query_files(self.universe, "universe", dir=dir)
-        if len(universe) == 0 or not all(universe):
-            logging.warning(emsg + "universe objects")
+        documents = query_files(self.documents, "documents", dir=dir)
+        if len(documents) == 0 or not all(documents):
+            logging.warning(emsg + "document objects")
 
         return result
 
-    def files(self, file_type):
-        if file_type not in set(["target", "exclude", "universe"]):
-            return []
-        return [join(self.dir, _) for _ in self.__dict__[file_type]]
+    def files(self, file_types):
+        """Get paths to project files.
 
-    def token_property(self, s):
-        if self.tokens is None:
-            return default_tokenizer.__dict__[s]
-        if s not in self.tokens:
-            return default_tokenizer.__dict__[s]
-        return self.tokens[s]
+        Argument:
+            file_types   an iterable with value "targets", "exclude", "documents"
 
-    @property
-    def token_min_length(self):
-        return self.token_property("min_length")
+        Returns:
+            simple list with file paths
+        """
 
-    @property
-    def token_max_length(self):
-        return self.token_property("max_length")
+        if type(file_types) is str:
+            file_types = [file_types]
 
-    @property
-    def token_aux_weight(self):
-        return self.token_property("aux_weight")
+        result = []
+        for file_type in file_types:
+            if file_type not in set(["targets", "exclude", "documents"]):
+                logging.warning("attempting to retrieve unknown file type: "+str(file_type))
+                continue
+            for _ in self.__dict__[file_type]:
+                result.append(join(self.dir, _))
+        return result
 
     def __str__(self):
         """simple view of the object (for debugging)"""

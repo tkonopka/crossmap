@@ -9,7 +9,7 @@ import logging
 import yaml
 from os import getcwd
 from os.path import join
-from .obo.obo import Obo
+from obo.obo import Obo
 
 
 parser = argparse.ArgumentParser(description="crossprep-obo")
@@ -39,6 +39,7 @@ logging.basicConfig(format='[%(asctime)s] %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
 
+
 def name_def(term):
     """get a term name and def"""
 
@@ -63,7 +64,8 @@ def build_dataset(obo_file, root_id=None):
     if root_id is None:
         hits = set(obo.ids())
     else:
-        hits = obo.descendants(root_id)
+        hits = set(obo.descendants(root_id))
+        hits.add(root_id)
 
     result = dict()
     for id in obo.ids():
@@ -79,7 +81,6 @@ def build_dataset(obo_file, root_id=None):
         result[id] = dict(data=data,
                           auxiliary=" ".join(auxiliary),
                           metadata=metadata)
-
     return result
 
 
