@@ -5,38 +5,41 @@
 
 
 import gzip
-import re
 from collections import Counter
-from .tools import read_set, yaml_document
+from .tools import yaml_document
 
 
-class Tokenizer():
+def kmers(s, k):
+    """create an array with kmers from one string"""
 
-    def __init__(self, include=None, exclude=None, aux_weight=0.5,
-                 min_length=3, max_length=12, case_sensitive=False):
+    if len(s) <= k:
+        return [s]
+    return [s[i:(i+k)] for i in range(len(s)-k+1)]
+
+
+class Kmerizer():
+    """A tokenizer of documents that splits words into kmers"""
+
+    def __init__(self, aux_weight=0.5, k=5, case_sensitive=False, alphabet=None):
         """configure a tokenizer
 
         Arguments:
-            include         path to text file with tokens to include
-            exclude         path to text file with tokens to exclude
             aux_weight      numeric, weighting for auxiliary tokens
-            min_length      minimum number of characters in final token
-            max_length      maximum number of characters in tokens
+            k               length of kmers (words will be split into overlapping kmers)
             case_sensitive  logical, if False, all tokens will be lowercase
+            alphabet        string with all possible characters
         """
 
-        # for cleaning raw tokens
-        self.cleaning = ["/|\\.|\\[|]|,|:|;|!|<|>|%|'|\\?|\"", "\\(|\\)",
-                         "±|·|=|\+", "[0-9]+", "^_|_$", "s$", "-$|^-"]
-        # minimum/maximum number of characters (longer token will be split)
-        self.min_length = min_length
-        self.max_length = max_length
-        self.case_sensitive = case_sensitive
-        # weighting of auxiliary/primary tokens
         self.aux_weight = aux_weight
-        # get sets of tokens to include/exclude
-        self.include = read_set(include)
-        self.exclude = read_set(exclude)
+        self.k = k
+        self.case_sensitive = case_sensitive
+        if alphabet is None:
+            alphabet =  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            alphabet += "abcdefghijklmnopqrstuvwxyz"
+            alphabet += "0123456789-"
+        if not case_sensitive:
+            alphabet = alphabet.lower()
+        self.alphabet = set([_ for _ in alphabet])
 
     def tokenize(self, filepath):
         """scan context of a dataset file and return a tokens dict
@@ -50,13 +53,12 @@ class Tokenizer():
         with open_fn(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 result[id] = self._tokens(doc)
-
         return result
 
     def _tokens(self, doc):
         """obtain token counts from a single document"""
 
-        # get tokens from primary and auxiliary fields
+        # count raw tokens in primary and auxiliary fields
         data, aux = Counter(), Counter()
         if "data" in doc:
             data = Counter(self.parse(doc["data"]))
@@ -64,38 +66,28 @@ class Tokenizer():
             aux = Counter(self.parse(doc["auxiliary"]))
 
         # assemble weighted tokens into a single element
-        result = dict()
-        aux_weight = self.aux_weight
-        for k, v in data.items():
-            result[k] = v
+        result = dict(data)
+        weight = self.aux_weight
         for k, v in aux.items():
             if k not in result:
                 result[k] = 0
-            result[k] += v * aux_weight
+            result[k] += v * weight
         return result
 
     def parse(self, s):
         """parse a long string into tokens"""
 
-        tokens = self._clean_tokens(s.split())
-        # process tokens for length
-        minlen = self.min_length
-        exclude = self.exclude
-        tokens = [_ for _ in tokens if len(_) >= minlen]
+        k = self.k
+        alphabet = self.alphabet
         if not self.case_sensitive:
-            tokens = [_.lower() for _ in tokens]
-        tokens = [_ for _ in tokens if _ not in exclude]
-        return tokens
-
-    def _clean_tokens(self, tokens):
-        """apply regex cleaning to tokens"""
-
-        patterns = self.cleaning
-        resub = re.sub
-        for p in patterns:
-            tokens = [resub(p, "", _) for _ in tokens]
-        tokens = [resub("--", "-", _) for _ in tokens]
-        return tokens
+            s = s.lower()
+        result = []
+        for word in s.split():
+            for i in range(len(word)):
+                if word[i] not in alphabet:
+                    word = word[:i]+" "+word[(i+1):]
+            result.extend(kmers(word.strip(), k))
+        return result
 
 
 def token_counts(docs):

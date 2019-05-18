@@ -8,7 +8,6 @@ Usage: python3 crossmap.py command
 
 import argparse
 import logging
-from os import getcwd
 from sys import exit
 from crossmap.crossmap import Crossmap
 

@@ -58,8 +58,8 @@ class CrossmapInitTests(unittest.TestCase):
         self.assertEqual(ids1, ids2)
         self.assertEqual(tokens1, tokens2)
         # both results should have all tokens
-        self.assertTrue("complete" in tokens1)
-        self.assertTrue("complete" in tokens2)
+        self.assertTrue("compl" in tokens1)
+        self.assertTrue("compl" in tokens2)
 
     def test_target_tokens_unique(self):
         """Target tokens should be unique"""
@@ -74,12 +74,11 @@ class CrossmapInitTests(unittest.TestCase):
             lines = f.readlines()
         self.assertEqual(len(lines)-1, len(tokens))
 
-    def test_target_tokens_exclude(self):
-        """Target tokens can exclude certain elements"""
-
-        crossmap = Crossmap(config_exclude)
-        ids, tokens = crossmap.targets_features()
-        self.assertFalse("that" in tokens)
+    #def test_target_tokens_exclude(self):
+    #    """Target tokens can exclude certain elements"""
+    #    crossmap = Crossmap(config_exclude)
+    #    ids, tokens = crossmap.targets_features()
+    #    self.assertFalse("that" in tokens)
 
     def test_feature_map(self):
         """Target tokens can exclude certain elements"""

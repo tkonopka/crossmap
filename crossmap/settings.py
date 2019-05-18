@@ -7,28 +7,34 @@ import yaml
 import logging
 from os import getcwd
 from os.path import join, exists, dirname, basename, isdir
-from .tokens import Tokenizer
+from .tokens import Kmerizer
 
 # a tokenizer with default parameters
-default_tokenizer = Tokenizer()
+default_tokenizer = Kmerizer()
 
 
-class CrossmapTokenSettings():
-    """Container for settings for tokenizer"""
+class CrossmapKmerSettings():
+    """Container for settings for kmer-based tokenizer"""
 
     def __init__(self, config=None):
-        self.min_length = 3
-        self.max_length = 10
+        self.k = 5
+        self.alphabet = None
 
         if config is not None:
-            for k, v in config.items():
-                if k == "min_length":
-                    self.min_length = v
-                if k == "max_length":
-                    self.max_length = v
+            for key, val in config.items():
+                if key == "k":
+                    self.k = val
+                if key == "alphabet":
+                    self.alphabet = val
 
     def valid(self):
         return True
+
+    def __str__(self):
+        result = "Crossmap Kmer Settings:\n"
+        result += "k=" + str(self.k) + ", "
+        result += "alphabet='" + str(self.alphabet) + "'"
+        return result
 
 
 class CrossmapUmapSettings():
@@ -67,7 +73,7 @@ class CrossmapSettingsDefaults:
         self.max_features = 0
         self.aux_weight = 0.5
         # sub-settings for components: tokens and embedding
-        self.tokens = CrossmapTokenSettings()
+        self.tokens = CrossmapKmerSettings()
         self.umap = CrossmapUmapSettings()
 
 
@@ -107,7 +113,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             result = yaml.safe_load(f)
         for k, v in result.items():
             if k == "tokens":
-                self.tokens = CrossmapTokenSettings(v)
+                self.tokens = CrossmapKmerSettings(v)
             elif k == "umap":
                 self.umap = CrossmapUmapSettings(v)
             else:

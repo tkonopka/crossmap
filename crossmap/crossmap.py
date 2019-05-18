@@ -9,7 +9,7 @@ from umap import UMAP
 from scipy.sparse import csr_matrix
 from collections import Counter
 from os.path import join, exists, basename
-from .tokens import Tokenizer
+from .tokens import Kmerizer
 from .tools import read_csv_set, write_csv
 from .tools import read_dict, write_dict
 from .tools import read_obj, write_obj, write_matrix
@@ -42,10 +42,9 @@ class Crossmap():
         self.settings = settings
         if not settings.valid:
             return
-        self.tokenizer = Tokenizer(min_length=settings.tokens.min_length,
-                                   max_length=settings.tokens.max_length,
-                                   aux_weight=settings.aux_weight,
-                                   exclude=settings.files("exclude"))
+        self.tokenizer = Kmerizer(k=settings.tokens.k,
+                                  alphabet=settings.tokens.alphabet,
+                                  aux_weight=settings.aux_weight)
 
     def valid(self):
         """get a boolean stating whether settings are valid"""

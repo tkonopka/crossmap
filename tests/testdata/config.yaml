@@ -4,7 +4,7 @@ targets:
 documents:
   - documents.yaml
 tokens:
-  min_length: 0
+  k: 5
 max_features: 200
 aux_weight: 0.5
 umap:
