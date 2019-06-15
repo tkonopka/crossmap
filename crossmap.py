@@ -25,10 +25,9 @@ parser.add_argument("--config", action="store",
                     default=None)
 
 # registering query and target objects
-parser.add_argument("--source", action="store",
+parser.add_argument("--data", action="store",
                     help="dataset with objects to map from")
-parser.add_argument("--target", action="store",
-                    help="dataset with objects to map onto")
+
 
 # ############################################################################
 
@@ -51,3 +50,7 @@ if __name__ == "__main__":
 
     if config.action == "build":
         crossmap.build()
+
+    if config.action == "predict":
+        crossmap.build()
+        crossmap.predict(config.data)

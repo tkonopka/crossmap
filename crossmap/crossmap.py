@@ -6,14 +6,16 @@
 import logging
 import functools
 from umap import UMAP
-from scipy.sparse import csr_matrix
+from sklearn.utils import check_random_state
 from collections import Counter
 from os.path import join, exists, basename
 from .tokens import Kmerizer
+from .data import CrossmapData
 from .tools import read_csv_set, write_csv
 from .tools import read_dict, write_dict
 from .tools import read_obj, write_obj, write_matrix
 from .settings import CrossmapSettings
+from .neighbors import neighbors
 
 
 def require_valid(function):
@@ -45,6 +47,7 @@ class Crossmap():
         self.tokenizer = Kmerizer(k=settings.tokens.k,
                                   alphabet=settings.tokens.alphabet,
                                   aux_weight=settings.aux_weight)
+        self.random_state = check_random_state(0)
 
     def valid(self):
         """get a boolean stating whether settings are valid"""
@@ -58,35 +61,48 @@ class Crossmap():
         creating an embedding.
         """
 
-        logging.info("Building")
         s = self.settings
+        logging.info("Building: " + s.name)
         project_files = s.files(["targets", "documents"])
         target_ids, target_features = self.targets_features()
         features = self.document_features(target_features, s.max_features)
-        self.feature_map = self.feature_map(features)
-        self.data, self.ids  = self.matrix(project_files)
-        self.umap()
+        self.feature_map = self._feature_map(features)
+        self.data_builder = CrossmapData(self.feature_map, self.tokenizer)
+        self.data, self.ids  = self._matrix(project_files)
+        item_indexes = [-1]*len(self.ids)
+        for k,v in self.ids.items():
+            item_indexes[v] = k
+        self.item_indexes = item_indexes
+        self._map = self.umap()
         logging.info("done")
 
     def _tsv_file(self, label):
         """create a file path for project tsv data"""
 
         s = self.settings
-        return join(s.dir, s.name + "-" + label + ".tsv")
+        return join(s.data_dir, s.name + "-" + label + ".tsv")
 
     def _pickle_file(self, label):
         """create a file path for project binary data object"""
         s = self.settings
-        return join(s.dir, s.name + "-" + label)
+        return join(s.data_dir, s.name + "-" + label)
 
     def targets_features(self):
-        """scan target documents to collect target ids and tokens"""
+        """scan target documents to gather information.
+
+        Returns
+            set of target ids
+            dict mapping each tokens to numbers of targets containing the token
+        """
 
         tok_file = self._tsv_file("target-features")
         ids_file = self._tsv_file("target-ids")
         if exists(tok_file) and exists(ids_file):
             logging.info("Reading target information (cache)")
-            return read_csv_set(ids_file, "id"), read_csv_set(tok_file, "id")
+            counts = read_dict(tok_file, id_col="id",
+                               value_col="count",
+                               value_fun=int)
+            return read_csv_set(ids_file, "id"), counts
 
         counts = Counter()
         ids = set()
@@ -99,10 +115,16 @@ class Crossmap():
                 counts.update(list(v.keys()))
         write_csv(counts, tok_file)
         write_csv(ids, ids_file)
-        return ids, set(counts.keys())
+        return ids, dict(counts)
 
     def _document_features(self, features):
-        """count features in document files"""
+        """count features in document files
+
+        Return:
+            Counter mapping tokens to a weight that captures
+            the number of documents containing the token, weighted by the
+            length of the document.
+        """
 
         result = Counter()
         for doc_file in self.settings.files("documents"):
@@ -133,10 +155,10 @@ class Crossmap():
             logging.info("Skipping feature augmentation")
             return features
 
+        # save feature counts into a disk file
         features_file = self._tsv_file("document-features")
         if not exists(features_file):
             doc_features = self._document_features(features)
-            # transfer top counts into a file
             write_dict(doc_features, features_file, value_col="weight")
         else:
             logging.info("Reading document features (cache)")
@@ -153,33 +175,30 @@ class Crossmap():
 
         return result
 
-    def feature_map(self, token_set):
+    def _feature_map(self, token_set):
         """create a map between tokens and integers/indexes"""
 
         feature_file = self._tsv_file("feature-map")
         if not exists(feature_file):
-            result = dict()
-            for token in token_set:
-                result[token] = len(result)
+            result = {v: index for index, v in enumerate(token_set)}
             write_dict(result, feature_file, value_col="index")
         return read_dict(feature_file, value_col="index")
 
-    def matrix(self, paths):
+    def _matrix(self, paths):
         """build a sparse matrix with features
 
         Arguments:
             paths   iterable with file paths containing documents
-            label   string included in the cache files
 
         Returns:
-            csr_matrix with data and mapping from document names to indeces
+            csr_matrix with data and mapping from document names to indices
         """
 
         data_file = self._pickle_file("data")
         ids_file = self._pickle_file("ids")
         if not exists(data_file) or not exists(ids_file):
             logging.info("Building feature matrix")
-            data, ids = build_data(self.feature_map, paths, self.tokenizer)
+            data, ids = self.data_builder.documents(paths)
             write_obj(data, data_file)
             write_obj(ids, ids_file)
         else:
@@ -215,36 +234,14 @@ class Crossmap():
 
         return read_obj(umap_file)
 
+    @require_valid
+    def predict(self, data_file):
+        """map new data objects onto targets"""
 
-def build_data(feature_map, filepaths, tokenizer):
-    """build a sparse matrix of items and features
-    
-    Arguments:
-        feature_map   dict mapping token string to integer
-        filepaths     paths with documents
-        tokenizer     configured tokenizer that will convert
-                      documents into weighted sets of tokens
-    
-    Returns:
-        sparse matrix and a dict mapping ids associated with each matrix row
-    """
+        data, ids = self.data_builder.documents([data_file])
+        result = dict()
+        for k,v in ids.items():
+            n_index = neighbors(data[v], self.data, 1)[0]
+            result[k] = self.item_indexes[n_index]
 
-    # three objects to track data in matrix
-    data = []
-    features = []
-    items = [0]
-    # one object to track string ids associated with each data row
-    item_names = dict()
-    # transfer data from files into a feature matrix
-    for filepath in filepaths:
-        docs = tokenizer.tokenize(filepath)
-        for doc_name, tokens in docs.items():
-            item_names[doc_name] = len(item_names)
-            for k, v in tokens.items():
-                if k not in feature_map:
-                    continue
-                data.append(v)
-                features.append(feature_map[k])
-            items.append(len(data))
-
-    return csr_matrix((data, features, items), dtype=float), item_names
+        return result

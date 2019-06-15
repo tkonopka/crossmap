@@ -45,17 +45,18 @@ class Kmerizer():
         """scan context of a dataset file and return a tokens dict
 
         Returns:
-            dict mapping object ids to Counter object with token counts
+            dict mapping object ids to Counter object with token values
         """
 
         result = dict()
+        tokenize_doc = self.tokenize_document
         open_fn = gzip.open if filepath.endswith(".gz") else open
         with open_fn(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result[id] = self._tokens(doc)
+                result[id] = tokenize_doc(doc)
         return result
 
-    def _tokens(self, doc):
+    def tokenize_document(self, doc):
         """obtain token counts from a single document"""
 
         # count raw tokens in primary and auxiliary fields

@@ -34,12 +34,11 @@ class KmersTests(unittest.TestCase):
 class KmerizerTests(unittest.TestCase):
     """Turning text data into kmer tokens"""
 
-    def test_init_default(self):
+    def test_init_small_k(self):
         """Configure a tokenizer with custom k"""
 
         tokenizer = Kmerizer(k=2)
         self.assertEqual(tokenizer.k, 2)
-
 
     def test_init_default(self):
         """Configure a tokenizer with default alphabet"""

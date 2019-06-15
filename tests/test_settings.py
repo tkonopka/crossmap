@@ -6,6 +6,7 @@
 import unittest
 from os.path import join
 from crossmap.crossmap import CrossmapSettings
+from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_file = join(data_dir, "crossmap.yaml")
@@ -24,6 +25,12 @@ dataset_file = join(data_dir, "dataset.yaml")
 
 class CrossmapSettingsTests(unittest.TestCase):
     """Turning text data into tokens"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "default0")
+        remove_crossmap_cache(data_dir, "no_universe")
+        remove_crossmap_cache(data_dir, "no_targets")
+        remove_crossmap_cache(data_dir, "crossmap")
 
     def test_init_dir(self):
         """Configure with just a directory"""

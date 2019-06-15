@@ -10,7 +10,6 @@ import warnings
 from scipy.sparse import csr_matrix
 
 
-@unittest.skip
 class UmapTests(unittest.TestCase):
     """Computing embeddings with umap"""
 

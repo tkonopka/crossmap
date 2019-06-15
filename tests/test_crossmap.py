@@ -1,4 +1,4 @@
-'''Tests for turning datasets into tokens
+'''Tests for mapping across datasets using token similarities
 
 @author: Tomasz Konopka
 '''
@@ -33,15 +33,18 @@ class CrossmapInitTests(unittest.TestCase):
 
         crossmap = Crossmap(data_dir)
         self.assertEqual(crossmap.settings.dir, data_dir)
-        # crossmap0 is a string in the config.yaml file
-        self.assertEqual(crossmap.settings.name, "crossmap0")
+        self.assertEqual(crossmap.settings.name, "crossmap0",
+                         "crossmap0 is the name defined in config.yaml file")
+        self.assertEqual(crossmap.settings.data_dir,
+                         join(data_dir, "crossmap0"))
 
     def test_target_tokens(self):
         """Extract tokens from target objects"""
 
         crossmap = Crossmap(config_plain)
+        crossmap_dir = crossmap.settings.data_dir
         # token cache should not exist
-        toks_file = join(data_dir, "crossmap0-target-features.tsv")
+        toks_file = join(crossmap_dir, "crossmap0-target-features.tsv")
         self.assertFalse(exists(toks_file))
         # first iteration should create the cache file
         with self.assertLogs(level="INFO") as cm1:
@@ -65,29 +68,24 @@ class CrossmapInitTests(unittest.TestCase):
         """Target tokens should be unique"""
 
         crossmap = Crossmap(config_plain)
+        crossmap_dir = crossmap.settings.data_dir
         ids, tokens = crossmap.targets_features()
         # output should be a set (i.e. unique strings)
-        self.assertTrue(type(tokens) is set)
+        self.assertTrue(type(tokens) is dict)
         # content on disk should contain same number of items (plus header)
-        toks_file = join(data_dir, "crossmap0-target-features.tsv")
+        toks_file = join(crossmap_dir, "crossmap0-target-features.tsv")
         with open(toks_file, "rt") as f:
             lines = f.readlines()
         self.assertEqual(len(lines)-1, len(tokens))
-
-    #def test_target_tokens_exclude(self):
-    #    """Target tokens can exclude certain elements"""
-    #    crossmap = Crossmap(config_exclude)
-    #    ids, tokens = crossmap.targets_features()
-    #    self.assertFalse("that" in tokens)
 
     def test_feature_map(self):
         """Target tokens can exclude certain elements"""
 
         crossmap = Crossmap(config_exclude)
-        ids, tokens = crossmap.targets_features()
-        features = crossmap.feature_map(tokens)
-        self.assertTrue(len(features), len(tokens))
-        self.assertEqual(tokens, set(features.keys()))
+        ids, counts = crossmap.targets_features()
+        features = crossmap._feature_map(counts.keys())
+        self.assertTrue(len(features), len(counts))
+        self.assertEqual(set(counts.keys()), set(features.keys()))
 
 
 class CrossmapBuildTests(unittest.TestCase):
@@ -103,9 +101,10 @@ class CrossmapBuildTests(unittest.TestCase):
         """Construct a sparse data object from target documents"""
 
         crossmap = Crossmap(config_plain)
+        crossmap_dir = crossmap.settings.data_dir
         crossmap.build()
-        data_file = join(data_dir, "crossmap0-data")
-        ids_file = join(data_dir, "crossmap0-ids")
+        data_file = join(crossmap_dir, "crossmap0-data")
+        ids_file = join(crossmap_dir, "crossmap0-ids")
         self.assertTrue(exists(data_file))
         self.assertTrue(exists(ids_file))
         self.assertGreater(crossmap.datum("A", "Alice"), 1)
@@ -132,3 +131,31 @@ class CrossmapBuildTests(unittest.TestCase):
         # documents have 7 letters in total, but the four top ones are a-d
         # a-d are in documents that overlap with a, b
         self.assertEqual(doc_features, set(["a", "b", "c", "d"]))
+
+
+class CrossmapPredictTests(unittest.TestCase):
+    """Mapping new objects onto targets"""
+
+    @classmethod
+    def setUpClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap0")
+        cls.crossmap = Crossmap(config_plain)
+        cls.crossmap.build()
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap0")
+
+    def test_embedding_exists(self):
+        """internal check: class setup build a crossmap object"""
+        self.assertEqual(self.crossmap.settings.name, "crossmap0")
+
+    def test_self_predict(self):
+        """predicting items from within the dataset should map onto themselves"""
+
+        tokens = self.crossmap.tokenizer.tokenize(dataset_file)
+        result = self.crossmap.predict(dataset_file)
+        self.assertEqual(len(result), len(tokens))
+        for k,v in result.items():
+            self.assertEqual(k, v, "all items should match to themselves")
+

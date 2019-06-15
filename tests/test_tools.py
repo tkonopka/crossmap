@@ -36,10 +36,10 @@ class WriteDictTests(unittest.TestCase):
     """Handling feature maps with files"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
 
     def test_read_write_integer_features(self):
         """Configure a crossmap with just a directory"""
@@ -54,10 +54,10 @@ class ObjTests(unittest.TestCase):
     """Handling pickling """
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
 
     def test_read_write_features(self):
         """Configure a crossmap with just a directory"""
@@ -72,7 +72,7 @@ class WriteMatrixTests(unittest.TestCase):
     """Writing embedding into text files"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
 
     def test_2d_write(self):
         """write a simple 2-coordinates embedding"""

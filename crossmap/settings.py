@@ -5,7 +5,7 @@
 
 import yaml
 import logging
-from os import getcwd
+from os import getcwd, mkdir
 from os.path import join, exists, dirname, basename, isdir
 from .tokens import Kmerizer
 
@@ -99,6 +99,10 @@ class CrossmapSettings(CrossmapSettingsDefaults):
 
         if self._load(self.dir, self.file):
             self.valid = all(list((self._validate()).values()))
+
+        self.data_dir = join(self.dir, self.name)
+        if not exists(self.data_dir):
+            mkdir(self.data_dir)
 
     def _load(self, dirpath, filename):
         """load settings from a file, return True/False of success"""
