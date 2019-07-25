@@ -1,6 +1,4 @@
 '''Tests for pubmed baseline downloads
-
-@author: Tomasz Konopka
 '''
 
 

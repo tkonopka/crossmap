@@ -1,6 +1,4 @@
 '''Tests for turning documents into tokens
-
-@author: Tomasz Konopka
 '''
 
 import unittest

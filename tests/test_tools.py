@@ -1,6 +1,4 @@
 '''Tests for turning datasets into tokens
-
-@author: Tomasz Konopka
 '''
 
 import unittest

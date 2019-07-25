@@ -1,6 +1,4 @@
 '''Tests for various tools in pubmed package
-
-@author: Tomasz Konopka
 '''
 
 

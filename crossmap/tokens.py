@@ -1,6 +1,4 @@
 """Tokenizer specifically for crossmap datasets.
-
-@author: Tomasz Konopka
 """
 
 

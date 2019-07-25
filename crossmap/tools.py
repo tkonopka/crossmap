@@ -1,6 +1,4 @@
 """Multi-purpose tools
-
-@author: Tomasz Konopka
 """
 
 

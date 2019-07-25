@@ -1,13 +1,10 @@
 """Crossmap class
-
-@author: Tomasz Konopka
 """
 
 import logging
 import functools
-from umap import UMAP
-from sklearn.utils import check_random_state
 from collections import Counter
+from umap import UMAP
 from os.path import join, exists, basename
 from .tokens import Kmerizer
 from .data import CrossmapData
@@ -41,40 +38,33 @@ class Crossmap():
         """
 
         settings = CrossmapSettings(config)
-        self.settings = settings
+        s = self.settings = settings
         if not settings.valid:
             return
         self.tokenizer = Kmerizer(k=settings.tokens.k,
                                   alphabet=settings.tokens.alphabet,
                                   aux_weight=settings.aux_weight)
-        self.random_state = check_random_state(0)
-
-    def valid(self):
-        """get a boolean stating whether settings are valid"""
-        return self.settings.valid
-
-    @require_valid
-    def build(self):
-        """build data objects for a crossmap analysis.
-
-        This involves processing tokens in targets and documents and
-        creating an embedding.
-        """
-
-        s = self.settings
         logging.info("Building: " + s.name)
         project_files = s.files(["targets", "documents"])
         target_ids, target_features = self.targets_features()
         features = self.document_features(target_features, s.max_features)
         self.feature_map = self._feature_map(features)
         self.data_builder = CrossmapData(self.feature_map, self.tokenizer)
-        self.data, self.ids  = self._matrix(project_files)
-        item_indexes = [-1]*len(self.ids)
-        for k,v in self.ids.items():
-            item_indexes[v] = k
-        self.item_indexes = item_indexes
-        self._map = self.umap()
-        logging.info("done")
+        self.data, self.indexes = self._matrix(project_files)
+        item_ids = [-1]*len(self.indexes)
+        target_indexes = set()
+        for k,v in self.indexes.items():
+            item_ids[v] = k
+            if k in target_ids:
+                target_indexes.add(v)
+        self.target_ids = target_ids
+        self.target_indexes = target_indexes
+        self.ids = item_ids
+        logging.info("Building done")
+
+    def valid(self):
+        """get a boolean stating whether settings are valid"""
+        return self.settings.valid
 
     def _tsv_file(self, label):
         """create a file path for project tsv data"""
@@ -98,7 +88,7 @@ class Crossmap():
         tok_file = self._tsv_file("target-features")
         ids_file = self._tsv_file("target-ids")
         if exists(tok_file) and exists(ids_file):
-            logging.info("Reading target information (cache)")
+            logging.info("Reading target features (cache)")
             counts = read_dict(tok_file, id_col="id",
                                value_col="count",
                                value_fun=int)
@@ -211,7 +201,7 @@ class Crossmap():
         """
 
         feature_name = self.tokenizer.parse(feature_name)[0]
-        doc_index = self.ids[doc_name]
+        doc_index = self.indexes[doc_name]
         feature_index = self.feature_map[feature_name]
         return self.data[doc_index, feature_index]
 
@@ -239,9 +229,23 @@ class Crossmap():
         """map new data objects onto targets"""
 
         data, ids = self.data_builder.documents([data_file])
-        result = dict()
+        result = dict.fromkeys(ids.keys())
         for k,v in ids.items():
-            n_index = neighbors(data[v], self.data, 1)[0]
-            result[k] = self.item_indexes[n_index]
-
+            n_index = self.nearest_target(data[v], 0)
+            if n_index >= 0:
+                result[k] = self.ids[n_index]
         return result
+
+    def nearest_target(self, doc, depth=2):
+        """identify index of target item closest to index"""
+
+        k = 10
+        neighbor_indexes = neighbors(doc, self.data, k)
+        for n in neighbor_indexes:
+            if n in self.target_indexes:
+                return n
+
+        # look further at neighbors-neighbors
+        if depth <= 0:
+            return -1
+

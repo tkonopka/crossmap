@@ -1,6 +1,4 @@
 """Handling data matrices
-
-@author: Tomasz Konopka
 """
 
 from scipy.sparse import csr_matrix

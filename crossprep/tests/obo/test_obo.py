@@ -1,6 +1,4 @@
 '''Tests for building crossmap datasets from obo
-
-@author: Tomasz Konopka
 '''
 
 

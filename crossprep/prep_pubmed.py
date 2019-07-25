@@ -1,6 +1,4 @@
 """Interface to using crossmap with pubmed data.
-
-@author: Tomasz Konopka
 """
 
 

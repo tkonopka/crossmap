@@ -1,6 +1,4 @@
 """Interface to using crossmap with ontologies.
-
-@author: Tomasz Konopka
 """
 
 import argparse

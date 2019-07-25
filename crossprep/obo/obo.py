@@ -1,8 +1,6 @@
 """Parsing ontologies from obo files on disk.
 
-(This file is copied from another project: Phenoscoring)
-
-@author: Tomasz Konopka
+(This file is copied from another project: phenoscoring)
 """
 
 from .oboterm import OboTerm, MinimalOboTerm

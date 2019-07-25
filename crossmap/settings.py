@@ -1,6 +1,4 @@
 """Crossmap settings and validation
-
-@author: Tomasz Konopka
 """
 
 import yaml

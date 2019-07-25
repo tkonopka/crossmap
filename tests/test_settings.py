@@ -1,6 +1,4 @@
 '''Tests for parsing settings
-
-@author: Tomasz Konopka
 '''
 
 import unittest

@@ -1,6 +1,4 @@
-"""Collection of helper functions for pubmedgraph.
-
-@author: Tomasz Konopka
+"""Collection of helper functions for pubmed.
 """
 
 import logging

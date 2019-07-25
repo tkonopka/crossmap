@@ -1,6 +1,4 @@
 """Computing nearest neighbors using sparse matrices
-
-@author: Tomasz Konopka
 """
 
 from sklearn.metrics import pairwise_distances

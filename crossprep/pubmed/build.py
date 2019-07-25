@@ -1,6 +1,4 @@
 """Build a dataset for crossmap from pubmed baseline data files.
-
-@author: Tomasz Konopka
 """
 
 import gzip

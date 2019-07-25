@@ -1,6 +1,4 @@
 '''Helper functions used within the test suite
-
-@author: Tomasz Konopka
 '''
 
 from os import remove, rmdir

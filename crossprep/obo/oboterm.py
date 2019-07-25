@@ -2,9 +2,7 @@
 
 This container/parser only supports a few of the data types in an obo term. 
 
-(This file is copied from another project: Phenoscoring)
-
-@author: Tomasz Konopka
+(This file is copied from another project: phenoscoring)
 """
 
 

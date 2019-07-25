@@ -1,6 +1,4 @@
 """Downloading baseline article data from pubmed.
-
-@author: Tomasz Konopka
 """
 
 import time

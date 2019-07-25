@@ -1,6 +1,4 @@
 '''Tests for computing embedding with umap
-
-@author: Tomasz Konopka
 '''
 
 import unittest
