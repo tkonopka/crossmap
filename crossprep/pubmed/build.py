@@ -121,7 +121,8 @@ def build_pubmed_one(config, xmlnode):
 
     result = dict()
     result["data"] = data
-    result["auxiliary"] = "; ".join(article.keywords)
+    result["aux_pos"] = "; ".join(article.keywords)
+    result["aux_neg"] = ""
     metadata = dict(journal=article.journal, year=article.year)
     result["metadata"] = metadata
 

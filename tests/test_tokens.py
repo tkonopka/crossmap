@@ -8,8 +8,6 @@ from crossmap.tokens import kmers, Kmerizer
 
 data_dir = join("tests", "testdata")
 include_file = join(data_dir, "include.txt")
-exclude_file = join(data_dir, "exclude.txt")
-exclude_file2 = join(data_dir, "exclude_2.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
 
@@ -76,6 +74,15 @@ class KmerizerTests(unittest.TestCase):
         result = tokens["A"]
         self.assertTrue("alice" in result)
         self.assertEqual(result["with"], 0.2)
+
+    def test_tokenize_aux_neg(self):
+        """obtain tokens also from aux_neg fields"""
+
+        tokenizer = Kmerizer(aux_weight=0.4)
+        tokens = tokenizer.tokenize(dataset_file)
+        result = tokens["C"]
+        self.assertTrue("bob" in result)
+        self.assertEqual(result["bob"], -0.4)
 
     def test_tokenize_case_sensitive(self):
         """obtain tokens in case sensitive manner"""

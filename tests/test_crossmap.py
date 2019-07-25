@@ -9,8 +9,6 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "crossmap.yaml")
-config_exclude = join(data_dir, "crossmap-exclude.yaml")
-
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
@@ -33,15 +31,6 @@ class CrossmapInitTests(unittest.TestCase):
                          "crossmap0 is the name defined in config.yaml file")
         self.assertEqual(crossmap.settings.data_dir,
                          join(data_dir, "crossmap0"))
-
-    def test_exclude(self):
-        """Target tokens can exclude certain elements"""
-
-        crossmap = Crossmap(config_exclude)
-        ids, counts = crossmap.targets_features()
-        features = crossmap._feature_map(counts.keys())
-        self.assertTrue(len(features), len(counts))
-        self.assertEqual(set(counts.keys()), set(features.keys()))
 
 
 class CrossmapBuildTests(unittest.TestCase):

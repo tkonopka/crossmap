@@ -60,9 +60,11 @@ class Kmerizer():
         # count raw tokens in primary and auxiliary fields
         data, aux = Counter(), Counter()
         if "data" in doc:
-            data = Counter(self.parse(doc["data"]))
-        if "auxiliary" in doc:
-            aux = Counter(self.parse(doc["auxiliary"]))
+            data.update(self.parse(doc["data"]))
+        if "aux_pos" in doc:
+            aux.update(self.parse(doc["aux_pos"]))
+        if "aux_neg" in doc:
+            aux.subtract(Counter(self.parse(doc["aux_neg"])))
 
         # assemble weighted tokens into a single element
         result = dict(data)

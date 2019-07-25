@@ -1,19 +1,20 @@
 A:
   data: Alice.
-  auxiliary: Alice starts with A
+  aux_pos: Alice starts with A
   metadata: 1
 B:
   data: Bob
-  auxiliary: Bob starts with B
+  aux_pos: Bob starts with B
   metadata: 2
 C:
   data: Catherine
-  auxiliary: Catherine starts with C
+  aux_pos: Catherine starts with C
+  aux_neg: Bob
 D:
   data: Daniel
-  auxiliary: Daniel starts with D
+  aux_pos: Daniel starts with D
 U:
   data: Entry that has a unique token, ABCDEFG.
 ZZ:
   data: Last data entry in file.
-  auxiliary: This should be at the end of the file, to check complete reading.
+  aux_pos: This should be at the end of the file, to check complete reading.

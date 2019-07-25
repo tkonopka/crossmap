@@ -1,8 +1,0 @@
-name: crossmap0
-comment: fairly minimal configuration, with exclusion of certain tokens
-targets:
-  - dataset.yaml
-documents:
-  - documents.yaml
-exclude:
-  - exclude.txt

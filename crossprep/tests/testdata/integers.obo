@@ -12,8 +12,8 @@ def: "integer."
 
 [Term]
 id: int:1
-name: zero
-def: "zero"
+name: one
+def: "one or unity"
 is_a: int:0
 
 [Term]
@@ -30,12 +30,12 @@ is_a: int:0
 
 [Term]
 id: int:4
-name: one
+name: another integer
 def: "smallest of the positive integers."
 is_a: int:2
 
 [Term]
-id: int:4
+id: int:5
 name: prime
 def: "integer that is divisible only by one and by itself."
 is_a: int:2
