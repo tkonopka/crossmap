@@ -9,6 +9,7 @@ Usage: python3 crossmap.py command
 import argparse
 import logging
 from sys import exit
+from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap
 
 
@@ -33,7 +34,7 @@ logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
 if __name__ == "__main__":
     config = parser.parse_args()
 
-    crossmap = Crossmap(config.config)
+    settings = CrossmapSettings(config.config)
 
     if not crossmap.valid():
         exit()

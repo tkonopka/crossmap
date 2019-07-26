@@ -62,6 +62,7 @@ class CrossmapSettingsDefaults:
     def __init__(self):
         self.name = "crossmap"
         self.dir = getcwd()
+        self.data_dir = join(self.dir, self.name)
         self.file = "crossmap.yaml"
         self.targets = []
         self.documents = []
@@ -73,6 +74,18 @@ class CrossmapSettingsDefaults:
         # sub-settings for components: tokens and embedding
         self.tokens = CrossmapKmerSettings()
         self.umap = CrossmapUmapSettings()
+
+    def tsv_file(self, label):
+        """create a file path for project tsv data"""
+        return join(self.data_dir, self.name + "-" + label + ".tsv")
+
+    def pickle_file(self, label):
+        """create a file path for project binary data object"""
+        return join(self.data_dir, self.name + "-" + label)
+
+    def index_file(self, label):
+        """create a file path for a project index file"""
+        return join(self.data_dir, self.name + "-index-" + label + ".ann")
 
 
 class CrossmapSettings(CrossmapSettingsDefaults):
@@ -163,7 +176,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         """Get paths to project files.
 
         Argument:
-            file_types   an iterable with value "targets", "exclude", "documents"
+            file_types   an iterable with value "targets", "documents"
 
         Returns:
             simple list with file paths
@@ -174,7 +187,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
 
         result = []
         for file_type in file_types:
-            if file_type not in set(["targets", "exclude", "documents"]):
+            if file_type not in set(["targets", "documents"]):
                 logging.warning("attempting to retrieve unknown file type: "+str(file_type))
                 continue
             for _ in self.__dict__[file_type]:

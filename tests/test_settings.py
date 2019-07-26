@@ -110,7 +110,7 @@ class CrossmapSettingsTests(unittest.TestCase):
         result = CrossmapSettings(join(data_dir, "config.yaml"))
         self.assertEqual(result.max_features, 200)
 
-    def test_uamp_settings(self):
+    def test_umap_settings(self):
         """set umap settings via the configuration"""
 
         result = CrossmapSettings(custom_config_file)
@@ -118,3 +118,14 @@ class CrossmapSettingsTests(unittest.TestCase):
         self.assertEqual(result.umap.n_neighbors, 5)
         self.assertEqual(result.umap.n_components, 1)
 
+    def test_tsv_file(self):
+        """settings object can create a file path to a tsv file"""
+        settings = CrossmapSettings(config_file)
+        result = settings.tsv_file("abc")
+        self.assertEqual(result, join(data_dir, "crossmap0", "crossmap0-abc.tsv"))
+
+    def test_pickle_file(self):
+        """settings object can create a file path to a pickle object"""
+        settings = CrossmapSettings(config_file)
+        result = settings.pickle_file("abc")
+        self.assertEqual(result, join(data_dir, "crossmap0", "crossmap0-abc"))

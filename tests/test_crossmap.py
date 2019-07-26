@@ -12,7 +12,7 @@ config_plain = join(data_dir, "crossmap.yaml")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
-
+@unittest.skip
 class CrossmapInitTests(unittest.TestCase):
     """Special cases for initialization"""
 
@@ -33,6 +33,7 @@ class CrossmapInitTests(unittest.TestCase):
                          join(data_dir, "crossmap0"))
 
 
+@unittest.skip
 class CrossmapBuildTests(unittest.TestCase):
     """Building a crossmap object"""
 

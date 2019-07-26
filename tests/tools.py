@@ -26,7 +26,8 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
                  prefix + "items.tsv",
                  prefix + "data",
                  prefix + "ids",
-                 prefix + "umap",
+                 prefix + "index-targets.ann",
+                 prefix + "index-documents.ann",
                  prefix + "embedding.tsv"])
     if exists(crossmap_data_dir):
         try:

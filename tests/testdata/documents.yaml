@@ -1,21 +1,39 @@
 U:A:
   data: A
-  auxiliary: B
+  aux_pos: B
 U:B:
   data: B
-  auxiliary: A C
+  aux_pos: A C
 U:C:
   data: C
-  auxiliary: B D
+  aux_pos: B D
 U:D:
   data: D
-  auxiliary: C E
+  aux_pos: C E
 U:E:
   data: E
-  auxiliary: D F
+  aux_pos: D F
 U:F:
   data: F
-  auxiliary: E G
+  aux_pos: E G
 U:G:
   data: G
-  auxiliary: F
+  aux_pos: F
+U:H:
+  data: H
+  aux_pos: G
+U:I:
+  data: I
+  aux_pos: H
+U:J:
+  data: J
+  aux_pos: I
+U:K:
+  data: K
+  aux_pos: J
+U:L:
+  data: L
+  aux_pos: K
+U:M:
+  data: M
+  aux_pos: L

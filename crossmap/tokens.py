@@ -15,6 +15,15 @@ def kmers(s, k):
     return [s[i:(i+k)] for i in range(len(s)-k+1)]
 
 
+def token_counts(docs):
+    """summarize token counts over all documents"""
+
+    result = Counter()
+    for k, v in docs.items():
+        result.update(v)
+    return result
+
+
 class Kmerizer():
     """A tokenizer of documents that splits words into kmers"""
 
@@ -91,11 +100,15 @@ class Kmerizer():
         return result
 
 
-def token_counts(docs):
-    """summarize token counts over all documents"""
+class CrossmapTokenizer(Kmerizer):
+    """A Kmerizer with a different constructor"""
 
-    result = Counter()
-    for k, v in docs.items():
-        result.update(v)
-    return result
+    def __init__(self, settings):
+        """Create a tokenizer object.
+
+        :param settings: object of class CrossmapSettings
+        """
+        super().__init__(k=settings.tokens.k,
+                         alphabet=settings.tokens.alphabet,
+                         aux_weight=settings.aux_weight)
 
