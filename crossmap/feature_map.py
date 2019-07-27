@@ -38,7 +38,7 @@ def feature_map(settings, use_cache=True):
     cache_file = settings.tsv_file("feature-map")
     if use_cache and exists(cache_file):
         info("Reading feature map from file: " + basename(cache_file))
-        return read_dict(cache_file, value_col="index")
+        return read_dict(cache_file, value_col="index", value_fun=int)
 
     info("Computing feature map")
     tokenizer = CrossmapTokenizer(settings)

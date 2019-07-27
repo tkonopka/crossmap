@@ -8,19 +8,20 @@ from crossmap.feature_map import feature_map
 from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
-config_file = join(data_dir, "crossmap.yaml")
+config_file = join(data_dir, "config-simple.yaml")
 
 
 class CrossmapFeatureMapTests(unittest.TestCase):
     """Turning text data into tokens"""
 
     def setUp(self):
-        self.settings = CrossmapSettings(config_file)
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+        self.settings = CrossmapSettings(config_file, create_dir=True)
         self.settings.max_features = 1000
         self.cache_file = self.settings.tsv_file("feature-map")
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def test_feature_map_wo_cache(self):
         """scan for features in targets and documents"""

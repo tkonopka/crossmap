@@ -3,11 +3,11 @@
 
 import unittest
 from os.path import join
-from crossmap.crossmap import CrossmapSettings
+from crossmap.settings import CrossmapSettings
 from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
-config_file = join(data_dir, "crossmap.yaml")
+config_file = join(data_dir, "config-simple.yaml")
 custom_config_file = join(data_dir, "config.yaml")
 config_no_target_file = join(data_dir, "config-no-targets.yaml")
 config_no_documents_file = join(data_dir, "config-no-documents.yaml")
@@ -35,7 +35,7 @@ class CrossmapSettingsTests(unittest.TestCase):
 
         result = CrossmapSettings(data_dir)
         self.assertEqual(result.dir, data_dir)
-        self.assertEqual(result.file, "crossmap.yaml")
+        self.assertEqual(result.file, "config-simple.yaml")
         self.assertTrue(result.valid)
 
     def test_init_file(self):
@@ -110,22 +110,16 @@ class CrossmapSettingsTests(unittest.TestCase):
         result = CrossmapSettings(join(data_dir, "config.yaml"))
         self.assertEqual(result.max_features, 200)
 
-    def test_umap_settings(self):
-        """set umap settings via the configuration"""
-
-        result = CrossmapSettings(custom_config_file)
-        self.assertEqual(result.umap.metric, "euclidean")
-        self.assertEqual(result.umap.n_neighbors, 5)
-        self.assertEqual(result.umap.n_components, 1)
-
     def test_tsv_file(self):
         """settings object can create a file path to a tsv file"""
         settings = CrossmapSettings(config_file)
         result = settings.tsv_file("abc")
-        self.assertEqual(result, join(data_dir, "crossmap0", "crossmap0-abc.tsv"))
+        cs = "crossmap_simple"
+        self.assertEqual(result, join(data_dir, cs, cs + "-abc.tsv"))
 
     def test_pickle_file(self):
         """settings object can create a file path to a pickle object"""
         settings = CrossmapSettings(config_file)
         result = settings.pickle_file("abc")
-        self.assertEqual(result, join(data_dir, "crossmap0", "crossmap0-abc"))
+        cs = "crossmap_simple"
+        self.assertEqual(result, join(data_dir, cs, cs + "-abc"))

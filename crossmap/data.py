@@ -24,7 +24,7 @@ class CrossmapData:
             filepaths     paths to yaml documents
 
         Returns:
-            sparse matrix and a dict mapping ids associated with each matrix row
+            array with encoded  matrix and a dict mapping ids associated with each matrix row
             array with one string
         """
 

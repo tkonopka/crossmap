@@ -2,10 +2,11 @@
 """
 
 from os.path import exists
-from logging import info
+from logging import info, warning
 from annoy import AnnoyIndex
 from .feature_map import feature_map
 from .tokens import CrossmapTokenizer
+from .tools import read_obj, write_obj
 from .data import CrossmapData
 
 
@@ -31,57 +32,83 @@ class CrossmapIndexer:
         self.indexes = []
         self.index_files = []
 
+    def clear(self):
+        self.items = dict()
+        self.item_names = []
+        self.indexes = []
+        self.index_files = []
+
     def _build_index(self, files, label=""):
         """builds an Annoy index using data from documents on disk"""
 
+        if len(files) == 0:
+            warning("Skipping build index for " + label)
+            self.indexes.append(None)
+            self.index_files.append(None)
+            self.item_names.append(None)
+            return
+
+        info("Building index for " + label)
+        index_file = self.settings.index_file(label)
+        items_file = self.settings.pickle_file(label + "-item-names")
         index_index = len(self.indexes)
         items, item_names = self.builder.documents(files)
         result = AnnoyIndex(len(self.feature_map), 'angular')
         for i in range(len(item_names)):
             result.add_item(i, items[i])
             self.items[item_names[i]] = (index_index, i)
-        self.item_names.append(item_names)
         result.build(10)
-        index_file = self.settings.index_file(label)
-        result.save(index_file)
         # record the index and items names
+        self.item_names.append(item_names)
         self.indexes.append(result)
         self.index_files.append(index_file)
+        # cache the index and item names
+        result.save(index_file)
+        write_obj(item_names, items_file)
 
     def build(self):
-        """construct indexes from """
+        """construct indexes from targets and other documents"""
 
         # build an index just for the targets, then just for documents
         settings = self.settings
-        info("Building index for targets")
+        self.clear()
         self._build_index(settings.files("targets"), "targets")
-        info("Building index for documents")
         self._build_index(settings.files("documents"), "documents")
 
     def _load_index(self, label=""):
         index_file = self.settings.index_file(label)
+        items_file = self.settings.pickle_file(label + "-item-names")
+        index_index = len(self.indexes)
         if not exists(index_file):
-            return None
+            warning("Skipping loading index for " + label)
+            self.indexes.append(None)
+            self.index_files.append(None)
+            self.item_names.append(None)
+            return
+
         annoy_index = AnnoyIndex(len(self.feature_map), "angular")
         annoy_index.load(index_file)
-        return annoy_index
+        self.indexes.append(annoy_index)
+        item_names = read_obj(items_file)
+        self.item_names.append(item_names)
+        for i, v in enumerate(item_names):
+            self.items[v] = (index_index, i)
 
     def load(self):
-        """Attempt to load indexes from disk files"""
+        """Load indexes from disk files"""
 
-        self.indexes = []
-        self.indexes.append(self._load_index("targets"))
-        self.indexes.append(self._load_index("documents"))
-        if self.indexes[0] is None and self.indexes[1] is None:
-            return False
-        return True
+        self.clear()
+        self._load_index("targets")
+        self._load_index("documents")
 
     def _neighbors(self, doc, n=5, index=0):
         """get a set of neighbors for a document"""
 
         doc_data, doc_name = self.builder.single(doc)
-        indx = self.indexes[index]
-        return indx.get_nns_by_vector(doc_data, n, include_distances=True)
+        get_nns = self.indexes[index].get_nns_by_vector
+        nns, distances = get_nns(doc_data, n, include_distances=True)
+        index_names = self.item_names[index]
+        return [index_names[_] for _ in nns], distances
 
     def nearest_targets(self, doc, n=5):
         return self._neighbors(doc, n, index=0)

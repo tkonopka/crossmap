@@ -4,84 +4,110 @@
 import unittest
 from os.path import join, exists
 from crossmap.crossmap import Crossmap
+from crossmap.settings import CrossmapSettings
+from crossmap.tools import read_dict
 from .tools import remove_crossmap_cache
 
 
 data_dir = join("tests", "testdata")
-config_plain = join(data_dir, "crossmap.yaml")
+config_simple = join(data_dir, "config-simple.yaml")
+config_nodocs = join(data_dir, "config-no-documents.yaml")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
-@unittest.skip
+
 class CrossmapInitTests(unittest.TestCase):
     """Special cases for initialization"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    def test_init_default(self):
-        """Configure a crossmap with just a directory"""
+    def test_init_from_settings(self):
+        """Initializing a crossmap object create directory structure"""
 
-        crossmap = Crossmap(data_dir)
-        self.assertEqual(crossmap.settings.dir, data_dir)
-        self.assertEqual(crossmap.settings.name, "crossmap0",
-                         "crossmap0 is the name defined in config.yaml file")
-        self.assertEqual(crossmap.settings.data_dir,
-                         join(data_dir, "crossmap0"))
+        settings = CrossmapSettings(data_dir)
+        subdir = settings.data_dir
+        self.assertEqual(subdir, join(data_dir, "crossmap_simple"))
+        # data directory does not exist before init, exists after
+        self.assertFalse(exists(subdir))
+        Crossmap(settings) #initializing using a settings object
+        self.assertTrue(exists(subdir))
+
+    def test_init_from_dir(self):
+        """Initializing a crossmap object create directory structure"""
+
+        subdir = join(data_dir, "crossmap_simple")
+        # data directory does not exist before init, exists after
+        self.assertFalse(exists(subdir))
+        crossmap = Crossmap(data_dir) # initilizing using a plain directory
+        self.assertTrue(exists(subdir))
+        self.assertEqual(crossmap.settings.data_dir, subdir)
 
 
-@unittest.skip
-class CrossmapBuildTests(unittest.TestCase):
+class CrossmapBuildStandardTests(unittest.TestCase):
     """Building a crossmap object"""
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap0")
-        cls.crossmap = Crossmap(config_plain)
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+        cls.crossmap = Crossmap(config_simple)
+        cls.crossmap.build()
+        cls.feature_map_file = cls.crossmap.settings.tsv_file("feature-map")
 
     @classmethod
     def tearDownClass(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    def test_target_tokens(self):
-        """Build extracts tokens from target objects"""
+    def test_valid_status(self):
+        """crossmap should report a valid status because settings are valid"""
+        self.assertTrue(self.crossmap.valid())
 
-        crossmap_dir = self.crossmap.settings.data_dir
-        toks_file = join(crossmap_dir, "crossmap0-target-features.tsv")
-        with self.assertLogs(level="INFO") as cm1:
-            ids1, tokens = self.crossmap.targets_features()
-        self.assertTrue(exists(toks_file))
-        self.assertTrue("features" in str(cm1.output))
-        self.assertTrue("with" in tokens)
-        self.assertTrue("start" in tokens)
-        self.assertTrue("that" in tokens)
-        self.assertTrue("compl" in tokens)
+    def test_feature_map_is_saved(self):
+        """Build records a feature map"""
 
-    def test_target_tokens_unique(self):
-        """Target tokens should be unique"""
+        fm_file = self.crossmap.settings.tsv_file("feature-map")
+        self.assertTrue(exists(fm_file))
+        features = read_dict(fm_file)
+        self.assertTrue("with" in features)
+        self.assertTrue("start" in features)
+        self.assertTrue("that" in features)
 
-        crossmap_dir = self.crossmap.settings.data_dir
-        ids, tokens = self.crossmap.targets_features()
-        # output should be a set (i.e. unique strings)
-        self.assertTrue(type(tokens) is dict)
-        # content on disk should contain same number of items (plus header)
-        toks_file = join(crossmap_dir, "crossmap0-target-features.tsv")
-        with open(toks_file, "rt") as f:
-            lines = f.readlines()
-        self.assertEqual(len(lines)-1, len(tokens))
+    def test_indexes_are_saved(self):
+        """Build records a feature map"""
 
-    def test_target_matrix(self):
-        """Build constructs a sparse data object from target documents"""
+        targets_file = self.crossmap.settings.index_file("targets")
+        docs_file = self.crossmap.settings.index_file("documents")
+        self.assertTrue(exists(targets_file))
+        self.assertTrue(exists(docs_file))
 
-        crossmap_dir = self.crossmap.settings.data_dir
-        data_file = join(crossmap_dir, "crossmap0-data")
-        ids_file = join(crossmap_dir, "crossmap0-ids")
-        self.assertTrue(exists(data_file))
-        self.assertTrue(exists(ids_file))
-        self.assertGreater(self.crossmap.datum("A", "Alice"), 1)
-        self.assertGreater(self.crossmap.datum("C", "Catherine"), 1)
-        self.assertEqual(self.crossmap.datum("A", "Catherine"), 0)
+
+class CrossmapBuildNoDocsTests(unittest.TestCase):
+    """Building a crossmap object without documents"""
+
+    def setUp(self):
+        remove_crossmap_cache(data_dir, "crossmap_nodocs")
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_nodocs")
+
+    def test_target_index_is_saved(self):
+        """Build without documents saves one index"""
+
+        # build crossmap object and indexes
+        with self.assertLogs(level='WARNING') as cm1:
+            crossmap = Crossmap(config_nodocs)
+        self.assertTrue("Configuration does not specify" in str(cm1.output))
+        self.assertTrue("documents" in str(cm1.output))
+        with self.assertLogs(level='WARNING') as cm2:
+            crossmap.build()
+        self.assertTrue("Skipping build" in str(cm2.output))
+        self.assertTrue("for documents" in str(cm2.output))
+
+        targets_file = crossmap.settings.index_file("targets")
+        docs_file = crossmap.settings.index_file("documents")
+        self.assertTrue(exists(targets_file))
+        self.assertFalse(exists(docs_file))
 

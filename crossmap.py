@@ -36,12 +36,15 @@ if __name__ == "__main__":
 
     settings = CrossmapSettings(config.config)
 
-    if not crossmap.valid():
+    if not settings.valid:
         exit()
 
+    crossmap = Crossmap(settings)
+
     if config.action == "build":
-        pass
+        crossmap.build()
+        exit()
 
     if config.action == "predict":
-        crossmap.build()
+        crossmap.load()
         crossmap.predict(config.data)

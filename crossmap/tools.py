@@ -88,7 +88,6 @@ def write_dict(features, filepath, id_col="id", value_col="index"):
 
 def read_obj(filepath):
     """read a pickled object"""
-
     with open(filepath, "rb") as f:
         result = pickle.load(f)
     return result
@@ -96,7 +95,6 @@ def read_obj(filepath):
 
 def write_obj(obj, filepath):
     """read a pickled object"""
-
     with open(filepath, "wb") as f:
         pickle.dump(obj, f)
 

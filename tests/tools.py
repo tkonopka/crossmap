@@ -19,16 +19,12 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
     crossmap_data_dir = join(dir, name) if use_subdir else dir
 
     prefix = join(crossmap_data_dir, name+"-")
-    remove_file([prefix + "target-features.tsv",
-                 prefix + "target-ids.tsv",
+    remove_file([prefix + "temp.tsv",
                  prefix + "feature-map.tsv",
-                 prefix + "document-features.tsv",
-                 prefix + "items.tsv",
-                 prefix + "data",
-                 prefix + "ids",
                  prefix + "index-targets.ann",
                  prefix + "index-documents.ann",
-                 prefix + "embedding.tsv"])
+                 prefix + "documents-item-names",
+                 prefix + "targets-item-names"])
     if exists(crossmap_data_dir):
         try:
             rmdir(crossmap_data_dir)
@@ -41,5 +37,4 @@ def remove_featuremap_cache(dir, name):
 
     prefix = join(dir, name+"-")
     remove_file([prefix + "feature-map.tsv"])
-
 

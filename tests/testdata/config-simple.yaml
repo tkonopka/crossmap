@@ -1,0 +1,6 @@
+name: crossmap_simple
+comment: a simple configuration object
+targets:
+  - dataset.yaml
+documents:
+  - documents.yaml

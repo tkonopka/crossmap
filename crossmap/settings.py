@@ -35,27 +35,6 @@ class CrossmapKmerSettings():
         return result
 
 
-class CrossmapUmapSettings():
-    """Container for umap settings"""
-
-    def __init__(self, config=None):
-        self.n_components = 2
-        self.n_neighbors = 15
-        self.metric = "cosine"
-
-        if config is not None:
-            for k, v in config.items():
-                if k == "n_components":
-                    self.n_components = v
-                if k == "n_neighbors":
-                    self.n_neighbors = v
-                if k == "metric":
-                    self.metric = v
-
-    def valid(self):
-        return True
-
-
 class CrossmapSettingsDefaults:
     """Container defining all settings for a crossmap project"""
 
@@ -63,7 +42,7 @@ class CrossmapSettingsDefaults:
         self.name = "crossmap"
         self.dir = getcwd()
         self.data_dir = join(self.dir, self.name)
-        self.file = "crossmap.yaml"
+        self.file = "config-simple.yaml"
         self.targets = []
         self.documents = []
         self.exclude = []
@@ -73,7 +52,6 @@ class CrossmapSettingsDefaults:
         self.aux_weight = 0.5
         # sub-settings for components: tokens and embedding
         self.tokens = CrossmapKmerSettings()
-        self.umap = CrossmapUmapSettings()
 
     def tsv_file(self, label):
         """create a file path for project tsv data"""
@@ -91,7 +69,7 @@ class CrossmapSettingsDefaults:
 class CrossmapSettings(CrossmapSettingsDefaults):
     """Container keeping and validating settings for a Crossmap project"""
 
-    def __init__(self, config):
+    def __init__(self, config, create_dir=False):
         """Load and validate settings
 
         Arguments:
@@ -112,7 +90,9 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             self.valid = all(list((self._validate()).values()))
 
         self.data_dir = join(self.dir, self.name)
-        if not exists(self.data_dir):
+
+        # perhaps create directories exist
+        if create_dir and not exists(self.data_dir):
             mkdir(self.data_dir)
 
     def _load(self, dirpath, filename):
@@ -129,8 +109,6 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         for k, v in result.items():
             if k == "tokens":
                 self.tokens = CrossmapKmerSettings(v)
-            elif k == "umap":
-                self.umap = CrossmapUmapSettings(v)
             else:
                 self.__dict__[k] = v
         return True
@@ -157,7 +135,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         targets = query_files(self.targets, "targets", dir=dir)
         result["targets"] = all(targets) if len(targets) > 0 else False
         if not result["targets"]:
-            logging.error(emsg + "target objects")
+            logging.error(emsg + "'targets'")
 
         # tokens to exclude
         excludes = query_files(self.exclude, "exclude", dir=dir)
@@ -168,7 +146,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         # universe (not required, so missing value generates only warning)
         documents = query_files(self.documents, "documents", dir=dir)
         if len(documents) == 0 or not all(documents):
-            logging.warning(emsg + "document objects")
+            logging.warning(emsg + "'documents'")
 
         return result
 

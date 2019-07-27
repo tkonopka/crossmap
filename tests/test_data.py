@@ -5,11 +5,10 @@ import unittest
 from os.path import join
 from crossmap.tokens import Kmerizer
 from crossmap.data import CrossmapData
-from .tools import remove_crossmap_cache
+
 
 data_dir = join("tests", "testdata")
 dataset_file = join(data_dir, "dataset.yaml")
-
 test_map = dict(abcd=0, bcde=1, cdef=2, defg=3, efgh=4, fghi=5, ghij=6)
 
 
@@ -18,9 +17,6 @@ class CrossmapDataTests(unittest.TestCase):
 
     def setUp(self):
         self.builder = CrossmapData(test_map, Kmerizer(k=4))
-
-    def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
 
     def test_tokenize_single_data(self):
         """convert a single string into a feature matrix"""

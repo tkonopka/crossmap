@@ -11,22 +11,21 @@ from .tools import remove_crossmap_cache
 
 
 data_dir = join("tests", "testdata")
-feature_file = join(data_dir, "crossmap0-feature-map.tsv")
-embedding_file = join(data_dir, "crossmap0-embedding.tsv")
+tsv_file = join(data_dir, "crossmap-testing-temp.tsv")
 
 
 class WriteCsvTests(unittest.TestCase):
     """Writing and reading data from csv files"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0")
+        remove_crossmap_cache(data_dir, "crossmap-testing")
 
     def test_write_dict(self):
         """Configure a crossmap with just a directory"""
 
         expected = dict(A=0, B=1, Z=3, G=4)
-        write_csv(expected, feature_file, id_column="id")
-        result = read_csv_set(feature_file, "id")
+        write_csv(expected, tsv_file, id_column="id")
+        result = read_csv_set(tsv_file, "id")
         self.assertEqual(result, set(expected.keys()))
 
 
@@ -34,17 +33,17 @@ class WriteDictTests(unittest.TestCase):
     """Handling feature maps with files"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
 
     def test_read_write_integer_features(self):
         """Configure a crossmap with just a directory"""
 
         expected = dict(A=0, B=1, Z=3, G=4)
-        write_dict(expected, feature_file)
-        result = read_dict(feature_file, value_fun=int)
+        write_dict(expected, tsv_file)
+        result = read_dict(tsv_file, value_fun=int)
         self.assertEqual(result, expected)
 
 
@@ -52,17 +51,17 @@ class ObjTests(unittest.TestCase):
     """Handling pickling """
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
 
     def test_read_write_features(self):
         """Configure a crossmap with just a directory"""
 
         expected = dict(A=0, B=1, Z=3, G=4)
-        write_obj(expected, feature_file)
-        result = read_obj(feature_file)
+        write_obj(expected, tsv_file)
+        result = read_obj(tsv_file)
         self.assertEqual(result, expected)
 
 
@@ -70,7 +69,7 @@ class WriteMatrixTests(unittest.TestCase):
     """Writing embedding into text files"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap0", use_subdir=False)
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
 
     def test_2d_write(self):
         """write a simple 2-coordinates embedding"""
@@ -80,9 +79,9 @@ class WriteMatrixTests(unittest.TestCase):
         data[1,1] = 4.4444444444444
         ids = dict(A=0, G=1, Z=2)
 
-        write_matrix(data, ids, embedding_file)
-        self.assertTrue(exists(embedding_file))
-        with open(embedding_file, "rt") as f:
+        write_matrix(data, ids, tsv_file)
+        self.assertTrue(exists(tsv_file))
+        with open(tsv_file, "rt") as f:
             result = f.readlines()
         self.assertEqual(result[0], "id\tX1\tX2\n")
         self.assertEqual(result[1], "A\t0.0\t1.0\n")
@@ -96,9 +95,9 @@ class WriteMatrixTests(unittest.TestCase):
         data[1,1] = 0.123123
         ids = dict(X=0, Y=1)
 
-        write_matrix(data, ids, embedding_file, digits=3)
-        self.assertTrue(exists(embedding_file))
-        with open(embedding_file, "rt") as f:
+        write_matrix(data, ids, tsv_file, digits=3)
+        self.assertTrue(exists(tsv_file))
+        with open(tsv_file, "rt") as f:
             result = f.readlines()
         self.assertEqual(result[0], "id\tX1\tX2\tX3\n")
         self.assertEqual(result[1], "X\t0.0\t1.0\t2.0\n")

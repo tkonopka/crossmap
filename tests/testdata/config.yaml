@@ -7,7 +7,3 @@ tokens:
   k: 5
 max_features: 200
 aux_weight: 0.5
-umap:
-  n_neighbors: 5
-  n_components: 1
-  metric: euclidean
