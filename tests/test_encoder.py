@@ -1,10 +1,10 @@
-'''Tests for turning documents into tokens
+'''Tests for encoding documents into numeric vectors
 '''
 
 import unittest
 from os.path import join
 from crossmap.tokens import Kmerizer
-from crossmap.data import CrossmapData
+from crossmap.encoder import CrossmapEncoder
 
 
 data_dir = join("tests", "testdata")
@@ -12,16 +12,16 @@ dataset_file = join(data_dir, "dataset.yaml")
 test_map = dict(abcd=0, bcde=1, cdef=2, defg=3, efgh=4, fghi=5, ghij=6)
 
 
-class CrossmapDataTests(unittest.TestCase):
+class CrossmapEncoderTests(unittest.TestCase):
     """Turning text data into tokens"""
 
     def setUp(self):
-        self.builder = CrossmapData(test_map, Kmerizer(k=4))
+        self.builder = CrossmapEncoder(test_map, Kmerizer(k=4))
 
     def test_tokenize_single_data(self):
         """convert a single string into a feature matrix"""
 
-        result, name = self.builder.single({"data": "abcdef"}, "00")
+        result, name = self.builder.encode({"data": "abcdef"}, "00")
         self.assertEqual(name, "00", "name is just returned back"),
         self.assertEqual(len(result), len(test_map),
                          "one row, all features")

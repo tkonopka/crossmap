@@ -43,6 +43,7 @@ class Crossmap():
 
         # prepare objects
         self.indexer = CrossmapIndexer(settings)
+        self.encoder = self.indexer.encoder
 
     def valid(self):
         """get a boolean stating whether settings are valid"""
@@ -59,6 +60,7 @@ class Crossmap():
     def predict(self, doc, n=3):
         """predict nearest target"""
 
-        targets, distances = self.indexer.nearest_targets(doc, n)
-        return targets, distances
+        doc_data = self.indexer.encode(doc)
+        targets, distances = self.indexer.suggest_targets(doc_data, n)
+        return targets[:n], distances[:n]
 

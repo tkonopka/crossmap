@@ -63,3 +63,4 @@ class CrossmapPredictTests(unittest.TestCase):
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], "C")
         self.assertEqual(result[1], "A")
+

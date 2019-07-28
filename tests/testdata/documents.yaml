@@ -1,39 +1,39 @@
 U:A:
-  data: A
+  data: A alpha
   aux_pos: B
 U:B:
-  data: B
+  data: B bravo
   aux_pos: A C
 U:C:
-  data: C
+  data: C charlie
   aux_pos: B D
 U:D:
-  data: D
+  data: D delta
   aux_pos: C E
 U:E:
-  data: E
+  data: E echo
   aux_pos: D F
 U:F:
-  data: F
+  data: F foxtrot
   aux_pos: E G
 U:G:
-  data: G
-  aux_pos: F
+  data: G golf
+  aux_pos: F H
 U:H:
-  data: H
-  aux_pos: G
+  data: H hotel
+  aux_pos: G I
 U:I:
-  data: I
-  aux_pos: H
+  data: I india
+  aux_pos: H J
 U:J:
-  data: J
-  aux_pos: I
+  data: J juliett
+  aux_pos: I K
 U:K:
-  data: K
-  aux_pos: J
+  data: K kilo
+  aux_pos: J L
 U:L:
-  data: L
-  aux_pos: K
+  data: L lima
+  aux_pos: K M
 U:M:
-  data: M
+  data: M mike
   aux_pos: L

@@ -14,7 +14,7 @@ D:
   data: Daniel
   aux_pos: Daniel starts with D
 U:
-  data: Entry that has a unique token, ABCDEFG.
+  data: Entry that has unique token, ABCDEFG.
 ZZ:
   data: Last data entry in file.
   aux_pos: This should be at the end of the file, to check complete reading.

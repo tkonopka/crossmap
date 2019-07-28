@@ -1,8 +1,8 @@
-"""Handling documents and feature vectors
+"""Encoding documents into feature vectors
 """
 
 
-class CrossmapData:
+class CrossmapEncoder:
     """Processing of raw data objects into feature vectors"""
 
     def __init__(self, feature_map, tokenizer):
@@ -37,7 +37,7 @@ class CrossmapData:
             docs = tokenize(filepath)
             for doc_name, tokens in docs.items():
                 item_names.append(doc_name)
-                item_data = [0]*len(feature_map)
+                item_data = [0.0]*len(feature_map)
                 for k, v in tokens.items():
                     if k not in feature_map:
                         continue
@@ -46,8 +46,8 @@ class CrossmapData:
 
         return data, item_names
 
-    def single(self, doc, name="X"):
-        """create a one-row data matrix by parsing one document object
+    def encode(self, doc, name="X"):
+        """encode one document into a vector
 
         Arguments:
             doc            a dictionary with data, aux_pos, aux_neg
@@ -59,7 +59,7 @@ class CrossmapData:
         """
 
         feature_map = self.feature_map
-        data = [0]*len(feature_map)
+        data = [0.0]*len(feature_map)
 
         tokens = self.tokenizer.tokenize_document(doc)
         for k, v in tokens.items():
