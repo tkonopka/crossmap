@@ -16,7 +16,7 @@ class CrossmapEncoderTests(unittest.TestCase):
     """Turning text data into tokens"""
 
     def setUp(self):
-        self.builder = CrossmapEncoder(test_map, Kmerizer(k=4))
+        self.builder = CrossmapEncoder(test_map, Kmerizer(k=4), normalize=False)
 
     def test_tokenize_single_data(self):
         """convert a single string into a feature matrix"""

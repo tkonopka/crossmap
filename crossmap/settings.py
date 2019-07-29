@@ -2,7 +2,7 @@
 """
 
 import yaml
-import logging
+from logging import error, warning
 from os import getcwd, mkdir
 from os.path import join, exists, dirname, basename, isdir
 from .tokens import Kmerizer
@@ -39,7 +39,7 @@ class CrossmapSettingsDefaults:
     """Container defining all settings for a crossmap project"""
 
     def __init__(self):
-        self.name = "crossmap"
+        self.name = ""   # this must be set
         self.dir = getcwd()
         self.data_dir = join(self.dir, self.name)
         self.file = "config-simple.yaml"
@@ -61,9 +61,13 @@ class CrossmapSettingsDefaults:
         """create a file path for project binary data object"""
         return join(self.data_dir, self.name + "-" + label)
 
-    def index_file(self, label):
+    def annoy_file(self, label):
         """create a file path for a project index file"""
         return join(self.data_dir, self.name + "-index-" + label + ".ann")
+
+    def index_file(self, label):
+        """create a file path for a project index file"""
+        return join(self.data_dir, self.name + "-" + label + "-index")
 
 
 class CrossmapSettings(CrossmapSettingsDefaults):
@@ -129,24 +133,24 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         # configuration name
         result["name"] = (type(self.name) is str and self.name != "")
         if not result["name"]:
-            logging.error(emsg + "valid name")
+            error(emsg + "valid name")
 
         # target objects to map toward
         targets = query_files(self.targets, "targets", dir=dir)
         result["targets"] = all(targets) if len(targets) > 0 else False
         if not result["targets"]:
-            logging.error(emsg + "'targets'")
+            error(emsg + "'targets'")
 
         # tokens to exclude
         excludes = query_files(self.exclude, "exclude", dir=dir)
         result["exclude"] = all(excludes)
         if len(excludes) > 0 and not result["exclude"]:
-            logging.error(emsg + "exclude")
+            error(emsg + "exclude")
 
         # universe (not required, so missing value generates only warning)
         documents = query_files(self.documents, "documents", dir=dir)
         if len(documents) == 0 or not all(documents):
-            logging.warning(emsg + "'documents'")
+            warning(emsg + "'documents'")
 
         return result
 
@@ -166,7 +170,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         result = []
         for file_type in file_types:
             if file_type not in set(["targets", "documents"]):
-                logging.warning("attempting to retrieve unknown file type: "+str(file_type))
+                warning("attempting to retrieve unknown file type: "+str(file_type))
                 continue
             for _ in self.__dict__[file_type]:
                 result.append(join(self.dir, _))
@@ -177,7 +181,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         return str(self.__dict__)
 
 
-def query_file(filepath, filetype, log=logging.warning):
+def query_file(filepath, filetype, log=warning):
     """check if a file or directory exists, emit a message if not"""
 
     if not exists(filepath):
@@ -187,7 +191,7 @@ def query_file(filepath, filetype, log=logging.warning):
     return True
 
 
-def query_files(filepaths, filetype, log=logging.warning, dir=None):
+def query_files(filepaths, filetype, log=warning, dir=None):
     """check a list of files using query_file()"""
 
     if type(filepaths) is str:
@@ -200,5 +204,5 @@ def query_files(filepaths, filetype, log=logging.warning, dir=None):
 def require_file(filepath, filetype):
     """check if a file or directory exists, emit a message if not"""
 
-    return query_file(filepath, filetype, log=logging.error)
+    return query_file(filepath, filetype, log=error)
 

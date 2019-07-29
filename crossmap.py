@@ -8,6 +8,7 @@ Usage: python3 crossmap.py command
 
 import argparse
 import logging
+from json import dumps
 from sys import exit
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap
@@ -22,6 +23,14 @@ parser.add_argument("--config", action="store",
                     default=None)
 parser.add_argument("--data", action="store",
                     help="dataset with objects to map from")
+
+
+# fine-tuning of predictions and output
+parser.add_argument("--nn", action="store",
+                    type=int, default=1,
+                    help="number of nearest neighbors")
+parser.add_argument("--pretty", action="store_true",
+                    help="display prediction results using pretty-print")
 
 
 # ############################################################################
@@ -47,4 +56,9 @@ if __name__ == "__main__":
 
     if config.action == "predict":
         crossmap.load()
-        crossmap.predict(config.data)
+        result = crossmap.predict_file(config.data, n=config.nn)
+        if config.pretty:
+            result = dumps(result, indent=2)
+        else:
+            result = dumps(result)
+        print(result)

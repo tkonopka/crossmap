@@ -1,11 +1,13 @@
 """Encoding documents into feature vectors
 """
 
+from .distance import normalize_vec
+
 
 class CrossmapEncoder:
     """Processing of raw data objects into feature vectors"""
 
-    def __init__(self, feature_map, tokenizer):
+    def __init__(self, feature_map, tokenizer, normalize=True):
         """intialize with a specific feature set and tokenization strategy
 
         Arguments:
@@ -16,6 +18,7 @@ class CrossmapEncoder:
 
         self.feature_map = feature_map
         self.tokenizer = tokenizer
+        self.normalize = normalize
 
     def documents(self, filepaths):
         """create a data matrix by parsing data from disk files
@@ -44,6 +47,10 @@ class CrossmapEncoder:
                     item_data[feature_map[k]] += v
                 data.append(item_data)
 
+        if self.normalize:
+            for i in range(len(data)):
+                data[i] = normalize_vec(data[i])
+
         return data, item_names
 
     def encode(self, doc, name="X"):
@@ -66,6 +73,9 @@ class CrossmapEncoder:
             if k not in feature_map:
                 continue
             data[feature_map[k]] += v
+
+        if self.normalize:
+            data = normalize_vec(data)
 
         return data, name
 

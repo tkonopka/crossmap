@@ -1,12 +1,12 @@
 """Crossmap class
 """
 
-import logging
 import functools
 from os import mkdir
 from os.path import exists
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
+from .tools import open_file, yaml_document
 
 
 def require_valid(function):
@@ -19,6 +19,11 @@ def require_valid(function):
         return None
 
     return wrapped
+
+
+def prediction(ids, distances, name):
+    """structure an object describing a nn prediction"""
+    return dict(query=name, targets=ids, distances=distances)
 
 
 class Crossmap():
@@ -45,6 +50,7 @@ class Crossmap():
         self.indexer = CrossmapIndexer(settings)
         self.encoder = self.indexer.encoder
 
+    @property
     def valid(self):
         """get a boolean stating whether settings are valid"""
         return self.settings.valid
@@ -57,10 +63,37 @@ class Crossmap():
         """load indexes from prepared files"""
         self.indexer.load()
 
-    def predict(self, doc, n=3):
-        """predict nearest target"""
+    def predict(self, doc, n=3, query_name="query"):
+        """predict nearest targets for one document
+
+        Arguments:
+            doc   dict-like object with "data", "aux_pos" and "aux_neg"
+            n     integer, number of neighbors
+
+        Returns:
+            two lists.
+            First list contains target ids
+            Second list contains weighted distances
+        """
 
         doc_data = self.indexer.encode(doc)
         targets, distances = self.indexer.suggest_targets(doc_data, n)
-        return targets[:n], distances[:n]
+        return prediction(targets[:n], distances[:n], query_name)
 
+    def predict_file(self, filepath, n=3):
+        """predict nearest targets for documents defined in a file
+
+        Arguments:
+            docs    dict mapping query ids to query documents
+            n       integer, number of neighbors
+
+        Returns:
+            one list with composite objects
+        """
+
+        result = []
+
+        with open_file(filepath, "rt") as f:
+            for id, doc in yaml_document(f):
+                result.append(self.predict(doc, n, id))
+        return result

@@ -1,10 +1,24 @@
 """Multi-purpose tools
 """
 
-
-import yaml
 import csv
+import gzip
+import yaml
 import pickle
+from contextlib import contextmanager
+
+
+@contextmanager
+def open_file(path, mode="rt"):
+    """work with an open file using plain text or gzip"""
+
+    open_fn = open
+    if path.endswith(".gz"):
+        open_fn = gzip.open
+
+    file = open_fn(path, mode)
+    yield file
+    file.close()
 
 
 def read_csv_set(filepaths, column, delimiter="\t", quotechar="'"):

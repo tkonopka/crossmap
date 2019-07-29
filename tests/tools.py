@@ -23,6 +23,12 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
                  prefix + "feature-map.tsv",
                  prefix + "index-targets.ann",
                  prefix + "index-documents.ann",
+                 prefix + "targets-index",
+                 prefix + "documents-index",
+                 prefix + "targets-index.dat",
+                 prefix + "documents-index.dat",
+                 prefix + "targets-data",
+                 prefix + "documents-data",
                  prefix + "documents-item-names",
                  prefix + "targets-item-names"])
     if exists(crossmap_data_dir):

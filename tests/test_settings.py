@@ -12,6 +12,7 @@ custom_config_file = join(data_dir, "config.yaml")
 config_no_target_file = join(data_dir, "config-no-targets.yaml")
 config_no_documents_file = join(data_dir, "config-no-documents.yaml")
 config_typo_file = join(data_dir, "config-typo-target.yaml")
+config_tokens_file = join(data_dir, "config-tokens.yaml")
 
 documents_file = join(data_dir, "documents.yaml")
 
@@ -22,7 +23,7 @@ dataset_file = join(data_dir, "dataset.yaml")
 
 
 class CrossmapSettingsTests(unittest.TestCase):
-    """Turning text data into tokens"""
+    """Recording settings for a crossmap analysis"""
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "default0")
@@ -123,3 +124,21 @@ class CrossmapSettingsTests(unittest.TestCase):
         result = settings.pickle_file("abc")
         cs = "crossmap_simple"
         self.assertEqual(result, join(data_dir, cs, cs + "-abc"))
+
+
+class CrossmapKmerSettingsTests(unittest.TestCase):
+    """Settings related to tokenizing documents"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_tokens")
+
+    def test_k_alphabet(self):
+        """settings are transfered from file into settings object"""
+
+        settings = CrossmapSettings(config_tokens_file)
+        self.assertEqual(settings.tokens.k, 6)
+        # custom alphabet has consonants but not vowels
+        self.assertTrue("b" in settings.tokens.alphabet)
+        self.assertTrue("w" in settings.tokens.alphabet)
+        self.assertFalse("e" in settings.tokens.alphabet)
+        self.assertFalse("i" in settings.tokens.alphabet)

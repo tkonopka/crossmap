@@ -11,6 +11,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_simple = join(data_dir, "config-simple.yaml")
+config_noname = join(data_dir, "config-no-name.yaml")
 config_nodocs = join(data_dir, "config-no-documents.yaml")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
@@ -33,7 +34,8 @@ class CrossmapInitTests(unittest.TestCase):
         self.assertEqual(subdir, join(data_dir, "crossmap_simple"))
         # data directory does not exist before init, exists after
         self.assertFalse(exists(subdir))
-        Crossmap(settings) #initializing using a settings object
+        crossmap = Crossmap(settings) # initializing using a settings object
+        self.assertTrue(crossmap.valid)
         self.assertTrue(exists(subdir))
 
     def test_init_from_dir(self):
@@ -43,8 +45,17 @@ class CrossmapInitTests(unittest.TestCase):
         # data directory does not exist before init, exists after
         self.assertFalse(exists(subdir))
         crossmap = Crossmap(data_dir) # initilizing using a plain directory
+        self.assertTrue(crossmap.valid)
         self.assertTrue(exists(subdir))
         self.assertEqual(crossmap.settings.data_dir, subdir)
+
+    def test_init_from_invalid(self):
+        """Initializing with an invalid configuration file"""
+
+        with self.assertLogs(level="ERROR") as cm:
+            crossmap = Crossmap(config_noname)
+        self.assertTrue("name" in str(cm.output))
+        self.assertFalse(crossmap.valid)
 
 
 class CrossmapBuildStandardTests(unittest.TestCase):
@@ -63,7 +74,7 @@ class CrossmapBuildStandardTests(unittest.TestCase):
 
     def test_valid_status(self):
         """crossmap should report a valid status because settings are valid"""
-        self.assertTrue(self.crossmap.valid())
+        self.assertTrue(self.crossmap.valid)
 
     def test_feature_map_is_saved(self):
         """Build records a feature map"""
@@ -83,7 +94,7 @@ class CrossmapBuildStandardTests(unittest.TestCase):
         self.assertTrue(exists(targets_file))
         self.assertTrue(exists(docs_file))
 
-
+@unittest.skip
 class CrossmapBuildNoDocsTests(unittest.TestCase):
     """Building a crossmap object without documents"""
 

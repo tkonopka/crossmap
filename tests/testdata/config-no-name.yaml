@@ -1,0 +1,3 @@
+comment: this configuration is invalid because it has no name (for testing)
+targets:
+  - dataset.yaml
