@@ -69,7 +69,7 @@ class CrossmapDB:
         return self.n_features
 
     def build(self, reset=False):
-        """create"""
+        """create empty tables in a new db"""
 
         if exists(self.db_file):
             if not reset:
@@ -88,6 +88,22 @@ class CrossmapDB:
             cur.execute(sql_targets)
             cur.execute(sql_docs)
             conn.commit()
+
+    def _index_table(self, table="targets"):
+        """create an index on one db table"""
+
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            i_name = table+"_idx"
+            cur.execute("DROP INDEX IF EXISTS " + i_name)
+            cur.execute("CREATE INDEX " + i_name + " on " + table + " (idx)")
+            conn.commit()
+
+    def index(self):
+        """create indexes on existing tables"""
+        info("Indexing database")
+        self._index_table("targets")
+        self._index_table("documents")
 
     def get_feature_map(self):
         """construct a feature map"""

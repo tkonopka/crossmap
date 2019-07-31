@@ -1,6 +1,7 @@
 """Indexer of crossmap data for NN search
 """
 
+import logging
 import nmslib
 from os.path import exists
 from logging import info, warning
@@ -10,7 +11,11 @@ from .db import CrossmapDB
 from .tokens import CrossmapTokenizer
 from .tools import read_obj, write_obj
 from .encoder import CrossmapEncoder
-from .distance import all_zero, normalize_vec, euc_dist
+from .distance import all_zero, euc_dist
+
+
+# this removes the INFO messages from nmslib
+logging.getLogger('nmslib').setLevel(logging.WARNING)
 
 
 def sparse_to_list(v):
@@ -99,7 +104,6 @@ class CrossmapIndexer:
         info("Building index for " + label)
         index_index = len(self.indexes)
         items, item_names = self.encoder.documents(files)
-        info("Number of items: "+str(len(item_names)))
         items, item_names = self._remove_null_items(items, item_names)
         info("Number of items: "+str(len(item_names)))
         self.db._add_data(items, item_names, tab=label)

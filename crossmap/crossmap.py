@@ -2,6 +2,7 @@
 """
 
 import functools
+from logging import info
 from os import mkdir
 from os.path import exists
 from .settings import CrossmapSettings
@@ -58,6 +59,7 @@ class Crossmap():
     def build(self):
         """create indexes and auxiliary objects"""
         self.indexer.build()
+        self.indexer.db.index()
 
     def load(self):
         """load indexes from prepared files"""
@@ -92,7 +94,6 @@ class Crossmap():
         """
 
         result = []
-
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 result.append(self.predict(doc, n, id))

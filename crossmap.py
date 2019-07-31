@@ -1,8 +1,8 @@
 """Crossmap
 
-Usage: python3 crossmap.py command
+Command line interface to crossmap document mapping.
 
-@author: Tomasz Konopka
+Usage: python3 crossmap.py command
 """
 
 
@@ -33,32 +33,34 @@ parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
 
 
+if __name__ != "__main__":
+    exit()
+
+
 # ############################################################################
+# Script below assumes running from command line
 
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
+config = parser.parse_args()
 
+settings = CrossmapSettings(config.config)
+if not settings.valid:
+    exit()
 
-if __name__ == "__main__":
-    config = parser.parse_args()
+crossmap = Crossmap(settings)
 
-    settings = CrossmapSettings(config.config)
+if config.action == "build":
+    crossmap.build()
+    exit()
 
-    if not settings.valid:
-        exit()
-
-    crossmap = Crossmap(settings)
-
-    if config.action == "build":
-        crossmap.build()
-        exit()
-
-    if config.action == "predict":
-        crossmap.load()
-        result = crossmap.predict_file(config.data, n=config.nn)
-        if config.pretty:
-            result = dumps(result, indent=2)
-        else:
-            result = dumps(result)
-        print(result)
+if config.action == "predict":
+    logging.getLogger().setLevel(level=logging.ERROR)
+    crossmap.load()
+    result = crossmap.predict_file(config.data, n=config.nn)
+    if config.pretty:
+        result = dumps(result, indent=2)
+    else:
+        result = dumps(result)
+    print(result)
