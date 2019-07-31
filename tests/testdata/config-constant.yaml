@@ -1,0 +1,6 @@
+name: crossmap_constant
+comment: a configuration using a dataset that has one token that is present in all items
+targets:
+  - constant.yaml
+features:
+  weighting: ic

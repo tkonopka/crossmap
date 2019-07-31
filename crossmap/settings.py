@@ -21,17 +21,39 @@ class CrossmapKmerSettings():
         if config is not None:
             for key, val in config.items():
                 if key == "k":
-                    self.k = val
+                    self.k = int(val)
                 if key == "alphabet":
                     self.alphabet = val
-
-    def valid(self):
-        return True
 
     def __str__(self):
         result = "Crossmap Kmer Settings:\n"
         result += "k=" + str(self.k) + ", "
         result += "alphabet='" + str(self.alphabet) + "'"
+        return result
+
+
+class CrossmapFeatureSettings():
+    """Container for settings related to features"""
+
+    def __init__(self, config=None):
+        self.max_number = 0
+        self.weighting = "none"
+        self.aux_weight = 0.5
+
+        if config is not None:
+            for key, val in config.items():
+                if key == "max_number":
+                    self.max_number = int(val)
+                elif key == "weighting":
+                    self.weighting = val
+                elif key == "aux_weight":
+                    self.aux_weight = float(val)
+
+    def __str__(self):
+        result = "Crossmap Feature Settings:\n"
+        result += "max_number=" + str(self.max_number) + ", "
+        result += "weighting='" + str(self.weighting) + "', "
+        result += "aux_weight=" + str(self.aux_weight)
         return result
 
 
@@ -47,11 +69,14 @@ class CrossmapSettingsDefaults:
         self.documents = []
         self.exclude = []
         self.valid = False
-        # tuning
-        self.max_features = 0
-        self.aux_weight = 0.5
+        # tuning features
+        self.features = CrossmapFeatureSettings()
         # sub-settings for components: tokens and embedding
         self.tokens = CrossmapKmerSettings()
+
+    def db_file(self):
+        """create path to db file"""
+        return join(self.data_dir, self.name + ".sqlite")
 
     def tsv_file(self, label):
         """create a file path for project tsv data"""
@@ -113,6 +138,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         for k, v in result.items():
             if k == "tokens":
                 self.tokens = CrossmapKmerSettings(v)
+            elif k == "features":
+                self.features = CrossmapFeatureSettings(v)
             else:
                 self.__dict__[k] = v
         return True
@@ -151,6 +178,11 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         documents = query_files(self.documents, "documents", dir=dir)
         if len(documents) == 0 or not all(documents):
             warning(emsg + "'documents'")
+
+        result["weighting"] = True
+        if self.features.weighting not in set(["none", "ic"]):
+            self.features.weighting = "none"
+            warning(emsg + 'weighting')
 
         return result
 

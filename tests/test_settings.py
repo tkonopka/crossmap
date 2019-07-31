@@ -99,18 +99,6 @@ class CrossmapSettingsTests(unittest.TestCase):
             settings.files(["documents", "badname"])
         self.assertTrue("badname" in str(cm.output))
 
-    def test_default_features(self):
-        """By default max number of features is 0"""
-
-        result = CrossmapSettings(data_dir)
-        self.assertEqual(result.max_features, 0)
-
-    def test_max_features(self):
-        """configure number of features for embedding"""
-
-        result = CrossmapSettings(join(data_dir, "config.yaml"))
-        self.assertEqual(result.max_features, 200)
-
     def test_tsv_file(self):
         """settings object can create a file path to a tsv file"""
         settings = CrossmapSettings(config_file)
@@ -124,6 +112,28 @@ class CrossmapSettingsTests(unittest.TestCase):
         result = settings.pickle_file("abc")
         cs = "crossmap_simple"
         self.assertEqual(result, join(data_dir, cs, cs + "-abc"))
+
+
+class CrossmapFeaturesSettingsTests(unittest.TestCase):
+    """Recording settings for handling features within crossmap analysis"""
+
+    def test_default_features(self):
+        """By default max number of features is 0"""
+
+        result = CrossmapSettings(data_dir)
+        self.assertEqual(result.features.max_number, 0)
+
+    def test_max_features(self):
+        """configure number of features in data vectors"""
+
+        result = CrossmapSettings(join(data_dir, "config.yaml"))
+        self.assertEqual(result.features.max_number, 200)
+
+    def test_aux_weight(self):
+        """configure weight assigned to auxiliary data fields"""
+
+        result = CrossmapSettings(join(data_dir, "config.yaml"))
+        self.assertEqual(result.features.aux_weight, 0.4)
 
 
 class CrossmapKmerSettingsTests(unittest.TestCase):

@@ -19,7 +19,8 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
     crossmap_data_dir = join(dir, name) if use_subdir else dir
 
     prefix = join(crossmap_data_dir, name+"-")
-    remove_file([prefix + "temp.tsv",
+    remove_file([prefix[:-1] + ".sqlite",
+                 prefix + "temp.tsv",
                  prefix + "feature-map.tsv",
                  prefix + "index-targets.ann",
                  prefix + "index-documents.ann",

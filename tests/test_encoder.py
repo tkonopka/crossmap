@@ -9,25 +9,26 @@ from crossmap.encoder import CrossmapEncoder
 
 data_dir = join("tests", "testdata")
 dataset_file = join(data_dir, "dataset.yaml")
-test_map = dict(abcd=0, bcde=1, cdef=2, defg=3, efgh=4, fghi=5, ghij=6)
+test_map = dict(abcd=(0,1), bcde=(1,1), cdef=(2,1),
+                defg=(3,1), efgh=(4,1), fghi=(5,1),
+                ghij=(6,1), hijk=(7,1), ijkl=(8,1))
 
 
 class CrossmapEncoderTests(unittest.TestCase):
     """Turning text data into tokens"""
 
     def setUp(self):
-        self.builder = CrossmapEncoder(test_map, Kmerizer(k=4), normalize=False)
+        self.builder = CrossmapEncoder(test_map, Kmerizer(k=4))
 
     def test_tokenize_single_data(self):
         """convert a single string into a feature matrix"""
 
         result, name = self.builder.encode({"data": "abcdef"}, "00")
+        arr = result.toarray()[0]
         self.assertEqual(name, "00", "name is just returned back"),
-        self.assertEqual(len(result), len(test_map),
-                         "one row, all features")
-        self.assertEqual(result[0], 1,
-                         "first token is present, with value 1")
-        self.assertEqual(sum(result), 3,
+        self.assertEqual(len(arr), len(test_map), "one row, all features")
+        self.assertGreater(arr[0], 0, "first token is present")
+        self.assertEqual(sum([_>0 for _ in arr]), 3,
                          "input is split into three tokens")
 
     def test_tokenize_no_documents(self):
@@ -46,12 +47,15 @@ class CrossmapEncoderTests(unittest.TestCase):
         self.assertEqual(sorted(names), ["A", "B", "C", "D", "U", "ZZ"],
                          "dataset.yaml has six documents")
         self.assertEqual(len(result), 6)
-        self.assertEqual(len(result[0]), len(test_map))
+        r0 = result[0].toarray()[0]
+        self.assertEqual(len(r0), len(test_map))
         # entry for item "A" does not have requested features
         names_dict = {v:k for k,v in enumerate(names)}
         index_A = names_dict["A"]
-        self.assertEqual(sum(result[index_A]), 0, "all values for item A zero")
+        rA = result[index_A].toarray()[0]
+        self.assertEqual(sum(rA), 0, "all values for item A zero")
         index_U = names_dict["U"]
-        self.assertGreater(sum(result[index_U]), 1,
+        rU = result[index_U].toarray()[0]
+        self.assertGreater(sum(rU), 0,
                            "item U has word ABCDEFG which matches features")
 

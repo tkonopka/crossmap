@@ -2,12 +2,12 @@
 """
 
 from .distance import normalize_vec
-
+from scipy.sparse import csr_matrix
 
 class CrossmapEncoder:
     """Processing of raw data objects into feature vectors"""
 
-    def __init__(self, feature_map, tokenizer, normalize=True):
+    def __init__(self, feature_map, tokenizer):
         """intialize with a specific feature set and tokenization strategy
 
         Arguments:
@@ -18,7 +18,6 @@ class CrossmapEncoder:
 
         self.feature_map = feature_map
         self.tokenizer = tokenizer
-        self.normalize = normalize
 
     def documents(self, filepaths):
         """create a data matrix by parsing data from disk files
@@ -44,12 +43,10 @@ class CrossmapEncoder:
                 for k, v in tokens.items():
                     if k not in feature_map:
                         continue
-                    item_data[feature_map[k]] += v
-                data.append(item_data)
-
-        if self.normalize:
-            for i in range(len(data)):
-                data[i] = normalize_vec(data[i])
+                    fm = feature_map[k]
+                    item_data[fm[0]] += v*fm[1]
+                item_data = normalize_vec(item_data)
+                data.append(csr_matrix(item_data))
 
         return data, item_names
 
@@ -67,15 +64,13 @@ class CrossmapEncoder:
 
         feature_map = self.feature_map
         data = [0.0]*len(feature_map)
-
         tokens = self.tokenizer.tokenize_document(doc)
         for k, v in tokens.items():
             if k not in feature_map:
                 continue
-            data[feature_map[k]] += v
-
-        if self.normalize:
-            data = normalize_vec(data)
+            fm = feature_map[k]
+            data[fm[0]] += v*fm[1]
+        data = csr_matrix(normalize_vec(data))
 
         return data, name
 

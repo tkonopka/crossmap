@@ -4,10 +4,10 @@
 import csv
 from collections import Counter
 from logging import info
+from math import log2
 from os.path import exists, basename
 from sys import maxsize
 from .tokens import CrossmapTokenizer
-from .tools import read_dict, write_dict
 
 
 # column titles for feature map files
@@ -37,62 +37,95 @@ def write_feature_map(feature_map, filepath):
 
 
 def _count_tokens(tokenizer, files):
-    """count number of times tokens appear in files"""
+    """count totkens in files on disk
+
+    :param tokenizer: object with function .tokenize()
+    :param files: list with file paths
+
+    :return: two objects.
+        a counter with token frequencies
+        an integer with total number of data items
+    """
 
     counts = Counter()
+    num_items = 0
     ids = set()
     for f in files:
         info("Extracting features from target file: " + basename(f))
         docs = tokenizer.tokenize(f)
+        num_items += len(docs)
         for k, v in docs.items():
             ids.add(k)
             counts.update(list(v.keys()))
 
-    return counts
+    return counts, num_items
+
+
+def _normalize_constant(count_map):
+    """normalize a feature map giving each feature a unit weight
+
+    :param count_map: dict mapping features to (index, count)
+    :return: a dict mapping features to (index, 1)
+    """
+    return {k: (v[0], 1) for k, v in count_map.items()}
+
+
+def _normalize_ic(count_map, N):
+    """normalize a feature map using information content, -log(p)
+
+    :param count_map: dict mapping features to (index, count)
+    :param N: integer, total number of documents
+    :return: dict mapping features to (index, weight)
+    """
+    return {k: (v[0], -log2(v[1]/(N+1))) for k, v in count_map.items()}
 
 
 def feature_map(settings, use_cache=True):
-    """get a feature map dictionary
+    """construct a dict with features
 
-    Parameters
-        settings    object of class CrossmapSettings
-        use_cache   logical, will try to store/look up features from disk
+    :param settings: object of class CrossmapSettings
+    :param use_cache: logical, whether to use fetch data from cache
 
-    Returns
-        dictionary with all tokens from target files
-        and most common tokens from document files
+    :return: dictionary mapping tokens to 2-tuples with
+        feature index and a weight.
+        Features correspond to tokens from target files
+        and most common tokens from document files.
     """
 
     cache_file = settings.tsv_file("feature-map")
     if use_cache and exists(cache_file):
         info("Reading feature map from file: " + basename(cache_file))
-        result = read_dict(cache_file, value_col="index", value_fun=int)
+        result = read_feature_map(cache_file)
         info("Feature map size: "+str(len(result)))
         return result
 
     info("Computing feature map")
-    max_features = settings.max_features
+    max_features = settings.features.max_number
     if max_features == 0:
         max_features = maxsize
     info("Max features is "+str(max_features))
     tokenizer = CrossmapTokenizer(settings)
-    target_counts = _count_tokens(tokenizer, settings.files("targets"))
+    target_files = settings.files("targets")
+    target_counts, n_targets = _count_tokens(tokenizer, target_files)
     result = dict()
     for k,v in target_counts.items():
-        result[k] = len(result)
-    if len(result) < max_features:
-        doc_counts = _count_tokens(tokenizer, settings.files("documents"))
-        for k, v in doc_counts.most_common():
-            if len(result) >= max_features:
-                break
-            if k not in result:
-                result[k] = len(result)
+        result[k] = [len(result), v]
+    doc_counts, n_docs = _count_tokens(tokenizer, settings.files("documents"))
+    for k, v in doc_counts.most_common():
+        if k in result:
+            result[k][1] += v
+        if len(result) >= max_features:
+            break
+        result[k] = [len(result), v]
+
+    if settings.features.weighting == "ic":
+        result = _normalize_ic(result, n_targets + n_docs)
     else:
-        info("Skipping tokens in documents - maxed out already")
+        result = _normalize_constant(result)
 
     info("Feature map size: "+str(len(result)))
     if use_cache:
         info("Saving feature map")
-        write_dict(result, cache_file, value_col="index")
+        write_feature_map(result, cache_file)
     return result
 

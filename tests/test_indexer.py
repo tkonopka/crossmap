@@ -56,8 +56,10 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         indexer.load()
         self.assertEqual(len(indexer.indexes), 2)
         self.assertEqual(len(indexer.item_names), 2)
+        # both index and data db should record items
         self.assertGreater(len(indexer.items), 6)
-        #self.assertEqual(indexer.indexes[0].get_n_items(), 6)
+        self.assertEqual(indexer.db._count_rows("targets"), 6)
+        self.assertGreater(indexer.db._count_rows("documents"), 2)
 
     def test_indexer_build_rebuild(self):
         """run a build when indexes already exist"""
@@ -279,13 +281,10 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
         self.assertEqual(len(self.indexer.indexes), 2)
         self.assertEqual(len(self.indexer.item_names), 2)
         self.assertEqual(len(self.indexer.index_files), 2)
-        self.assertEqual(len(self.indexer.data), 2)
-
         # second index should not exist
         self.assertEqual(self.indexer.index_files[1], None)
         self.assertEqual(self.indexer.item_names[1], None)
         self.assertEqual(self.indexer.indexes[1], None)
-        self.assertEqual(self.indexer.data[1], None)
 
     def test_suggest_nodocs_A(self):
         """target suggestion"""

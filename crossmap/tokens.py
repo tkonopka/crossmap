@@ -110,5 +110,5 @@ class CrossmapTokenizer(Kmerizer):
         """
         super().__init__(k=settings.tokens.k,
                          alphabet=settings.tokens.alphabet,
-                         aux_weight=settings.aux_weight)
+                         aux_weight=settings.features.aux_weight)
 

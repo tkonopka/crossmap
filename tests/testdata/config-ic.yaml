@@ -1,0 +1,9 @@
+name: crossmap_ic
+comment: a configuration object with feature weighting using information content
+targets:
+  - dataset.yaml
+documents:
+  - documents.yaml
+features:
+  weighting: ic
+  max_number: 10000

@@ -94,7 +94,7 @@ class CrossmapBuildStandardTests(unittest.TestCase):
         self.assertTrue(exists(targets_file))
         self.assertTrue(exists(docs_file))
 
-@unittest.skip
+
 class CrossmapBuildNoDocsTests(unittest.TestCase):
     """Building a crossmap object without documents"""
 
@@ -107,7 +107,6 @@ class CrossmapBuildNoDocsTests(unittest.TestCase):
     def test_target_index_is_saved(self):
         """Build without documents saves one index"""
 
-        # build crossmap object and indexes
         with self.assertLogs(level='WARNING') as cm1:
             crossmap = Crossmap(config_nodocs)
         self.assertTrue("Configuration does not specify" in str(cm1.output))

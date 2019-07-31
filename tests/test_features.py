@@ -11,6 +11,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_file = join(data_dir, "config-simple.yaml")
+config_constant_file = join(data_dir, "config-constant.yaml")
 
 
 class CrossmapFeatureMapTests(unittest.TestCase):
@@ -34,8 +35,10 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertTrue("bob" in map)
         self.assertTrue("g" in map)
         # all items in map should be distinct
-        v = [v for k, v in map.items()]
-        self.assertEqual(max(v), len(map)-1)
+        indexes = [v[0] for k, v in map.items()]
+        weights = [v[1] for k, v in map.items()]
+        self.assertEqual(max(indexes), len(map)-1)
+        self.assertGreater(min(weights), 0, "all weights should be positive")
 
     def test_feature_map_w_cache(self):
         """scan for features and record in cache"""
@@ -63,20 +66,19 @@ class CrossmapFeatureMapTests(unittest.TestCase):
 
         # when number of features is limited, there is no need
         # to scan documents. All features come from targets.
-        self.settings.max_features=20
+        self.settings.features.max_number=20
         with self.assertLogs(level="INFO") as cm:
             map = feature_map(self.settings, False)
         self.assertTrue("bob" in map)
         self.assertFalse("g" in map)
-        self.assertTrue("Skipping" in str(cm.output))
-        self.assertTrue("already" in str(cm.output))
+        self.assertLess(len(map), 50)
 
     def test_skipping_partial_documents(self):
         """scan for features in targets, but not documents"""
 
         # with an intermediate number of required features,
         # some features will come from targets, some from documents.
-        self.settings.max_features = 50
+        self.settings.features.max_number = 50
         with self.assertLogs(level="INFO") as cm:
             map = feature_map(self.settings, False)
         self.assertTrue("bob" in map)
@@ -84,6 +86,44 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertEqual(len(map), 50)
         self.assertTrue("g" in map)
         self.assertFalse("M" in map)
+
+    def test_weights(self):
+        """scan for features in targets, but not documents"""
+
+        # compute two maps using different weighting
+        with self.assertLogs(level="INFO") as cm:
+            self.settings.features.weighting = "constant"
+            map_const = feature_map(self.settings, False)
+            self.settings.features.weighting = "ic"
+            map_ic = feature_map(self.settings, False)
+        self.assertEqual(len(map_const), len(map_ic))
+        # constant map has all the weights equal to 1
+        for k,v in map_const.items():
+            self.assertEqual(v[1], 1)
+        # information content map has certain features with less weight
+        self.assertLess(map_ic["with"][1], map_ic["alice"][1])
+        self.assertLess(map_ic["with"][1], map_ic["uniqu"][1])
+        self.assertEqual(map_ic["uniqu"][1], map_ic["token"][1])
+
+
+class CrossmapFeatureMapWeightingTests(unittest.TestCase):
+    """Turning text data into tokens with Log weighting"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_constant")
+
+    def test_ic_log1(self):
+
+        with self.assertLogs(level="WARNING") as cm1:
+            settings = CrossmapSettings(config_constant_file,
+                                        create_dir=True)
+        with self.assertLogs(level="INFO") as cm2:
+            settings.features.weighting = "ic"
+            map_const = feature_map(settings, False)
+        # all features should have >0 weights
+        for k, v in map_const.items():
+            kmsg = "feature "+str(k)+" should have weight >0"
+            self.assertGreater(v[1], 0, kmsg)
 
 
 class CrossmapFeatureMapIOTests(unittest.TestCase):
