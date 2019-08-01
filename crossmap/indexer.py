@@ -9,7 +9,6 @@ from scipy.sparse import csr_matrix, vstack
 from .features import feature_map
 from .db import CrossmapDB
 from .tokens import CrossmapTokenizer
-from .tools import read_obj, write_obj
 from .encoder import CrossmapEncoder
 from .distance import all_zero, euc_dist
 
@@ -49,14 +48,11 @@ class CrossmapIndexer:
                 warning("features in constructor will be ignored")
             self.feature_map = self.db.get_feature_map()
         self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
-        self.items = dict()
-        self.item_names = []
         self.indexes = []
         self.index_files = []
+        self.target_ids = None
 
     def clear(self):
-        self.items = dict()
-        self.item_names = []
         self.indexes = []
         self.index_files = []
 
@@ -85,7 +81,6 @@ class CrossmapIndexer:
         warning("Skipping build index for " + label + " - no data")
         self.indexes.append(None)
         self.index_files.append(None)
-        self.item_names.append(None)
 
     def _build_index(self, files, label=""):
         """builds an Annoy index using data from documents on disk"""
@@ -95,14 +90,12 @@ class CrossmapIndexer:
             return
 
         index_file = self.settings.index_file(label)
-        items_file = self.settings.pickle_file(label+"-item-names")
-        if exists(index_file) and exists(items_file):
+        if exists(index_file):
             warning("Skipping build index for " + label + " - already exists")
             self._load_index(label)
             return
 
         info("Building index for " + label)
-        index_index = len(self.indexes)
         items, item_names = self.encoder.documents(files)
         items, item_names = self._remove_null_items(items, item_names)
         info("Number of items: "+str(len(item_names)))
@@ -111,16 +104,10 @@ class CrossmapIndexer:
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         result.addDataPointBatch(items)
-        for i in range(len(item_names)):
-            self.items[item_names[i]] = (index_index, i)
         result.createIndex(print_progress=False)
-        # record the index and items names
-        self.item_names.append(item_names)
         self.indexes.append(result)
         self.index_files.append(index_file)
-        # cache the index and item names
         result.saveIndex(index_file, save_data=True)
-        write_obj(item_names, items_file)
 
     def build(self):
         """construct indexes from targets and other documents"""
@@ -130,16 +117,14 @@ class CrossmapIndexer:
         self.clear()
         self._build_index(settings.files("targets"), "targets")
         self._build_index(settings.files("documents"), "documents")
+        self._target_ids()
 
     def _load_index(self, label=""):
         index_file = self.settings.index_file(label)
-        items_file = self.settings.pickle_file(label + "-item-names")
-        index_index = len(self.indexes)
         if not exists(index_file):
             warning("Skipping loading index for " + label)
             self.indexes.append(None)
             self.index_files.append(None)
-            self.item_names.append(None)
             return
 
         info("Loading index for " + label)
@@ -147,11 +132,7 @@ class CrossmapIndexer:
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         result.loadIndex(index_file, load_data=True)
         self.indexes.append(result)
-        item_names = read_obj(items_file)
-        self.item_names.append(item_names)
         self.index_files.append(index_file)
-        for i, v in enumerate(item_names):
-            self.items[v] = (index_index, i)
 
     def load(self):
         """Load indexes from disk files"""
@@ -159,6 +140,11 @@ class CrossmapIndexer:
         self.clear()
         self._load_index("targets")
         self._load_index("documents")
+        self._target_ids()
+
+    def _target_ids(self):
+        """grab a map of target indexes and ids"""
+        self.target_ids = self.db.all_ids(table="targets")
 
     def _neighbors(self, v, n=5, index=0, names=False):
         """get a set of neighbors for a document"""
@@ -170,8 +156,7 @@ class CrossmapIndexer:
         nns, distances = temp[0][0], temp[0][1]
         nns = [int(_) for _ in nns]
         if names:
-            index_names = self.item_names[index]
-            nns = [index_names[_] for _ in nns]
+            nns = self.db.ids(nns, table=index)
         return nns, distances
 
     def encode(self, doc):
@@ -208,7 +193,6 @@ class CrossmapIndexer:
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_list(val["data"])
         # collect relevant documents
-
         nn1, dist1 = self._neighbors(v, n, index=1)
         doc_dist = {i: d for i, d in zip(nn1, dist1)}
         hit_docs = db.get_documents(idxs=nn1)
@@ -243,6 +227,6 @@ class CrossmapIndexer:
                 result[j] += (d_v_i + d_i_j)/n
 
         result = sorted(result.items(), key=lambda x: x[1])
-        suggestions = [self.item_names[0][i] for i, _ in result]
+        suggestions = [self.target_ids[i] for i, _ in result]
         distances = [float(d) for _, d in result]
         return suggestions, distances

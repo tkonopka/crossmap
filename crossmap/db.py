@@ -210,3 +210,56 @@ class CrossmapDB:
         :return: array of dicts
         """
         return self._get_data(idxs=idxs, ids=ids, table="documents")
+
+    def ids(self, idxs, table="targets"):
+        """convert integer indexes to string ids
+
+        :param idxs: iterable with numeric indexes. This function only supports
+            small vectors of indexes.
+        :param table: string, indicating to query targets or documents
+        :return: list with ids corresponding to those indexes
+        """
+
+        if len(idxs) == 0:
+            return []
+        table = std_table(table)
+        sql = "SELECT id, idx FROM " + table + " WHERE "
+        sql +=  " OR ".join(["idx=?"]*len(idxs))
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.execute(sql, idxs)
+            map = {row["idx"]: row["id"] for row in cur}
+        # arrange into a list
+        result = [None]*len(idxs)
+        for i,v in enumerate(idxs):
+            result[i] = map[v]
+        return result
+
+    def all_ids(self, table="targets"):
+        """get all ids
+
+        :param table: string, indicating to query targets or documents
+        :return: list with ids corresponding to those indexes
+        """
+
+        table = std_table(table)
+        n_rows = self._count_rows(table)
+        result = [None]*n_rows
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id, idx FROM " + table)
+            for row in cur:
+                result[row["idx"]] = row["id"]
+        return result
+
+
+def std_table(table=0):
+    """standardize a description of an table"""
+
+    if table == 0:
+        table = "targets"
+    elif table == 1:
+        table = "documents"
+    if table not in ["targets", "documents"]:
+        raise Exception("unrecognized table: " + str(table))
+    return table

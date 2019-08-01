@@ -36,9 +36,10 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
 
         self.assertFalse(exists(self.index_file))
         self.indexer.build()
-        items = self.indexer.items
-        self.assertGreater(len(items), 6,
-                           "dataset has six items, documents have more items")
+        num_targets = self.indexer.db._count_rows(table="targets")
+        num_docs = self.indexer.db._count_rows(table="documents")
+        self.assertEqual(num_targets, 6, "dataset has six items")
+        self.assertGreater(num_docs, 6, "documents have several items")
         self.assertEqual(len(self.indexer.index_files), 2,
                          "one index for targets, one for documents")
         self.assertTrue(exists(self.indexer.index_files[0]))
@@ -51,15 +52,11 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         self.assertFalse(exists(self.index_file))
         indexer.build()
         indexer.indexes = []
-        indexer.item_names = []
-        indexer.items = dict()
         indexer.load()
         self.assertEqual(len(indexer.indexes), 2)
-        self.assertEqual(len(indexer.item_names), 2)
         # both index and data db should record items
-        self.assertGreater(len(indexer.items), 6)
         self.assertEqual(indexer.db._count_rows("targets"), 6)
-        self.assertGreater(indexer.db._count_rows("documents"), 2)
+        self.assertGreater(indexer.db._count_rows("documents"), 6)
 
     def test_indexer_build_rebuild(self):
         """run a build when indexes already exist"""
@@ -75,11 +72,10 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         self.assertTrue("Skip" in str(cm.output))
         self.assertTrue("exists" in str(cm.output))
         # after build, the indexer should be ready to use
-        items = newindexer.items
-        self.assertGreater(len(items), 6,
-                           "dataset has six items, documents have more items")
-        self.assertEqual(len(newindexer.index_files), 2,
-                         "one index for targets, one for documents")
+        num_targets = newindexer.db._count_rows(table="targets")
+        num_docs = newindexer.db._count_rows(table="documents")
+        self.assertEqual(num_targets, 6, "dataset still has six items")
+        self.assertGreater(num_docs, 6, "targets have many items")
         self.assertTrue(exists(newindexer.index_files[0]))
         self.assertTrue(exists(newindexer.index_files[1]))
 
@@ -113,7 +109,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         settings = CrossmapSettings(config_plain, create_dir=True)
         settings.tokens.k = 10
         cls.indexer = CrossmapIndexer(settings, test_features)
-        cls.feature_map = self.indexer.feature_map
+        cls.feature_map = cls.indexer.feature_map
         cls.indexer.build()
 
     @classmethod
@@ -124,7 +120,6 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         """class should set up correctly with two indexes"""
 
         self.assertEqual(len(self.indexer.indexes), 2)
-        self.assertEqual(len(self.indexer.item_names), 2)
         self.assertEqual(len(self.indexer.index_files), 2)
 
     def test_nn_targets_A(self):
@@ -198,7 +193,6 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         """class should set up correctly with two indexes"""
 
         self.assertEqual(len(self.indexer.indexes), 2)
-        self.assertEqual(len(self.indexer.item_names), 2)
         self.assertEqual(len(self.indexer.index_files), 2)
 
     def test_nn_targets_A(self):
@@ -279,11 +273,9 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
         """class should set up correctly with two indexes"""
 
         self.assertEqual(len(self.indexer.indexes), 2)
-        self.assertEqual(len(self.indexer.item_names), 2)
         self.assertEqual(len(self.indexer.index_files), 2)
         # second index should not exist
         self.assertEqual(self.indexer.index_files[1], None)
-        self.assertEqual(self.indexer.item_names[1], None)
         self.assertEqual(self.indexer.indexes[1], None)
 
     def test_suggest_nodocs_A(self):

@@ -51,7 +51,7 @@ def _count_tokens(tokenizer, files):
     num_items = 0
     ids = set()
     for f in files:
-        info("Extracting features from target file: " + basename(f))
+        info("Extracting features from file: " + basename(f))
         docs = tokenizer.tokenize(f)
         num_items += len(docs)
         for k, v in docs.items():

@@ -45,7 +45,6 @@ class CrossmapPredictTests(unittest.TestCase):
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
 
-    @unittest.skip
     def test_predict_targets_A(self):
         """target documents should map onto themselves"""
 
@@ -56,7 +55,6 @@ class CrossmapPredictTests(unittest.TestCase):
         self.assertEqual(len(result["distances"]), 3)
         self.assertEqual(result["targets"][0], "A")
 
-    @unittest.skip
     def test_predict_targets_B(self):
         """target documents should map onto themselves"""
 
@@ -67,7 +65,6 @@ class CrossmapPredictTests(unittest.TestCase):
         self.assertEqual(len(result["distances"]), 1)
         self.assertEqual(result["targets"][0], "B")
 
-    @unittest.skip
     def test_predict_misc_doc(self):
         """auxiliary documents should map onto dataset targets"""
 
@@ -99,7 +96,6 @@ class CrossmapPredictBatchTests(unittest.TestCase):
     def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    @unittest.skip
     def test_file_targets(self):
         """target documents should map onto themselves"""
 
@@ -111,7 +107,6 @@ class CrossmapPredictBatchTests(unittest.TestCase):
             self.assertTrue(result[i]["query"] in self.targets)
             self.assertTrue(result[i]["targets"][0], result[i]["query"])
 
-    @unittest.skip
     def test_file_documents(self):
         """documents should map onto targets"""
 
