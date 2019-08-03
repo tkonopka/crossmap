@@ -21,7 +21,7 @@ def name_def(term):
     return result
 
 
-def build_obo_dataset(obo_file, root_id=None):
+def build_obo_dataset(obo_file, root_id=None, aux_pos=True, aux_neg=True):
     """transfer data from an obo into a dictionary"""
 
     obo = Obo(obo_file)
@@ -37,13 +37,18 @@ def build_obo_dataset(obo_file, root_id=None):
             continue
         term = obo.terms[id]
         data = name_def(term)
-        auxiliary = []
+        data_pos = []
+        data_neg = []
         metadata = dict(is_a=[])
         for parent in obo.parents(id):
             metadata["is_a"].append(parent)
-            auxiliary.append(name_def(obo.terms[parent]))
+            if aux_pos:
+                data_pos.append(name_def(obo.terms[parent]))
+        if aux_neg:
+            for sib in obo.siblings(id):
+                data_neg.append(obo.terms[sib].name)
         result[id] = dict(data=data,
-                          aux_pos=" ".join(auxiliary),
-                          aux_neg="",
+                          aux_pos="; ".join(data_pos),
+                          aux_neg="; ".join(data_neg),
                           metadata=metadata)
     return result

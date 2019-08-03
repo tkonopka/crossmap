@@ -25,9 +25,13 @@ parser.add_argument("--name", action="store", required=True,
 parser.add_argument("--root", action="store",
                     help="filtering by root node",
                     default=None)
+parser.add_argument("--aux", action="store",
+                    help="types of auxiliary data to include, use P,N, or B",
+                    default="")
+
 
 # outputs
-parser.add_argument("--outdir", action="store", required=True,
+parser.add_argument("--outdir", action="store",
                     help="Output directory",
                     default=getcwd())
 
@@ -44,7 +48,11 @@ if __name__ == "__main__":
     logging.info("Starting "+config.action)
     
     if config.action == "build":
-        result = build_obo_dataset(config.obo, config.root)
+        aux_pos = config.aux in set(["P", "B"])
+        aux_neg = config.aux in set(["N", "B"])
+
+        result = build_obo_dataset(config.obo, config.root,
+                                   aux_pos = aux_pos, aux_neg = aux_neg)
         out_file = join(config.outdir, config.name+".yaml.gz")
         with gzip.open(out_file, "wt") as out:
             out.write(yaml.dump(result))

@@ -103,7 +103,8 @@ def feature_map(settings, use_cache=True):
     max_features = settings.features.max_number
     if max_features == 0:
         max_features = maxsize
-    info("Max features is "+str(max_features))
+    else:
+        info("Max features is "+str(max_features))
     tokenizer = CrossmapTokenizer(settings)
     target_files = settings.files("targets")
     target_counts, n_targets = _count_tokens(tokenizer, target_files)
