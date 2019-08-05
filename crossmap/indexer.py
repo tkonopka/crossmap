@@ -173,6 +173,9 @@ class CrossmapIndexer:
         hits_targets = db.get_targets(idxs=nn0)
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_list(val["data"])
+        manual = self.db.get_targets(idxs=nn0)
+        for m in manual:
+            mdata = sparse_to_list(m["data"])
         # collect relevant documents
         nn1, dist1 = self._neighbors(v, n, index=1)
         doc_dist = {i: d for i, d in zip(nn1, dist1)}
@@ -180,6 +183,7 @@ class CrossmapIndexer:
         doc_data = dict()
         for _, val in enumerate(hit_docs):
             doc_data[val["idx"]] = sparse_to_list(val["data"])
+
         # record distances from docs to targets
         # (some docs may introduce new targets to consider)
         doc_target_dist = dict()

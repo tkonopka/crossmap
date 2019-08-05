@@ -79,41 +79,13 @@ class CrossmapEncoder:
                     continue
                 fm = feature_map[k]
                 vec[fm[0]] += fm[1]*v
-            return vec
+            return normalize_vec(vec)
 
         data = _to_vec("data")
         aux_pos, aux_neg = _to_vec("aux_pos"), _to_vec("aux_neg")
         w = self.aux_weight
-        result = _encode_vec(data, aux_pos, aux_neg, w[0], w[1])
-        return csr_matrix(result), name
-
-
-@numba.jit
-def _encode_vec(data, aux_pos, aux_neg, w_pos, w_neg):
-    """encode three vectors into one
-
-    Arguments:
-        data    numeric vector
-        aux_pos numeric vector
-        aux_neg numeric vector
-        w_pos   numeric value, weight for aux_pos
-        w_neg   numeric value, weight for aux_neg
-
-    Returns:
-        numeric vector of same length as data
-    """
-
-    # regularize weighting using norms
-    data_norm = vec_norm(data)
-    if data_norm == 0:
-        data_norm = 1
-    pos_norm = vec_norm(aux_pos)
-    neg_norm = vec_norm(aux_neg)
-    w_pos = min(w_pos, pos_norm/data_norm)
-    w_neg = min(w_neg, neg_norm/data_norm)
-
-    # combine the three vectors into a single normalized vector
-    for i in range(len(data)):
-        data[i] += w_pos*aux_pos[i] - w_neg*aux_neg[i]
-    return normalize_vec(data)
+        result = data
+        for i in range(len(data)):
+            result[i] += w[0]*aux_pos[i] - w[1]*aux_neg[i]
+        return csr_matrix(normalize_vec(result)), name
 

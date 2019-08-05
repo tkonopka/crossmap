@@ -136,7 +136,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         """find nearest neighbors among targets, B"""
 
         # this doc should be close to B, A, U
-        doc = {"data": "Bob Bob Alice", "aux_pos": "unique"}
+        doc = {"data": "Bob Bob Alice", "aux_pos": "Alice unique"}
         doc_vector = self.indexer.encode_document(doc)
         nns, distances = self.indexer.nearest_targets(doc_vector, 3)
         self.assertEqual(nns[0], "B")
@@ -169,6 +169,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         # this doc should be close to two auxiliary items
         doc = {"data": "alpha", "aux_pos": "A bravo"}
         doc_vector = self.indexer.encode_document(doc)
+        temp = self.indexer.db.get_targets(idxs=[4])
         nns, distances = self.indexer.suggest_targets(doc_vector, 2)
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "B")
