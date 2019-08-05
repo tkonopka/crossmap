@@ -24,11 +24,20 @@ def all_zero(a):
 
 
 @numba.jit
+def num_nonzero(a):
+    """evaluate number of elements in a vector that are nonzero"""
+    result = 0
+    for i in range(len(a)):
+        result += (a[i]!=0.0)
+    return result
+
+
+@numba.jit
 def normalize_vec(a):
     """compute the vector norm of a vector"""
     n = vec_norm(a)
     if n == 0:
-        n = 1.0
+        return a
     for i in range(len(a)):
         a[i] = a[i]/n
     return a

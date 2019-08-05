@@ -56,25 +56,6 @@ class CrossmapIndexer:
         self.indexes = []
         self.index_files = []
 
-    def _remove_null_items(self, data, names):
-        """ensure that data vectors are non-null"""
-
-        # identify problematic items
-        n = len(data)
-        skip = set()
-        for i in range(n):
-            if all_zero(data[i].toarray()[0]):
-                skip.add(i)
-        if len(skip) == 0:
-            return data, names
-        skipped = [str(names[i]) for i in range(n) if i in skip]
-        s_str = "\n".join(skipped)
-        w_str = "Skipping items - null vectors - "
-        warning(w_str + str(len(skipped)) + "\n" + s_str)
-        data = [data[i] for i in range(n) if i not in skip]
-        names = [names[i] for i in range(n) if i not in skip]
-        return data, names
-
     def _build_index_none(self, label=""):
         """a helper to build an empty index"""
 
@@ -97,7 +78,7 @@ class CrossmapIndexer:
 
         info("Building index for " + label)
         items, item_names = self.encoder.documents(files)
-        items, item_names = self._remove_null_items(items, item_names)
+        items, item_names = _remove_null_items(items, item_names)
         info("Number of items: "+str(len(item_names)))
         self.db._add_data(items, item_names, tab=label)
         items = vstack(items)
@@ -159,8 +140,8 @@ class CrossmapIndexer:
             nns = self.db.ids(nns, table=index)
         return nns, distances
 
-    def encode(self, doc):
-        result, _ = self.encoder.encode(doc)
+    def encode_document(self, doc):
+        result, _ = self.encoder.document(doc)
         return result
 
     def nearest_targets(self, v, n=5):
@@ -199,7 +180,6 @@ class CrossmapIndexer:
         doc_data = dict()
         for _, val in enumerate(hit_docs):
             doc_data[val["idx"]] = sparse_to_list(val["data"])
-
         # record distances from docs to targets
         # (some docs may introduce new targets to consider)
         doc_target_dist = dict()
@@ -230,3 +210,24 @@ class CrossmapIndexer:
         suggestions = [self.target_ids[i] for i, _ in result]
         distances = [float(d) for _, d in result]
         return suggestions, distances
+
+
+def _remove_null_items(data, names):
+    """eliminate data vectors that are null"""
+
+    # identify problematic items
+    n = len(data)
+    skip = set()
+    for i in range(n):
+        if all_zero(data[i].toarray()[0]):
+            skip.add(i)
+    if len(skip) == 0:
+        return data, names
+    skipped = [str(names[i]) for i in range(n) if i in skip]
+    s_str = "\n".join(skipped)
+    w_str = "Skipping items - null vectors - "
+    warning(w_str + str(len(skipped)) + "\n" + s_str)
+    data = [data[i] for i in range(n) if i not in skip]
+    names = [names[i] for i in range(n) if i not in skip]
+    return data, names
+

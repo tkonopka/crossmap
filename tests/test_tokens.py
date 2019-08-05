@@ -52,44 +52,48 @@ class KmerizerTests(unittest.TestCase):
         self.assertTrue("ZZ" in tokens)
         self.assertGreater(len(tokens), 3)
 
+    def test_tokenize_entry_structure(self):
+        """obtain tokens for every component of a document"""
+
+        tokenizer = Kmerizer()
+        tokens = tokenizer.tokenize(dataset_file)
+        result = tokens["A"]
+        self.assertTrue("data" in result)
+        self.assertTrue("aux_pos" in result)
+        # aux_neg is not in the result because the dataset does not define aux_neg
+        self.assertFalse("aux_neg" in result)
+
+    def test_tokenize_entry_structure_aux_neg(self):
+        """obtain tokens also from aux_neg fields"""
+
+        tokenizer = Kmerizer()
+        tokens = tokenizer.tokenize(dataset_file)
+        result = tokens["C"]
+        self.assertTrue("aux_neg" in result)
+        self.assertTrue("bob" in result["aux_neg"])
+        self.assertEqual(result["aux_neg"]["bob"], 1)
+
     def test_tokenize_documents(self):
         """obtain tokens from documents"""
 
         tokenizer = Kmerizer(k=5)
         tokens = tokenizer.tokenize(dataset_file)
         result = tokens["D"]
-        self.assertEqual(len(result), 6)
-        self.assertTrue("with" in result)
-        # auxiliary data is weighted at 0.5
-        self.assertEqual(result["with"], 0.5)
-        # count sums primary data and auxiliary counts
-        self.assertEqual(result["danie"], 1.5)
-        self.assertEqual(result["aniel"], 1.5)
-
-    def test_tokenize_entry_weight(self):
-        """obtain relevant tokens, with a custom weight for auxiliary field"""
-
-        tokenizer = Kmerizer(aux_weight=0.2)
-        tokens = tokenizer.tokenize(dataset_file)
-        result = tokens["A"]
-        self.assertTrue("alice" in result)
-        self.assertEqual(result["with"], 0.2)
-
-    def test_tokenize_aux_neg(self):
-        """obtain tokens also from aux_neg fields"""
-
-        tokenizer = Kmerizer(aux_weight=0.4)
-        tokens = tokenizer.tokenize(dataset_file)
-        result = tokens["C"]
-        self.assertTrue("bob" in result)
-        self.assertEqual(result["bob"], -0.4)
+        # data component should only be based on "Daniel"
+        self.assertEqual(len(result["data"]), 2)
+        self.assertTrue("danie" in result["data"])
+        # aux_pos component will have other items
+        self.assertTrue("with" in result["aux_pos"])
+        self.assertEqual(result["aux_pos"]["with"], 1)
+        self.assertEqual(result["aux_pos"]["danie"], 1)
+        self.assertEqual(result["aux_pos"]["aniel"], 1)
 
     def test_tokenize_case_sensitive(self):
         """obtain tokens in case sensitive manner"""
 
         tokenizer = Kmerizer(k=10, case_sensitive=True)
         tokens = tokenizer.tokenize(dataset_file)
-        result = tokens["U"]
+        result = tokens["U"]["data"]
         self.assertTrue("ABCDEFG" in result)
         self.assertEqual(result["ABCDEFG"], 1)
 
@@ -98,7 +102,7 @@ class KmerizerTests(unittest.TestCase):
 
         tokenizer = Kmerizer(k=10, case_sensitive=False)
         tokens = tokenizer.tokenize(dataset_file)
-        result = tokens["U"]
+        result = tokens["U"]["data"]
         self.assertFalse("ABCDEFG" in result)
         self.assertTrue("abcdefg" in result)
         self.assertEqual(result["abcdefg"], 1)
@@ -106,7 +110,7 @@ class KmerizerTests(unittest.TestCase):
     def test_count_all_tokens(self):
         """obtain summary of tokens in all documents"""
 
-        tokenizer = Kmerizer(k=10, aux_weight=0.5)
+        tokenizer = Kmerizer(k=10)
         tokens = tokenizer.tokenize(dataset_file)
         result = token_counts(tokens)
         self.assertTrue("data" in result)

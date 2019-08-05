@@ -15,29 +15,29 @@ def kmers(s, k):
     return [s[i:(i+k)] for i in range(len(s)-k+1)]
 
 
-def token_counts(docs):
+def token_counts(docs, components=("data", "aux_pos", "aux_neg")):
     """summarize token counts over all documents"""
 
     result = Counter()
     for k, v in docs.items():
-        result.update(v)
+        for comp in components:
+            if comp in v:
+                result.update(v[comp])
     return result
 
 
 class Kmerizer():
     """A tokenizer of documents that splits words into kmers"""
 
-    def __init__(self, aux_weight=0.5, k=5, case_sensitive=False, alphabet=None):
+    def __init__(self, k=5, case_sensitive=False, alphabet=None):
         """configure a tokenizer
 
         Arguments:
-            aux_weight      numeric, weighting for auxiliary tokens
             k               length of kmers (words will be split into overlapping kmers)
             case_sensitive  logical, if False, all tokens will be lowercase
             alphabet        string with all possible characters
         """
 
-        self.aux_weight = aux_weight
         self.k = k
         self.case_sensitive = case_sensitive
         if alphabet is None:
@@ -67,21 +67,11 @@ class Kmerizer():
         """obtain token counts from a single document"""
 
         # count raw tokens in primary and auxiliary fields
-        data, aux = Counter(), Counter()
-        if "data" in doc:
-            data.update(self.parse(doc["data"]))
-        if "aux_pos" in doc:
-            aux.update(self.parse(doc["aux_pos"]))
-        if "aux_neg" in doc:
-            aux.subtract(Counter(self.parse(doc["aux_neg"])))
-
-        # assemble weighted tokens into a single element
-        result = dict(data)
-        weight = self.aux_weight
-        for k, v in aux.items():
-            if k not in result:
-                result[k] = 0
-            result[k] += v * weight
+        parse = self.parse
+        result = dict()
+        for k, data in doc.items():
+            k_counter = Counter(parse(str(data)))
+            result[k] = k_counter
         return result
 
     def parse(self, s):
@@ -109,6 +99,5 @@ class CrossmapTokenizer(Kmerizer):
         :param settings: object of class CrossmapSettings
         """
         super().__init__(k=settings.tokens.k,
-                         alphabet=settings.tokens.alphabet,
-                         aux_weight=settings.features.aux_weight)
+                         alphabet=settings.tokens.alphabet)
 

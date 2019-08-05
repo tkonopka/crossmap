@@ -56,7 +56,11 @@ def _count_tokens(tokenizer, files):
         num_items += len(docs)
         for k, v in docs.items():
             ids.add(k)
-            counts.update(list(v.keys()))
+            k_tokens = set()
+            for component in ("data", "aux_pos", "aux_neg"):
+                if component in v:
+                    k_tokens.update(v[component].keys())
+            counts.update(k_tokens)
 
     return counts, num_items
 

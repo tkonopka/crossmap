@@ -20,10 +20,10 @@ class CrossmapEncoderTests(unittest.TestCase):
     def setUp(self):
         self.builder = CrossmapEncoder(test_map, Kmerizer(k=4))
 
-    def test_tokenize_single_data(self):
-        """convert a single string into a feature matrix"""
+    def test_encode_single_document(self):
+        """process a single string into a feature matrix"""
 
-        result, name = self.builder.encode({"data": "abcdef"}, "00")
+        result, name = self.builder.document({"data": "abcdef"}, "00")
         arr = result.toarray()[0]
         self.assertEqual(name, "00", "name is just returned back"),
         self.assertEqual(len(arr), len(test_map), "one row, all features")
@@ -31,15 +31,15 @@ class CrossmapEncoderTests(unittest.TestCase):
         self.assertEqual(sum([_>0 for _ in arr]), 3,
                          "input is split into three tokens")
 
-    def test_tokenize_no_documents(self):
-        """extract tokens with empty documents list"""
+    def test_encode_no_documents(self):
+        """process an empty documents list"""
 
         result, names = self.builder.documents([])
         self.assertEqual(names, [])
         self.assertEqual(result, [])
 
-    def test_tokenize_documents(self):
-        """extract tokens from several documents on disk"""
+    def test_encode_documents(self):
+        """process several documents on disk"""
 
         result, names = self.builder.documents([dataset_file])
         self.assertEqual(len(names), 6,

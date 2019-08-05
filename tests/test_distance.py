@@ -3,6 +3,7 @@
 
 import unittest
 from math import sqrt
+from crossmap.distance import num_nonzero
 from crossmap.distance import vec_norm, normalize_vec, all_zero
 from crossmap.distance import euc_dist, euc_sq_dist, norm_euc_dist
 
@@ -34,6 +35,12 @@ class VecNormTests(unittest.TestCase):
 
         self.assertEqual(all_zero([0.4, 0.0, 0.0]), 0)
         self.assertEqual(all_zero([0.0, 0.0, -0.2]), 0)
+
+    def test_num_nonzero(self):
+        """produce a unit-norm vector"""
+
+        self.assertEqual(num_nonzero([0.0, 0.0, 0.0]), 0)
+        self.assertEqual(num_nonzero([0.0, 0.0, -0.2]), 1)
 
     def test_normalize(self):
         """produce a unit-norm vector"""

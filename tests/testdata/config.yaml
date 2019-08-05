@@ -7,4 +7,4 @@ tokens:
   k: 5
 features:
   max_number: 200
-  aux_weight: 0.4
+  aux_weight: [0.4, 0.2]

@@ -38,7 +38,7 @@ class CrossmapFeatureSettings():
     def __init__(self, config=None):
         self.max_number = 0
         self.weighting = "none"
-        self.aux_weight = 0.5
+        self.aux_weight = (0.5, 0.5)
 
         if config is not None:
             for key, val in config.items():
@@ -47,7 +47,7 @@ class CrossmapFeatureSettings():
                 elif key == "weighting":
                     self.weighting = val
                 elif key == "aux_weight":
-                    self.aux_weight = float(val)
+                    self.aux_weight = [float(_) for _ in val]
 
     def __str__(self):
         result = "Crossmap Feature Settings:\n"

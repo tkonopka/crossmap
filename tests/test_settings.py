@@ -133,7 +133,8 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
         """configure weight assigned to auxiliary data fields"""
 
         result = CrossmapSettings(join(data_dir, "config.yaml"))
-        self.assertEqual(result.features.aux_weight, 0.4)
+        self.assertEqual(result.features.aux_weight[0], 0.4)
+        self.assertEqual(result.features.aux_weight[1], 0.2)
 
 
 class CrossmapKmerSettingsTests(unittest.TestCase):

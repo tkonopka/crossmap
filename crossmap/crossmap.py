@@ -78,7 +78,7 @@ class Crossmap():
             Second list contains weighted distances
         """
 
-        doc_data = self.indexer.encode(doc)
+        doc_data = self.indexer.encode_document(doc)
         targets, distances = self.indexer.suggest_targets(doc_data, n)
         return prediction(targets[:n], distances[:n], query_name)
 
