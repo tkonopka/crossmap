@@ -87,23 +87,34 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertTrue("g" in map)
         self.assertFalse("M" in map)
 
-    def test_weights(self):
-        """scan for features in targets, but not documents"""
+    def test_weights_ic(self):
+        """weights using constant and ic scaling"""
 
-        # compute two maps using different weighting
+        # compute maps using different weightings
         with self.assertLogs(level="INFO") as cm:
-            self.settings.features.weighting = "constant"
+            self.settings.features.weighting = [1,0]
             map_const = feature_map(self.settings, False)
-            self.settings.features.weighting = "ic"
+            self.settings.features.weighting = [0, 1]
             map_ic = feature_map(self.settings, False)
+            self.settings.features.weighting = [1, 1]
+            map_mid = feature_map(self.settings, False)
+        # maps should all contain same features, i.e. equal length
         self.assertEqual(len(map_const), len(map_ic))
+        self.assertEqual(len(map_const), len(map_mid))
         # constant map has all the weights equal to 1
         for k,v in map_const.items():
             self.assertEqual(v[1], 1)
         # information content map has certain features with less weight
-        self.assertLess(map_ic["with"][1], map_ic["alice"][1])
-        self.assertLess(map_ic["with"][1], map_ic["uniqu"][1])
+        with_ic = map_ic["with"][1]
+        with_const = map_const["with"][1]
+        self.assertLess(with_ic, map_ic["alice"][1])
+        self.assertLess(with_ic, map_ic["uniqu"][1])
         self.assertEqual(map_ic["uniqu"][1], map_ic["token"][1])
+        # Because mixed map has high coefficient for both constnat and ic component,
+        # all values should be higher than in either constant or ic maps
+        with_mid = map_mid["with"][1]
+        self.assertGreater(with_mid, with_ic)
+        self.assertGreater(with_mid, with_const)
 
 
 class CrossmapFeatureMapWeightingTests(unittest.TestCase):
@@ -112,13 +123,13 @@ class CrossmapFeatureMapWeightingTests(unittest.TestCase):
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_constant")
 
-    def test_ic_log1(self):
+    def test_ic(self):
 
         with self.assertLogs(level="WARNING") as cm1:
             settings = CrossmapSettings(config_constant_file,
                                         create_dir=True)
         with self.assertLogs(level="INFO") as cm2:
-            settings.features.weighting = "ic"
+            settings.features.weighting = [0, 1]
             map_const = feature_map(settings, False)
         # all features should have >0 weights
         for k, v in map_const.items():

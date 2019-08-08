@@ -3,4 +3,4 @@ comment: a configuration using a dataset that has one token that is present in a
 targets:
   - constant.yaml
 features:
-  weighting: ic
+  weighting: [0, 1]

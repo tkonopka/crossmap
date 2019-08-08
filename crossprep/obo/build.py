@@ -45,14 +45,11 @@ def build_obo_dataset(obo_file, root_id=None, aux_pos=True, aux_neg=True):
             if aux_pos:
                 data_pos.append(name_def(obo.terms[parent]))
         if aux_neg:
-            # only consider words in siblings that are not in term or parents
-            temp_neg = []
-            for sib in obo.siblings(id):
-                temp_neg.append(obo.terms[sib].name)
-            all_pos = set((data+" "+" ".join(data_pos)).split(" "))
-            all_pos.update(name_def(term, " ").split(" "))
-            all_neg = set((" ".join(temp_neg)).split(" "))
-            data_neg = all_neg.difference(all_pos)
+            # consider non-parent relations (siblings and children)
+            for sibling in obo.siblings(id):
+                data_neg.append(obo.terms[sibling].name)
+            for child in obo.children(id):
+                data_neg.append(obo.terms[child].name)
         result[id] = dict(data=data,
                           aux_pos="; ".join(data_pos),
                           aux_neg="; ".join(data_neg),

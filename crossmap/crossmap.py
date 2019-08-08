@@ -65,12 +65,13 @@ class Crossmap():
         """load indexes from prepared files"""
         self.indexer.load()
 
-    def predict(self, doc, n=3, query_name="query"):
+    def predict(self, doc, n_targets=3, n_docs=3, query_name="query"):
         """predict nearest targets for one document
 
         Arguments:
-            doc   dict-like object with "data", "aux_pos" and "aux_neg"
-            n     integer, number of neighbors
+            doc       dict-like object with "data", "aux_pos" and "aux_neg"
+            n_target  integer, number of target to report
+            n_docs    integer, number of documents to use in the calculation
 
         Returns:
             two lists.
@@ -78,16 +79,19 @@ class Crossmap():
             Second list contains weighted distances
         """
 
+        n = n_targets
         doc_data = self.indexer.encode_document(doc)
-        targets, distances = self.indexer.suggest_targets(doc_data, n)
+        suggest_targets = self.indexer.suggest_targets
+        targets, distances = suggest_targets(doc_data, n, n_docs)
         return prediction(targets[:n], distances[:n], query_name)
 
-    def predict_file(self, filepath, n=3):
+    def predict_file(self, filepath, n_targets=3, n_docs=3):
         """predict nearest targets for documents defined in a file
 
         Arguments:
-            docs    dict mapping query ids to query documents
-            n       integer, number of neighbors
+            docs       dict mapping query ids to query documents
+            n_targets  integer, number of target to report
+            n_docs     integer, number of documents to use in the calculation
 
         Returns:
             one list with composite objects
@@ -96,5 +100,5 @@ class Crossmap():
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.predict(doc, n, id))
+                result.append(self.predict(doc, n_targets, n_docs, id))
         return result

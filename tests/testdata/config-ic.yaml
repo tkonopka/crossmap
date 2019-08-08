@@ -5,5 +5,5 @@ targets:
 documents:
   - documents.yaml
 features:
-  weighting: ic
+  weighting: [0, 1]
   max_number: 10000

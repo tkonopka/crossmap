@@ -41,7 +41,7 @@ class CrossmapPredictTests(unittest.TestCase):
     def test_prediction_is_serializable(self):
         """prediction output should be compatible with json"""
         A = self.docs["A"]
-        result = self.crossmap.predict(A, n=3)
+        result = self.crossmap.predict(A, n_targets=3)
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
 
@@ -49,7 +49,7 @@ class CrossmapPredictTests(unittest.TestCase):
         """target documents should map onto themselves"""
 
         A = self.docs["A"]
-        result = self.crossmap.predict(A, n=3)
+        result = self.crossmap.predict(A, n_targets=3)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 3)
         self.assertEqual(len(result["distances"]), 3)
@@ -59,7 +59,7 @@ class CrossmapPredictTests(unittest.TestCase):
         """target documents should map onto themselves"""
 
         doc = self.docs["B"]
-        result = self.crossmap.predict(doc, n=1)
+        result = self.crossmap.predict(doc, n_targets=1)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 1)
         self.assertEqual(len(result["distances"]), 1)
@@ -71,7 +71,7 @@ class CrossmapPredictTests(unittest.TestCase):
         doc = {"data": "Catherine C",
                "aux_pos": "Alice alpha A",
                "aux_neg": "B"}
-        result = self.crossmap.predict(doc, n=2)
+        result = self.crossmap.predict(doc, n_targets=2)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 2)
         self.assertEqual(result["targets"][0], "C")

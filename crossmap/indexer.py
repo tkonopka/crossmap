@@ -22,6 +22,26 @@ def sparse_to_list(v):
     return v.toarray()[0]
 
 
+def _remove_null_items(data, names):
+    """eliminate data vectors that are null"""
+
+    # identify problematic items
+    n = len(data)
+    skip = set()
+    for i in range(n):
+        if all_zero(data[i].toarray()[0]):
+            skip.add(i)
+    if len(skip) == 0:
+        return data, names
+    skipped = [str(names[i]) for i in range(n) if i in skip]
+    s_str = "\n".join(skipped)
+    w_str = "Skipping items - null vectors - "
+    warning(w_str + str(len(skipped)) + "\n" + s_str)
+    data = [data[i] for i in range(n) if i not in skip]
+    names = [names[i] for i in range(n) if i not in skip]
+    return data, names
+
+
 class CrossmapIndexer:
     """Indexing data for crossmap"""
 
@@ -150,12 +170,13 @@ class CrossmapIndexer:
     def nearest_documents(self, v, n=5):
         return self._neighbors(v, n, index=1, names=True)
 
-    def suggest_targets(self, v, n=5):
+    def suggest_targets(self, v, n=5, n_doc=5):
         """suggest nearest neighbors for a vector
 
         Arguments:
             v     list with float values
             n     integer, number of suggestions
+            n_doc integer, number of helper documents
 
         Returns:
             two lists:
@@ -173,12 +194,8 @@ class CrossmapIndexer:
         hits_targets = db.get_targets(idxs=nn0)
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_list(val["data"])
-        manual = self.db.get_targets(idxs=nn0)
-        for m in manual:
-            mdata = sparse_to_list(m["data"])
         # collect relevant documents
-        nn1, dist1 = self._neighbors(v, n, index=1)
-        doc_dist = {i: d for i, d in zip(nn1, dist1)}
+        nn1, dist1 = self._neighbors(v, n_doc, index=1)
         hit_docs = db.get_documents(idxs=nn1)
         doc_data = dict()
         for _, val in enumerate(hit_docs):
@@ -200,7 +217,7 @@ class CrossmapIndexer:
 
         # compute weighted distances from vector to targets
         result = target_dist.copy()
-        for i, d_v_i in doc_dist.items():
+        for i, d_v_i in zip(nn1, dist1):
             i_data = doc_data[i]
             i_target_dist = doc_target_dist[i]
             for j in target_dist.keys():
@@ -208,30 +225,10 @@ class CrossmapIndexer:
                     d_i_j = i_target_dist[j]
                 else:
                     d_i_j = euc_dist(i_data, target_data[j])
-                result[j] += (d_v_i + d_i_j)/n
+                result[j] += (d_v_i + d_i_j)/n_doc
 
         result = sorted(result.items(), key=lambda x: x[1])
         suggestions = [self.target_ids[i] for i, _ in result]
         distances = [float(d) for _, d in result]
         return suggestions, distances
-
-
-def _remove_null_items(data, names):
-    """eliminate data vectors that are null"""
-
-    # identify problematic items
-    n = len(data)
-    skip = set()
-    for i in range(n):
-        if all_zero(data[i].toarray()[0]):
-            skip.add(i)
-    if len(skip) == 0:
-        return data, names
-    skipped = [str(names[i]) for i in range(n) if i in skip]
-    s_str = "\n".join(skipped)
-    w_str = "Skipping items - null vectors - "
-    warning(w_str + str(len(skipped)) + "\n" + s_str)
-    data = [data[i] for i in range(n) if i not in skip]
-    names = [names[i] for i in range(n) if i not in skip]
-    return data, names
 

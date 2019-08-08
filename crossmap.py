@@ -26,11 +26,19 @@ parser.add_argument("--data", action="store",
 
 
 # fine-tuning of predictions and output
-parser.add_argument("--nn", action="store",
+parser.add_argument("--n_targets", action="store",
                     type=int, default=1,
-                    help="number of nearest neighbors")
+                    help="number of nearest targets")
+parser.add_argument("--n_docs", action="store",
+                    type=int, default=1,
+                    help="number of documents used")
 parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
+
+# fine-tuning of predictions and output
+parser.add_argument("--logging", action="store",
+                    default="WARNING",
+                    help="logging levels, use WARNING, INFO, or ERROR")
 
 
 if __name__ != "__main__":
@@ -40,10 +48,13 @@ if __name__ != "__main__":
 # ############################################################################
 # Script below assumes running from command line
 
+config = parser.parse_args()
+
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
-config = parser.parse_args()
+logging.getLogger().setLevel(config.logging)
+
 
 settings = CrossmapSettings(config.config)
 if not settings.valid:
@@ -58,7 +69,9 @@ if config.action == "build":
 if config.action == "predict":
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap.load()
-    result = crossmap.predict_file(config.data, n=config.nn)
+    result = crossmap.predict_file(config.data,
+                                   n=config.n_targets,
+                                   n_docs=config.n_docs)
     if config.pretty:
         result = dumps(result, indent=2)
     else:

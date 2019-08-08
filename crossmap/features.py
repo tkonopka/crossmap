@@ -84,6 +84,20 @@ def _normalize_ic(count_map, N):
     return {k: (v[0], -log2(v[1]/(N+1))) for k, v in count_map.items()}
 
 
+def _feature_weights(count_map, N, model_weights):
+    """
+
+    :param count_map:
+    :param N:
+    :param model_weights:
+    :return:
+    """
+    w0 = model_weights[0]
+    w1 = model_weights[1]
+    map = count_map
+    return {k: (v[0], w0 - w1*log2(v[1]/(N+1))) for k, v in map.items()}
+
+
 def feature_map(settings, use_cache=True):
     """construct a dict with features
 
@@ -97,11 +111,30 @@ def feature_map(settings, use_cache=True):
     """
 
     cache_file = settings.tsv_file("feature-map")
+    result = None
     if use_cache and exists(cache_file):
         info("Reading feature map from file: " + basename(cache_file))
         result = read_feature_map(cache_file)
-        info("Feature map size: "+str(len(result)))
-        return result
+        use_cache = False
+    if result is None:
+        result = _feature_map(settings)
+    info("Feature map size: "+str(len(result)))
+    if use_cache:
+        info("Saving feature map")
+        write_feature_map(result, cache_file)
+    return result
+
+
+def _feature_map(settings):
+    """construct a dict with features
+
+    :param settings: object of class CrossmapSettings
+
+    :return: dictionary mapping tokens to 2-tuples with
+        feature index and a weight.
+        Features correspond to tokens from target files
+        and most common tokens from document files.
+    """
 
     info("Computing feature map")
     max_features = settings.features.max_number
@@ -123,14 +156,8 @@ def feature_map(settings, use_cache=True):
             break
         result[k] = [len(result), v]
 
-    if settings.features.weighting == "ic":
-        result = _normalize_ic(result, n_targets + n_docs)
-    else:
-        result = _normalize_constant(result)
+    N = n_targets + n_docs
+    result = _feature_weights(result, N, settings.features.weighting)
 
-    info("Feature map size: "+str(len(result)))
-    if use_cache:
-        info("Saving feature map")
-        write_feature_map(result, cache_file)
     return result
 

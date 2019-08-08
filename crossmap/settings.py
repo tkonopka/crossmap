@@ -37,17 +37,18 @@ class CrossmapFeatureSettings():
 
     def __init__(self, config=None):
         self.max_number = 0
-        self.weighting = "none"
+        self.weighting = [1, 0]
         self.aux_weight = (0.5, 0.5)
 
-        if config is not None:
-            for key, val in config.items():
-                if key == "max_number":
-                    self.max_number = int(val)
-                elif key == "weighting":
-                    self.weighting = val
-                elif key == "aux_weight":
-                    self.aux_weight = [float(_) for _ in val]
+        if config is None:
+            return
+        for key, val in config.items():
+            if key == "max_number":
+                self.max_number = int(val)
+            elif key == "weighting":
+                self.weighting = [float(_) for _ in val]
+            elif key == "aux_weight":
+                self.aux_weight = [float(_) for _ in val]
 
     def __str__(self):
         result = "Crossmap Feature Settings:\n"
@@ -180,8 +181,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             warning(emsg + "'documents'")
 
         result["weighting"] = True
-        if self.features.weighting not in set(["none", "ic"]):
-            self.features.weighting = "none"
+        if len(self.features.weighting) != 2:
+            self.features.weighting = [1, 0]
             warning(emsg + 'weighting')
 
         return result

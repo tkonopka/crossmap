@@ -42,13 +42,21 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertTrue("zero" in r4["aux_pos"])
         self.assertEqual(r4["aux_neg"], "")
 
-    def test_aux_N_only(self):
-        """elements can have negative auxiliary data fields"""
+    def test_aux_N_siblings(self):
+        """elements can have negative auxiliary data fields from siblings"""
 
         result = build_obo_dataset(int_file, aux_pos=False, aux_neg=True)
         r4 = result["int:4"]
         self.assertEqual(r4["aux_pos"], "")
         self.assertTrue("prime" in r4["aux_neg"])
+
+    def test_aux_N_children(self):
+        """elements can have negative auxiliary data fields from siblings"""
+
+        result = build_obo_dataset(int_file, aux_pos=False, aux_neg=True)
+        r2 = result["int:2"]
+        self.assertEqual(r2["aux_pos"], "")
+        self.assertTrue("prime" in r2["aux_neg"])
 
     def test_aux_both_intermediate(self):
         """elements can have both positive and negative aux fields"""
