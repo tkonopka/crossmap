@@ -45,6 +45,15 @@ class CrossmapPredictTests(unittest.TestCase):
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
 
+    def test_predict_empty(self):
+        """prediction on an empty document should not raise exceptions"""
+
+        empty = dict(data="")
+        result = self.crossmap.predict(empty, n_targets=3)
+        self.assertTrue(type(result) is dict)
+        self.assertEqual(len(result["targets"]), 0)
+        self.assertEqual(len(result["distances"]), 0)
+
     def test_predict_targets_A(self):
         """target documents should map onto themselves"""
 

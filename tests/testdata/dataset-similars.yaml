@@ -1,0 +1,18 @@
+comment:
+  data: This dataset contains pairs of similar items
+A1:
+  data: Alpha Alice Alex Andrea
+A2:
+  data: Alpha Alice Amy Anthony
+B1:
+  data: Bravo Bob Boris Beatrice
+B2:
+  data: Bravo Bob Benjamin Bernard
+C1:
+  data: Charlie Catherine Christine Clare
+C2:
+  data: Charlie Catherine Claude Camilla
+D1:
+  data: Delta Daniel David Dorothy
+D2:
+  data: Delta Daniel Dennis Daphne

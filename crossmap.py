@@ -70,7 +70,7 @@ if config.action == "predict":
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap.load()
     result = crossmap.predict_file(config.data,
-                                   n=config.n_targets,
+                                   n_targets=config.n_targets,
                                    n_docs=config.n_docs)
     if config.pretty:
         result = dumps(result, indent=2)

@@ -1,8 +1,7 @@
 """Encoding documents into feature vectors
 """
 
-import numba
-from .distance import normalize_vec, vec_norm
+from .distance import normalize_vec
 from scipy.sparse import csr_matrix
 
 

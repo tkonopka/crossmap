@@ -31,6 +31,15 @@ class CrossmapEncoderTests(unittest.TestCase):
         self.assertEqual(sum([_>0 for _ in arr]), 3,
                          "input is split into three tokens")
 
+    def test_encode_empty_doc(self):
+        """process a document with no data"""
+
+        doc = dict(data="")
+        result, name = self.builder.document(doc, "X")
+        arr = result.toarray()[0]
+        self.assertEqual(len(arr), len(test_map), "")
+        self.assertEqual(sum([_ for _ in arr]), 0)
+
     def test_encode_no_documents(self):
         """process an empty documents list"""
 
