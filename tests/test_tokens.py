@@ -9,6 +9,7 @@ from crossmap.tokens import kmers, Kmerizer
 data_dir = join("tests", "testdata")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
+arrays_file = join(data_dir, "dataset-arrays.yaml")
 
 
 class KmersTests(unittest.TestCase):
@@ -116,3 +117,28 @@ class KmerizerTests(unittest.TestCase):
         self.assertTrue("data" in result)
         self.assertGreater(result["with"], 1)
         self.assertEqual(result["abcdefg"], 1)
+
+
+class KmerizerArraysTests(unittest.TestCase):
+    """Tokenize when yaml data is formatted as an array"""
+
+    tokenizer = Kmerizer(k=5)
+    tokens = tokenizer.tokenize(arrays_file)
+
+    def test_tokenize_arrays_without_quotes(self):
+        """tokenize when yaml array does not have quotes"""
+
+        result = self.tokens["without"]["aux_pos"]
+        self.assertTrue("abcde" in result)
+        self.assertTrue("mnopq" in result)
+        self.assertTrue("nopqr" in result)
+
+    def test_tokenize_arrays_with_quotes(self):
+        """tokenize when yaml array has quote around each item"""
+
+        result = self.tokens["with"]["aux_pos"]
+        self.assertTrue("abc12" in result)
+        self.assertTrue("bc123" in result)
+        self.assertTrue("abc78" in result)
+        self.assertTrue("bc789" in result)
+

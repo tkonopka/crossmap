@@ -43,7 +43,7 @@ parser.add_argument("--name", action="store",
                     default="pubmed")
 
 # outputs
-parser.add_argument("--outdir", action="store", required=True,
+parser.add_argument("--outdir", action="store",
                     help="Output directory",
                     default=getcwd())
 

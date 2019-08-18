@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<JDBOR date="2019-08" version="0.1" comment="dataset based on orphanet schema, with dummy entries, for testing">
+<Availability> 
+ <Licence>
+    <FullName lang="en">Creative Commons Attribution 4.0 International</FullName>
+    <ShortIdentifier>CC-BY-4.0</ShortIdentifier>
+    <LegalCode>https://creativecommons.org/licenses/by/4.0/legalcode</LegalCode>
+ </Licence>
+</Availability>
+  <DisorderList>
+    <Disorder>
+      <OrphaNumber>1</OrphaNumber>
+      <Name lang="en">Disorder name 1</Name>
+      <HPODisorderAssociationList>
+        <HPODisorderAssociation>
+          <HPO>
+            <HPOId>HP:0000256</HPOId>
+            <HPOTerm>Macrocephaly</HPOTerm>
+          </HPO>
+          <HPOFrequency>
+            <OrphaNumber>453311</OrphaNumber>
+            <Name lang="en">Very frequent (99-80%)</Name>
+          </HPOFrequency>
+          <DiagnosticCriteria/>
+        </HPODisorderAssociation>
+        <HPODisorderAssociation>
+          <HPO>
+            <HPOId>HP:0000272</HPOId>
+            <HPOTerm>Malar flattening</HPOTerm>
+          </HPO>
+          <HPOFrequency>
+            <OrphaNumber>453311</OrphaNumber>
+            <Name lang="en">Very frequent (99-80%)</Name>
+          </HPOFrequency>
+          <DiagnosticCriteria/>
+        </HPODisorderAssociation>
+        <HPODisorderAssociation>
+          <HPO>
+            <HPOId>HP:0000316</HPOId>
+            <HPOTerm>Hypertelorism</HPOTerm>
+          </HPO>
+          <HPOFrequency>
+            <OrphaNumber>453311</OrphaNumber>
+            <Name lang="en">Very frequent (99-80%)</Name>
+          </HPOFrequency>
+          <DiagnosticCriteria/>
+        </HPODisorderAssociation>
+      </HPODisorderAssociationList>
+    </Disorder>
+    <Disorder>
+      <OrphaNumber>2</OrphaNumber>
+      <Name lang="en">Disorder name 2</Name>
+      <HPODisorderAssociationList>
+        <HPODisorderAssociation>
+          <HPO>
+            <HPOId>HP:0000218</HPOId>
+            <HPOTerm>High palate</HPOTerm>
+          </HPO>
+          <HPOFrequency>
+            <OrphaNumber>453313</OrphaNumber>
+            <Name lang="en">Occasional (29-5%)</Name>
+          </HPOFrequency>
+          <DiagnosticCriteria/>
+        </HPODisorderAssociation>
+        <HPODisorderAssociation>
+          <HPO>
+            <HPOId>HP:0000238</HPOId>
+            <HPOTerm>Hydrocephalus</HPOTerm>
+          </HPO>
+          <HPOFrequency>
+            <OrphaNumber>453313</OrphaNumber>
+            <Name lang="en">Occasional (29-5%)</Name>
+          </HPOFrequency>
+          <DiagnosticCriteria/>
+        </HPODisorderAssociation>
+        <HPODisorderAssociation>
+          <HPO>
+            <HPOId>HP:0000256</HPOId>
+            <HPOTerm>Macrocephaly</HPOTerm>
+          </HPO>
+          <HPOFrequency>
+            <OrphaNumber>453311</OrphaNumber>
+            <Name lang="en">Very frequent (99-80%)</Name>
+          </HPOFrequency>
+          <DiagnosticCriteria/>
+        </HPODisorderAssociation>
+      </HPODisorderAssociationList>
+    </Disorder>
+  </DisorderList>
+</JDBOR>

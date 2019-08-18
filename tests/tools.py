@@ -38,10 +38,3 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
         except OSError:
             pass
 
-
-def remove_featuremap_cache(dir, name):
-    """remove any crossmap cache files for a crossmap project"""
-
-    prefix = join(dir, name+"-")
-    remove_file([prefix + "feature-map.tsv"])
-

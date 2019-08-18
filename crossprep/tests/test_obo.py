@@ -8,7 +8,7 @@ from crossprep.obo.build import build_obo_dataset
 from crossprep.obo.obo import Obo
 
 
-data_dir = join("tests", "testdata")
+data_dir = join("crossprep", "tests", "testdata")
 int_file = join(data_dir, "integers.obo")
 
 

@@ -1,0 +1,8 @@
+comment:
+  data: This dataset contains data encoded as arrays
+without:
+  data: without quotes
+  aux_pos: [abcdef, ghijkl, mnopqr]
+with:
+  data: with quotes
+  aux_pos: ["abc123", "abc456", "abc789"]
