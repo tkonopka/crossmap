@@ -6,10 +6,10 @@
 from .oboterm import OboTerm, MinimalOboTerm
 
 
-## ##################################################################
+# ############################################################################
 # Container for an ontology, constructed from an obo definition file
 
-class MinimalObo():
+class MinimalObo:
     """Representation of an obo ontology with minimal parsing and checking"""
 
     def __init__(self, filepath, infer_children=True):
@@ -21,6 +21,9 @@ class MinimalObo():
         """
 
         self.terms = parse_obo(filepath, MinimalOboTerm)
+        self.parents_cache = dict()
+        self.ancestors_cache = dict()
+        self.descendants_cache = dict()
         self.clear_cache()
         if infer_children:
             add_parent_of(self)
@@ -141,7 +144,7 @@ class Obo(MinimalObo):
             return self.terms[key].name
 
 
-## ############################################################################
+# ############################################################################
 # Helper functions for this module
 
 

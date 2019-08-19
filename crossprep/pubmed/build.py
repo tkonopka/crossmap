@@ -7,7 +7,7 @@ import yaml
 import re
 from os import listdir
 from os.path import join
-from pubmed.tools import ensure_dir, load_xml, parse_indexes
+from .tools import ensure_dir, load_xml, parse_indexes
 
 
 class Article():
@@ -105,8 +105,8 @@ def build_pubmed_one(config, xmlnode):
         return None, None
 
     # abort early if year is undesired
-    if config.year is not None:
-        if article.year not in config.year:
+    if config.pubmed_year is not None:
+        if article.year not in config.pubmed_year:
             return None, None
     if article.title is None:
         print("title is None "+str(article.pmid))
@@ -116,7 +116,7 @@ def build_pubmed_one(config, xmlnode):
         print(str(article))
 
     data = article.title + " " + article.abstract
-    if len(data) < config.length:
+    if len(data) < config.pubmed_length:
         return None, None
 
     result = dict()
@@ -126,8 +126,8 @@ def build_pubmed_one(config, xmlnode):
     metadata = dict(journal=article.journal, year=article.year)
     result["metadata"] = metadata
 
-    if config.pattern is not None:
-        if not config.pattern.search(str(result)):
+    if config.pubmed_pattern is not None:
+        if not config.pubmed_pattern.search(str(result)):
             return None, None
 
     return "PMID:" + str(article.pmid), result
@@ -160,11 +160,11 @@ def build_pubmed_items(config, xmlnode):
 def build_config(config):
     """prepare raw settings into sets and integers"""
 
-    if config.year is not None:
-        config.year = set(parse_indexes(config.year))
-    if config.pattern is not None:
-        config.pattern = re.compile(config.pattern, re.IGNORECASE)
-    config.length = int(config.length)
+    if config.pubmed_year is not None:
+        config.pubmed_year = set(parse_indexes(config.pubmed_year))
+    if config.pubmed_pattern is not None:
+        config.pubmed_pattern = re.compile(config.pubmed_pattern, re.IGNORECASE)
+    config.pubmed_length = int(config.pubmed_length)
 
     return config
 

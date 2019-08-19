@@ -15,25 +15,25 @@ def template_format(template):
     return "#"*num_hashes, "{:0" + str(num_hashes) + "}"
 
 
-def download_baseline(config):
+def download_pubmed_baseline(config):
     """Run downloads for baseline files from pubmed."""
     
     out_dir = ensure_dir(join(config.outdir, "baseline"))
 
     # Download the README
-    url = config.url
+    url = config.baseline_url
     if not url.endswith("/"):
         url += "/"
     readme_url = url + "README.txt"
     download_one(readme_url, join(out_dir, "README.txt"))
     
     # try to download files
-    template = config.template
+    template = config.baseline_template
     hashes, format = template_format(template)
 
-    if config.indexes is None:
-        config.indexes = "1-2000"
-    for i in parse_indexes(config.indexes):
+    if config.baseline_indexes is None:
+        config.baseline_indexes = "1-2000"
+    for i in parse_indexes(config.baseline_indexes):
         file_name = template.replace(hashes, format.format(i))
         file_path = join(out_dir, file_name)
         status = download_one(url+file_name, file_path)
@@ -41,6 +41,6 @@ def download_baseline(config):
         if status == 404:
             break
         if status == 200:
-            time.sleep(config.sleep)
+            time.sleep(config.baseline_sleep)
 
 

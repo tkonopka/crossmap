@@ -87,11 +87,3 @@ def build_orphanet(filepath):
     return result
 
 
-def build_orphanet_dataset(config):
-    """write a new dataset file by parsing from an orphanet xml"""
-
-    result = build_orphanet(config.input)
-    out_file = join(config.outdir, config.name+".yaml.gz")
-    with gzip.open(out_file, "wt") as out:
-        out.write(yaml.dump(result))
-
