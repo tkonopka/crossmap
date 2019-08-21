@@ -107,7 +107,7 @@ elif config.action == "pubmed":
     build_pubmed_dataset(config)
 
 elif config.action == "orphanet":
-    result = build_orphanet(config)
+    result = build_orphanet(config.orphanet)
     save_dataset(result, config.outdir, config.name)
 
 
