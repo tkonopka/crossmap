@@ -5,22 +5,21 @@ Command line interface to a suite of tools to prepare data for crossmap.
 Usage: python3 crossprep.py command
 """
 
-
 import argparse
 import logging
 from os import getcwd
 from sys import exit
 from crossprep.tools import save_dataset
 from crossprep.obo.build import build_obo_dataset
-from crossprep.orphanet.build import build_orphanet
+from crossprep.orphanet.build import build_orphanet_dataset
 from crossprep.pubmed.baseline import download_pubmed_baseline
 from crossprep.pubmed.build import build_pubmed_dataset
+from crossprep.genesets.build import build_gmt_dataset
 
 
 # this is a command line utility
 if __name__ != "__main__":
     exit()
-
 
 # ############################################################################
 # Arguments
@@ -28,7 +27,7 @@ if __name__ != "__main__":
 parser = argparse.ArgumentParser(description="crossprep")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["obo", "orphanet", "pubmed", "baseline"])
+                    choices=["obo", "orphanet", "pubmed", "baseline", "genesets"])
 
 # common arguments
 parser.add_argument("--outdir", action="store",
@@ -50,8 +49,10 @@ parser.add_argument("--obo_aux", action="store",
                     default="")
 
 # settings for orphanet
-parser.add_argument("--orphanet", action="store",
+parser.add_argument("--orphanet_phenotypes", action="store",
                     help="path to orphanet disorder-phenotype xml")
+parser.add_argument("--orphanet_genes", action="store",
+                    help="path to orphanet disorder-gene xml")
 
 # setting for pubmed baseline
 parser.add_argument("--baseline_url", action="store",
@@ -78,6 +79,17 @@ parser.add_argument("--pubmed_length", action="store",
                     help="filtering by minimum number of characters in primary data",
                     default=200)
 
+# settings for geneset build
+parser.add_argument("--gmt", action="store",
+                    help="path to gmt file with genesets",
+                    default=None)
+parser.add_argument("--gmt_min_size", action="store", type=int,
+                    help="minimal number of genes in a gmt gene set",
+                    default=5)
+parser.add_argument("--gmt_max_size", action="store", type=int,
+                    help="maximal number of genes in a gmt gene set",
+                    default=100)
+
 
 # ############################################################################
 # Script below assumes running from command line
@@ -87,7 +99,7 @@ config = parser.parse_args()
 logging.basicConfig(format='[%(asctime)s] %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
-logging.info("Starting "+config.action)
+logging.info("Starting " + config.action + " - " + str(config.name) )
 
 # set a nontrivial output file name
 if config.name is None or config.name == "":
@@ -107,8 +119,13 @@ elif config.action == "pubmed":
     build_pubmed_dataset(config)
 
 elif config.action == "orphanet":
-    result = build_orphanet(config.orphanet)
+    result = build_orphanet_dataset(config.orphanet_phenotypes,
+                                    config.orphanet_genes)
     save_dataset(result, config.outdir, config.name)
 
+elif config.action == "genesets":
+    result = build_gmt_dataset(config.gmt,
+                               config.gmt_min_size, config.gmt_max_size)
+    save_dataset(result, config.outdir, config.name)
 
 logging.info("done")

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<JDBOR date="2019-08" version="0.1" comment="dataset based on orphanet disease-gene schema, with dummy entries, for testing">
+<Availability> 
+ <Licence>
+    <FullName>Creative Commons Attribution 4.0 International</FullName>
+    <ShortIdentifier>CC-BY-4.0</ShortIdentifier>
+    <LegalCode>https://creativecommons.org/licenses/by/4.0/legalcode</LegalCode>
+ </Licence>
+</Availability>
+  <DisorderList>
+    <Disorder>
+      <OrphaNumber>1</OrphaNumber>
+      <Name>Disorder name 1</Name>
+      <DisorderGeneAssociationList>
+        <DisorderGeneAssociation>
+          <Gene>
+            <OrphaNumber>268061</OrphaNumber>
+            <Name>kinesin family member 7</Name>
+            <Symbol>KIF7</Symbol>
+            <SynonymList>
+              <Synonym>JBTS12</Synonym>
+            </SynonymList>
+            <ExternalReferenceList>
+              <ExternalReference>
+                <Source>Ensembl</Source>
+                <Reference>ENSG00000166813</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>Genatlas</Source>
+                <Reference>KIF7</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>HGNC</Source>
+                <Reference>30497</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>OMIM</Source>
+                <Reference>611254</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>Reactome</Source>
+                <Reference>Q2M1P5</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>SwissProt</Source>
+                <Reference>Q2M1P5</Reference>
+              </ExternalReference>
+            </ExternalReferenceList>
+          </Gene>
+          <DisorderGeneAssociationType>
+            <Name>Disease-causing germline mutation(s) in</Name>
+          </DisorderGeneAssociationType>
+          <DisorderGeneAssociationStatus>
+            <Name>Assessed</Name>
+          </DisorderGeneAssociationStatus>
+        </DisorderGeneAssociation>
+      </DisorderGeneAssociationList>
+    </Disorder>
+    <Disorder>
+      <OrphaNumber>2</OrphaNumber>
+      <Name>Disorder name 2</Name>
+      <DisorderGeneAssociationList>
+        <DisorderGeneAssociation>
+          <Gene>
+            <OrphaNumber>119513</OrphaNumber>
+            <Name>aspartylglucosaminidase</Name>
+            <Symbol>AGA</Symbol>
+            <SynonymList>
+              <Synonym>ASRG</Synonym>
+              <Synonym>N(4)-(beta-N-acetylglucosaminyl)-L-asparaginase</Synonym>
+              <Synonym>glycosylasparaginase</Synonym>
+            </SynonymList>
+            <ExternalReferenceList>
+              <ExternalReference>
+                <Source>Reactome</Source>
+                <Reference>P20933</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>Ensembl</Source>
+                <Reference>ENSG00000038002</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>Genatlas</Source>
+                <Reference>AGA</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>HGNC</Source>
+                <Reference>318</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>OMIM</Source>
+                <Reference>613228</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>SwissProt</Source>
+                <Reference>P20933</Reference>
+              </ExternalReference>
+            </ExternalReferenceList>
+          </Gene>
+          <DisorderGeneAssociationType>
+            <Name>Disease-causing germline mutation(s) in</Name>
+          </DisorderGeneAssociationType>
+          <DisorderGeneAssociationStatus>
+            <Name>Assessed</Name>
+          </DisorderGeneAssociationStatus>
+        </DisorderGeneAssociation>
+      </DisorderGeneAssociationList>
+    </Disorder>
+  </DisorderList>
+</JDBOR>
