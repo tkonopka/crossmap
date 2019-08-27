@@ -13,6 +13,8 @@ config_no_target_file = join(data_dir, "config-no-targets.yaml")
 config_no_documents_file = join(data_dir, "config-no-documents.yaml")
 config_typo_file = join(data_dir, "config-typo-target.yaml")
 config_tokens_file = join(data_dir, "config-tokens.yaml")
+config_server_file = join(data_dir, "config-server.yaml")
+config_weighting_file = join(data_dir, "config-weighting.yaml")
 
 documents_file = join(data_dir, "documents.yaml")
 
@@ -113,6 +115,17 @@ class CrossmapSettingsTests(unittest.TestCase):
         cs = "crossmap_simple"
         self.assertEqual(result, join(data_dir, cs, cs + "-abc"))
 
+    def test_str(self):
+        """summarize the settings in a single string"""
+        settings = CrossmapSettings(config_file)
+        self.assertTrue("simple" in str(settings))
+
+    def test_validate_weights(self):
+        """validation can detect misspecified feature weighting scheme"""
+        with self.assertLogs(level="WARNING") as cm:
+            settings = CrossmapSettings(config_weighting_file)
+            settings._validate()
+
 
 class CrossmapFeaturesSettingsTests(unittest.TestCase):
     """Recording settings for handling features within crossmap analysis"""
@@ -136,6 +149,13 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
         self.assertEqual(result.features.aux_weight[0], 0.4)
         self.assertEqual(result.features.aux_weight[1], 0.2)
 
+    def test_str(self):
+        """summarize settings in a string"""
+
+        settings = CrossmapSettings(join(data_dir, "config.yaml"))
+        self.assertTrue("0.4" in str(settings.features))
+        self.assertTrue("0.2" in str(settings.features))
+
 
 class CrossmapKmerSettingsTests(unittest.TestCase):
     """Settings related to tokenizing documents"""
@@ -153,3 +173,28 @@ class CrossmapKmerSettingsTests(unittest.TestCase):
         self.assertTrue("w" in settings.tokens.alphabet)
         self.assertFalse("e" in settings.tokens.alphabet)
         self.assertFalse("i" in settings.tokens.alphabet)
+
+    def test_str(self):
+        """summarize settings in a string"""
+        settings = CrossmapSettings(config_tokens_file)
+        settings.tokens.k = 241
+        self.assertTrue("241" in str(settings.tokens))
+
+
+class CrossmapServerSettingsTests(unittest.TestCase):
+    """Settings related to tokenizing documents"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_server")
+
+    def test_ports(self):
+        """settings are transferred from file into settings object"""
+
+        settings = CrossmapSettings(config_server_file)
+        self.assertEqual(settings.server.api_port, 8080)
+        self.assertEqual(settings.server.ui_port, 8081)
+
+    def test_str(self):
+        """summarize settings in a string"""
+        settings = CrossmapSettings(config_server_file)
+        self.assertTrue("8081" in str(settings.server))

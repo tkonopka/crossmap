@@ -130,18 +130,16 @@ def build_pubmed_one(config, xmlnode):
         if not config.pubmed_pattern.search(str(result)):
             return None, None
 
-    return "PMID:" + str(article.pmid), result
+    return article.pmid, result
 
 
-def build_pubmed_items(config, xmlnode):
-    """Transfer data from pubmed baseline xmls into a dict
+def build_pubmed_items(config, xmlnode, used_ids=set()):
+    """Transfer data from pubmed baseline xmls into a crossmap dict
 
-    Arguments:
-        config    dictionary with settings
-        xmlnode   XML node, expected like <PubmedArticle>
-
-    Returns:
-        dictionary with one entry per article
+    :param config: dictionary with settings
+    :param xmlnode: XML node, expected liked <PubmedArticle>
+    :param used_ids: optional set, tracks used ids and skips items already used
+    :return: dict with one entry per article
     """
 
     result = dict()
@@ -150,9 +148,10 @@ def build_pubmed_items(config, xmlnode):
             if metadata.tag != "MedlineCitation":
                 continue
             id, article = build_pubmed_one(config, metadata)
-            if id is None:
+            if id is None or id in used_ids:
                 continue
-            result[id] = article
+            used_ids.add(id)
+            result["PMID:" + str(id)] = article
 
     return result
 
@@ -175,15 +174,17 @@ def build_pubmed_dataset(config):
     config = build_config(config)
     baseline_dir = ensure_dir(join(config.outdir, "baseline"))
     baseline_files = listdir(baseline_dir)
+    baseline_files.sort(reverse=True)
 
     out_file = join(config.outdir, config.name+".yaml.gz")
+    used_ids = set()
     with gzip.open(out_file, "wt") as out:
         for f in baseline_files:
             if not f.endswith(".xml.gz"):
                 continue
             logging.info("Processing: " + f)
             xml = load_xml(join(baseline_dir, f))
-            data = build_pubmed_items(config, xml)
+            data = build_pubmed_items(config, xml, used_ids)
             if len(data) == 0:
                 continue
             out.write(yaml.dump(data))

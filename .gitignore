@@ -5,10 +5,16 @@
 .coverage
 htmlcov
 
+# ignore data files by default
+*xml
+*sqlite3
+*gz
+
 # ignore temporary files in python code
 */*pyc
 */*json
 */__pycache*
+manage.py
 
 # ignore python compiled code and job logs
 *pyc
@@ -19,6 +25,7 @@ htmlcov
 *bash
 *out
 
-# ignore protege temporary files
-*catalog*xml
+# ignore content of data directory
+data/*
+
 

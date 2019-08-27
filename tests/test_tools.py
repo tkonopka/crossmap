@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 from os.path import join, exists
 from crossmap.tools import read_obj, write_obj, write_matrix
-from crossmap.tools import write_csv, read_csv_set
+from crossmap.tools import write_csv, read_csv_set, read_set
 from crossmap.tools import write_dict, read_dict
 from .tools import remove_crossmap_cache
 
@@ -21,12 +21,18 @@ class WriteCsvTests(unittest.TestCase):
         remove_crossmap_cache(data_dir, "crossmap-testing")
 
     def test_write_dict(self):
-        """Configure a crossmap with just a directory"""
+        """read back data as a set"""
 
         expected = dict(A=0, B=1, Z=3, G=4)
         write_csv(expected, tsv_file, id_column="id")
         result = read_csv_set(tsv_file, "id")
         self.assertEqual(result, set(expected.keys()))
+
+    def test_read_csv_dict_none(self):
+        """reading from None gives empty set"""
+
+        result = read_csv_set(None, "id")
+        self.assertEqual(result, set())
 
 
 class WriteDictTests(unittest.TestCase):
@@ -45,6 +51,32 @@ class WriteDictTests(unittest.TestCase):
         write_dict(expected, tsv_file)
         result = read_dict(tsv_file, value_fun=int)
         self.assertEqual(result, expected)
+
+
+class ReadSetTests(unittest.TestCase):
+    """Read/write set to disk"""
+
+    def setUp(self):
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
+
+    def test_read_write_set(self):
+        """save and retrieve a set of items"""
+
+        data = [str(_) for _ in [0, 1, 2, 3, 5, 7]]
+        expected = set(data)
+        with open(tsv_file, "wt") as f:
+            f.write("\n".join(data))
+            f.write("\n")
+            f.write("\n".join(data))
+        result = read_set(tsv_file)
+        self.assertEqual(result, expected)
+
+    def test_read_none(self):
+        """retrieving from non-existent file gives an empty set"""
+        self.assertEqual(read_set(None), set())
 
 
 class ObjTests(unittest.TestCase):

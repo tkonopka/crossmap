@@ -1,5 +1,4 @@
-"""Crossmap class
-"""
+"""Crossmap class"""
 
 import functools
 from os import mkdir
@@ -33,7 +32,7 @@ def decomposition(ids, weights, name):
     return dict(query=name, targets=ids, coefficients=weights)
 
 
-class Crossmap():
+class Crossmap:
 
     def __init__(self, settings):
         """configure a crossmap object.

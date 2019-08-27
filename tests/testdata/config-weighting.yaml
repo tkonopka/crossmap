@@ -1,0 +1,8 @@
+name: crossmap_weighting
+comment: a configuration object that mis-specifies a weighting scheme
+targets:
+  - dataset.yaml
+documents:
+  - documents.yaml
+features:
+  weighting: [0, 1, 0.5]

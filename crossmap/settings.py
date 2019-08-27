@@ -11,6 +11,10 @@ from .tokens import Kmerizer
 default_tokenizer = Kmerizer()
 
 
+# ############################################################################
+# Classes for settings, organized into groups by topic
+
+
 class CrossmapKmerSettings():
     """Container for settings for kmer-based tokenizer"""
 
@@ -32,7 +36,7 @@ class CrossmapKmerSettings():
         return result
 
 
-class CrossmapFeatureSettings():
+class CrossmapFeatureSettings:
     """Container for settings related to features"""
 
     def __init__(self, config=None):
@@ -58,6 +62,32 @@ class CrossmapFeatureSettings():
         return result
 
 
+class CrossmapServerSettings:
+    """Container for settings for server"""
+
+    def __init__(self, config=None):
+        self.api_port = 8098
+        self.ui_port = 8099
+
+        if config is None:
+            return
+        for key, val in config.items():
+            if key == "api_port":
+                self.api_port = int(val)
+            elif key == "ui_port":
+                self.ui_port = int(val)
+
+    def __str__(self):
+        result = "Crossmap Server Settings:"
+        result += "\napi_port=" + str(self.api_port)
+        result += "\nui_port=" + str(self.ui_port)
+        return result
+
+
+# ############################################################################
+# Classes for setting groups
+
+
 class CrossmapSettingsDefaults:
     """Container defining all settings for a crossmap project"""
 
@@ -70,10 +100,12 @@ class CrossmapSettingsDefaults:
         self.documents = []
         self.exclude = []
         self.valid = False
-        # tuning features
+        # settings for features (e.g. number of features)
         self.features = CrossmapFeatureSettings()
-        # sub-settings for components: tokens and embedding
+        # settings for tokens (e.g. kmer length)
         self.tokens = CrossmapKmerSettings()
+        # settings for server (e.g. port)
+        self.server = CrossmapServerSettings()
 
     def db_file(self):
         """create path to db file"""
@@ -141,6 +173,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
                 self.tokens = CrossmapKmerSettings(v)
             elif k == "features":
                 self.features = CrossmapFeatureSettings(v)
+            elif k == "server":
+                self.server = CrossmapServerSettings(v)
             else:
                 self.__dict__[k] = v
         return True
@@ -148,7 +182,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
     def _validate(self):
         """perform a series of checks"""
 
-        emsg = "Configuration does not specify "
+        missing_msg = "Configuration does not specify "
+        incorrect_msg = "Configuration mis-specifies "
         result = dict()
         dir = self.dir
 
@@ -161,29 +196,29 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         # configuration name
         result["name"] = (type(self.name) is str and self.name != "")
         if not result["name"]:
-            error(emsg + "valid name")
+            error(missing_msg + "valid name")
 
         # target objects to map toward
         targets = query_files(self.targets, "targets", dir=dir)
         result["targets"] = all(targets) if len(targets) > 0 else False
         if not result["targets"]:
-            error(emsg + "'targets'")
+            error(missing_msg + "'targets'")
 
         # tokens to exclude
         excludes = query_files(self.exclude, "exclude", dir=dir)
         result["exclude"] = all(excludes)
         if len(excludes) > 0 and not result["exclude"]:
-            error(emsg + "exclude")
+            error(missing_msg + "exclude")
 
         # universe (not required, so missing value generates only warning)
         documents = query_files(self.documents, "documents", dir=dir)
         if len(documents) == 0 or not all(documents):
-            warning(emsg + "'documents'")
+            warning(missing_msg + "'documents'")
 
         result["weighting"] = True
         if len(self.features.weighting) != 2:
             self.features.weighting = [1, 0]
-            warning(emsg + 'weighting')
+            warning(incorrect_msg + 'weighting')
 
         return result
 

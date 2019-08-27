@@ -8,8 +8,9 @@ Usage: python3 crossmap.py command
 
 import argparse
 import logging
+import sys
+from os import environ
 from json import dumps
-from sys import exit
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap
 
@@ -17,7 +18,7 @@ from crossmap.crossmap import Crossmap
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "predict"])
+                    choices=["build", "predict", "server"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -42,7 +43,7 @@ parser.add_argument("--logging", action="store",
 
 
 if __name__ != "__main__":
-    exit()
+    sys.exit()
 
 
 # ############################################################################
@@ -58,13 +59,13 @@ logging.getLogger().setLevel(config.logging)
 
 settings = CrossmapSettings(config.config)
 if not settings.valid:
-    exit()
+    sys.exit()
 
 crossmap = Crossmap(settings)
 
 if config.action == "build":
     crossmap.build()
-    exit()
+    sys.exit()
 
 if config.action == "predict":
     logging.getLogger().setLevel(level=logging.ERROR)
@@ -77,3 +78,16 @@ if config.action == "predict":
     else:
         result = dumps(result)
     print(result)
+    sys.exit()
+
+
+if config.action == "server":
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError("Could not import Django.") from exc
+    settings = crossmap.settings
+    environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
+    environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
+    execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
+
