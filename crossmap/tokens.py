@@ -86,7 +86,10 @@ class Kmerizer():
             for i in range(len(word)):
                 if word[i] not in alphabet:
                     word = word[:i]+" "+word[(i+1):]
-            result.extend(kmers(word.strip(), k))
+            word = word.strip()
+            if word == "":
+                continue
+            result.extend([_.strip() for _ in kmers(word, k)])
         return result
 
 

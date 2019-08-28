@@ -118,6 +118,26 @@ class KmerizerTests(unittest.TestCase):
         self.assertGreater(result["with"], 1)
         self.assertEqual(result["abcdefg"], 1)
 
+    def test_tokenize_with_nondefault_alphanet(self):
+        """tokenizing with alphabet with missing letters introduces spaces"""
+
+        tokenizer = Kmerizer(k=5, alphabet="bcdefghijklmnopqrstuvwxyz")
+        tokens = tokenizer.tokenize(dataset_file)
+        # item Alice - has a word just with letter A
+        dataA = tokens["A"]["data"]
+        auxA = tokens["A"]["aux_pos"]
+        # letter "A" can turn into " " and reduce to ""
+        # avoid tokens that are empty
+        self.assertFalse("a" in dataA)
+        keysA = list(auxA.keys())
+        for k in keysA:
+            self.assertNotEqual(k, "")
+        # item Daniel - has letter a on a boundary of k=5
+        keysD = list(tokens["D"]["data"].keys())
+        # "Daniel" can create "D niel" which can kmerize to " niel"
+        # avoid tokens that start with a space
+        self.assertEqual(keysD, [_.strip() for _ in keysD])
+
 
 class KmerizerArraysTests(unittest.TestCase):
     """Tokenize when yaml data is formatted as an array"""

@@ -106,5 +106,53 @@
         </DisorderGeneAssociation>
       </DisorderGeneAssociationList>
     </Disorder>
+    <Disorder>
+      <OrphaNumber>3</OrphaNumber>
+      <Name>Disorder name 3</Name>
+      <DisorderGeneAssociationList>
+        <DisorderGeneAssociation>
+          <Gene>
+            <OrphaNumber>268061</OrphaNumber>
+            <Name>kinesin family member 7</Name>
+            <Symbol>KIF7</Symbol>
+            <SynonymList>
+              <Synonym>JBTS12</Synonym>
+            </SynonymList>
+            <ExternalReferenceList>
+              <ExternalReference>
+                <Source>Ensembl</Source>
+                <Reference>ENSG00000166813</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>Genatlas</Source>
+                <Reference>KIF7</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>HGNC</Source>
+                <Reference>30497</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>OMIM</Source>
+                <Reference>611254</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>Reactome</Source>
+                <Reference>Q2M1P5</Reference>
+              </ExternalReference>
+              <ExternalReference>
+                <Source>SwissProt</Source>
+                <Reference>Q2M1P5</Reference>
+              </ExternalReference>
+            </ExternalReferenceList>
+          </Gene>
+          <DisorderGeneAssociationType>
+            <Name>Disease-causing germline mutation(s) in</Name>
+          </DisorderGeneAssociationType>
+          <DisorderGeneAssociationStatus>
+            <Name>Assessed</Name>
+          </DisorderGeneAssociationStatus>
+        </DisorderGeneAssociation>
+      </DisorderGeneAssociationList>
+    </Disorder>
   </DisorderList>
 </JDBOR>

@@ -11,6 +11,7 @@ class OrphanetDisorderGenes:
         """create a new container, parse data from an xml node"""
 
         self.id = 0
+        self.name = ""
         self.genes = []
         self.hgnc = []
         self.ensembl = []
@@ -137,6 +138,8 @@ def combine_phenotypes_genes(phen_data, gene_data):
     for disorder in gene_data.values():
         genes = [_[0] + " - " + _[1] for _ in disorder.genes]
         data = result["ORPHA:" + str(disorder.id)]
+        if data["data"] == "":
+            data["data"] = disorder.name
         data["aux_pos"].extend(genes)
         data["metadata"]["hgnc"] = disorder.hgnc
         data["metadata"]["ensembl"] = disorder.ensembl

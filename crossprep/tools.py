@@ -12,4 +12,3 @@ def save_dataset(data, dir, name):
     out_file = join(dir, name+".yaml.gz")
     with gzip.open(out_file, "wt") as out:
         out.write(yaml.dump(data))
-
