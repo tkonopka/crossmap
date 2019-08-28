@@ -1,0 +1,77 @@
+/** Styles for Crosschat App **/
+
+body {
+  background-color: #f9e9d1;
+  padding: 1.5em;
+  font-size: 1.4em;
+}
+.crosschat {
+  background-color: #f9e9d1;
+  text-align: left;
+  width: 80%;
+}
+
+/** History panel **/
+.chat-user, .chat-response {
+  clear: both;
+  width: 65%;
+  margin: 0.2em 0em;
+  padding: 0.5em;
+  border-radius: 5px;
+  border: solid 1px #4d243d;
+}
+.chat-user {
+  background-color: #c5d9e5;
+  float: right;
+}
+.chat-response {
+  background-color: #ffffff;
+  float: left;
+}
+.chat-list {
+  padding: 0px;
+  padding-bottom: 0.5em;
+}
+
+
+/** query panel with text areas **/
+.chat-query {
+  clear: both;
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: solid 1px #4d243d;
+  width: 100%;
+}
+.chat-query textarea {
+  font-size: 1em;
+  background: transparent;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #4d243d;
+  margin-bottom: 0.5em;
+}
+.chat-query textarea:focus {
+  outline: none;
+}
+.chat-query button.button {
+  cursor: pointer;
+  margin-top: 1em;
+  margin-left: 0.5em;
+  background-color: #286f9b;
+  color: #f0f0f0;
+  opacity: 0.8;
+  transition: 0.2s;
+  padding: 0.2em 0.5em;
+  border-radius: 5px;
+  border: solid 1px #4d243d;
+  float: right;
+  font-size: 1em;
+}
+button.button:focus {
+  outline: none;
+}
+button.button:active {
+  opacity: 1;
+}
+
+

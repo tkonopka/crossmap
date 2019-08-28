@@ -38,13 +38,24 @@ def parse_request(request):
     return doc, n_targets, n_docs
 
 
+def add_access(response):
+    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "X-Requested-With, Content-Type, Accept"
+    return response
+
+
 def process_request(request, process_function):
     """"""
+    if request.method == "OPTIONS":
+        return add_access(HttpResponse(""))
     if request.method != "POST":
+        print("seen method "+str(request.method))
         return HttpResponse("Use POST protocol. For curl, set --request POST\n")
     doc, n_targets, n_docs = parse_request(request)
     result = process_function(doc, n_targets, n_docs, "query")
-    return HttpResponse(dumps(result))
+    return add_access(HttpResponse(dumps(result)))
 
 
 def predict(request):

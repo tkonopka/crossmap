@@ -1,4 +1,5 @@
-"""Crossmap
+"""
+Crossmap
 
 Command line interface to crossmap document mapping.
 

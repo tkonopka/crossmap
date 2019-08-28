@@ -1,4 +1,5 @@
-"""Crossprep
+"""
+Crossprep
 
 Command line interface to a suite of tools to prepare data for crossmap.
 

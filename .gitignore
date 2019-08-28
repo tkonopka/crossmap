@@ -29,3 +29,14 @@ manage.py
 data/*
 
 
+# development files for chat user interface
+
+crosschat/node_modules
+crosschat/build
+crosschat/.pnp*
+crosschat/coverage
+crosschat/.env*
+crosschat/npm-debug.log*
+crosschat/yarn-debug.log*
+crosschat/yarn-error.log*
+
