@@ -101,11 +101,29 @@ logging.basicConfig(format='[%(asctime)s] %(message)s',
                     level=logging.INFO)
 logging.info("Starting " + config.action + " - " + str(config.name) )
 
+
+def missing_arguments(argnames):
+    """determine if arguments required for an action are missing
+
+    :param argnames: list of argument names to check in object "config"
+    :return: True if any of the arguments are set to None
+    """
+    missing = set()
+    for argname in argnames:
+        if getattr(config, argname) is None:
+            missing.add(argname)
+    if len(missing) > 0:
+        logging.error("missing required arguments: " + ", ".join(missing))
+    return len(missing) > 0
+
+
 # set a nontrivial output file name
 if config.name is None or config.name == "":
     config.name = config.action
 
 if config.action == "obo":
+    if missing_arguments(["obo"]):
+        exit()
     aux_pos = config.obo_aux in set(["P", "B"])
     aux_neg = config.obo_aux in set(["N", "B"])
     result = build_obo_dataset(config.obo, config.obo_root,
@@ -119,6 +137,8 @@ elif config.action == "pubmed":
     build_pubmed_dataset(config)
 
 elif config.action == "orphanet":
+    if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):
+        exit()
     result = build_orphanet_dataset(config.orphanet_phenotypes,
                                     config.orphanet_genes)
     save_dataset(result, config.outdir, config.name)
