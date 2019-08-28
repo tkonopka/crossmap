@@ -20,9 +20,6 @@ dataset_file = join(data_dir, "dataset.yaml")
 class CrossmapInitTests(unittest.TestCase):
     """Special cases for initialization"""
 
-    def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
-
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
@@ -63,7 +60,6 @@ class CrossmapBuildStandardTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         cls.crossmap = Crossmap(config_simple)
         cls.crossmap.build()
         cls.feature_map_file = cls.crossmap.settings.tsv_file("feature-map")
@@ -97,9 +93,6 @@ class CrossmapBuildStandardTests(unittest.TestCase):
 
 class CrossmapBuildNoDocsTests(unittest.TestCase):
     """Building a crossmap object without documents"""
-
-    def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_nodocs")
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_nodocs")

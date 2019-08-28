@@ -18,7 +18,6 @@ class CrossmapFeatureMapTests(unittest.TestCase):
     """Turning text data into tokens"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         self.settings = CrossmapSettings(config_file, create_dir=True)
         self.cache_file = self.settings.tsv_file("feature-map")
 
@@ -141,7 +140,6 @@ class CrossmapFeatureMapIOTests(unittest.TestCase):
     """reading and writing feature-map tables"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         self.settings = CrossmapSettings(config_file, create_dir=True)
 
     def tearDown(self):

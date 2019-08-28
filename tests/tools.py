@@ -38,3 +38,9 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
         except OSError:
             pass
 
+
+def remove_cachefile(dir, filename):
+    """remove a specific crossmap cache file"""
+
+    filepath = join(dir, filename)
+    remove_file([filepath])

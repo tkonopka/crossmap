@@ -20,7 +20,6 @@ class CrossmapDBTests(unittest.TestCase):
     """Creating a DB for holding"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         self.settings = CrossmapSettings(config_plain, create_dir=True)
         self.db_file = self.settings.db_file()
 
@@ -106,7 +105,6 @@ class CrossmapDBQueriesTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         settings = CrossmapSettings(config_plain, create_dir=True)
         cls.db_file = settings.db_file()
         cls.db = CrossmapDB(cls.db_file)

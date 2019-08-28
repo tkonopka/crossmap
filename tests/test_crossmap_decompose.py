@@ -18,7 +18,6 @@ class CrossmapDecomposeTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_similars")
         with cls.assertLogs(cls, level="WARNING"):
             cls.crossmap = Crossmap(config_file)
             cls.crossmap.build()
@@ -70,7 +69,6 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_similars")
         with cls.assertLogs(cls, level="WARNING"):
             cls.crossmap = Crossmap(config_file)
             cls.crossmap.build()

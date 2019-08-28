@@ -7,7 +7,7 @@ from os.path import join, exists
 from crossmap.tools import read_obj, write_obj, write_matrix
 from crossmap.tools import write_csv, read_csv_set, read_set
 from crossmap.tools import write_dict, read_dict
-from .tools import remove_crossmap_cache
+from .tools import remove_cachefile
 
 
 data_dir = join("tests", "testdata")
@@ -18,7 +18,7 @@ class WriteCsvTests(unittest.TestCase):
     """Writing and reading data from csv files"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing")
+        remove_cachefile(data_dir, "crossmap-testing-temp.tsv")
 
     def test_write_dict(self):
         """read back data as a set"""
@@ -38,11 +38,8 @@ class WriteCsvTests(unittest.TestCase):
 class WriteDictTests(unittest.TestCase):
     """Handling feature maps with files"""
 
-    def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
-
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
+        remove_cachefile(data_dir, "crossmap-testing-temp.tsv")
 
     def test_read_write_integer_features(self):
         """Configure a crossmap with just a directory"""
@@ -56,11 +53,8 @@ class WriteDictTests(unittest.TestCase):
 class ReadSetTests(unittest.TestCase):
     """Read/write set to disk"""
 
-    def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
-
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
+        remove_cachefile(data_dir, "crossmap-testing-temp.tsv")
 
     def test_read_write_set(self):
         """save and retrieve a set of items"""
@@ -82,11 +76,8 @@ class ReadSetTests(unittest.TestCase):
 class ObjTests(unittest.TestCase):
     """Handling pickling """
 
-    def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
-
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
+        remove_cachefile(data_dir, "crossmap-testing-temp.tsv")
 
     def test_read_write_features(self):
         """Configure a crossmap with just a directory"""
@@ -101,7 +92,7 @@ class WriteMatrixTests(unittest.TestCase):
     """Writing embedding into text files"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap-testing", use_subdir=False)
+        remove_cachefile(data_dir, "crossmap-testing-temp.tsv")
 
     def test_2d_write(self):
         """write a simple 2-coordinates embedding"""

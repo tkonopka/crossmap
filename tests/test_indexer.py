@@ -21,7 +21,6 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
     """Creating nearest neighbor indexes from documents and text tokens"""
 
     def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         settings = CrossmapSettings(config_plain, create_dir=True)
         settings.tokens.k = 10
         self.indexer = CrossmapIndexer(settings, test_features)
@@ -85,9 +84,6 @@ class CrossmapIndexerSkippingTests(unittest.TestCase):
 
     limited_features = ["alice", "bob", "catherine", "daniel", "starts", "unique", "file",
                         "a", "b", "c", "d", "e"]
-
-    def setUp(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
@@ -205,7 +201,6 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """build an indexer using target documents only"""
-
         # this construction "with" avoid displaying warning messages
         # during the test procedure
         with cls.assertLogs(cls, level="WARNING") as cm:

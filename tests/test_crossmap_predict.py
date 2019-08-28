@@ -21,7 +21,6 @@ class CrossmapPredictTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
@@ -93,7 +92,6 @@ class CrossmapPredictNoDocsTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_nodocs")
         with cls.assertLogs(cls, level="WARNING"):
             cls.crossmap = Crossmap(config_nodocs)
             cls.crossmap.build()
@@ -122,7 +120,6 @@ class CrossmapPredictBatchTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
