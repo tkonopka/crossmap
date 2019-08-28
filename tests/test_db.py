@@ -58,7 +58,7 @@ class CrossmapDBTests(unittest.TestCase):
         self.assertTrue("Removing" in str(cm2.output))
 
     def test_db_feature_map(self):
-        """build indexes from a simple configuration"""
+        """build process produces a feature map in db"""
 
         db = CrossmapDB(self.db_file)
         with self.assertLogs(level="INFO") as cm:
@@ -70,11 +70,11 @@ class CrossmapDBTests(unittest.TestCase):
         # retrieve a feature map
         result = db.get_feature_map()
         self.assertEqual(len(result), len(test_feature_map))
-        for k,v in result.items():
+        for k, v in result.items():
             self.assertListEqual(list(v), list(test_feature_map[k]))
 
     def test_db_add_get(self):
-        """build indexes from a simple configuration"""
+        """can add documents ane retrieve them later"""
 
         db = CrossmapDB(self.db_file)
         with self.assertLogs(level="INFO") as cm:

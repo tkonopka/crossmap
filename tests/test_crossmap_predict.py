@@ -11,6 +11,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
+config_nodocs = join(data_dir, "config-no-documents.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
 aux_file = join(data_dir, "documents.yaml")
 
@@ -25,14 +26,14 @@ class CrossmapPredictTests(unittest.TestCase):
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
         # load all the target and auxiliary items
-        cls.docs = dict()
-        cls.auxs = dict()
+        docs, auxs = dict(), dict()
         with open(dataset_file, "rt") as f:
             for id, doc in yaml_document(f):
-                cls.docs[id] = doc
+                docs[id] = doc
         with open(aux_file, "rt") as f:
             for id, doc in yaml_document(f):
-                cls.auxs[id] = doc
+                auxs[id] = doc
+        cls.docs, cls.auxs = docs, auxs
 
     @classmethod
     def tearDownClass(cls):
@@ -87,6 +88,35 @@ class CrossmapPredictTests(unittest.TestCase):
         self.assertEqual(result["targets"][1], "A")
 
 
+class CrossmapPredictNoDocsTests(unittest.TestCase):
+    """Mapping new objects onto targets without documents"""
+
+    @classmethod
+    def setUpClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_nodocs")
+        with cls.assertLogs(cls, level="WARNING"):
+            cls.crossmap = Crossmap(config_nodocs)
+            cls.crossmap.build()
+            cls.feature_map = cls.crossmap.indexer.feature_map
+        # load all the target and auxiliary items
+        docs = dict()
+        with open(dataset_file, "rt") as f:
+            for id, doc in yaml_document(f):
+                docs[id] = doc
+        cls.docs = docs
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_nodocs")
+
+    def test_prediction(self):
+        """prediction should produce output"""
+        A = self.docs["A"]
+        result = self.crossmap.predict(A, n_targets=3)
+        result_str = dumps(result)
+        self.assertTrue("A" in result_str)
+
+
 class CrossmapPredictBatchTests(unittest.TestCase):
     """Mapping new objects onto targets - in batch"""
 
@@ -96,10 +126,11 @@ class CrossmapPredictBatchTests(unittest.TestCase):
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        cls.targets = dict()
+        targets = dict()
         with open(dataset_file, "rt") as f:
             for id, doc in yaml_document(f):
-                cls.targets[id] = doc
+                targets[id] = doc
+        cls.targets = targets
 
     @classmethod
     def tearDownClass(cls):

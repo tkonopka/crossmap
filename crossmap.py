@@ -18,7 +18,7 @@ from crossmap.crossmap import Crossmap
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "predict", "server"])
+                    choices=["build", "predict", "decompose", "server"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -67,19 +67,20 @@ if config.action == "build":
     crossmap.build()
     sys.exit()
 
-if config.action == "predict":
+if config.action == "predict" or config.action == "decompose":
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap.load()
-    result = crossmap.predict_file(config.data,
-                                   n_targets=config.n_targets,
-                                   n_docs=config.n_docs)
+    action_fun = crossmap.predict_file
+    if config.action == "decompose":
+        action_fun = crossmap.decompose_file
+    result = action_fun(config.data,
+                        n_targets=config.n_targets, n_docs=config.n_docs)
     if config.pretty:
         result = dumps(result, indent=2)
     else:
         result = dumps(result)
     print(result)
     sys.exit()
-
 
 if config.action == "server":
     try:

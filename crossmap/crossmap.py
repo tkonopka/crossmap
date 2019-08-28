@@ -113,10 +113,15 @@ class Crossmap:
         while len(components) < n_targets and q_residual.sum() > 0:
             target, _ = suggest_targets(q_residual, 1, n_docs)
             target_data = get_targets(ids=target)
-            ids.append(target[0])
-            components.append(target_data[0]["data"])
-            basis = vstack(components)
-            coefficients = decompose(q_dense, basis.toarray())
+            if target[0] not in ids:
+                ids.append(target[0])
+                components.append(target_data[0]["data"])
+                basis = vstack(components)
+                coefficients = decompose(q_dense, basis.toarray())
+            else:
+                # residual mapped back onto self?
+                # change the last coefficient (it's a hack)
+                coefficients[len(coefficients)-1] *= 2
             q_residual = csr_residual(q, basis, csr_matrix(coefficients))
 
         # this handles case when the loop doesn't run as well as when

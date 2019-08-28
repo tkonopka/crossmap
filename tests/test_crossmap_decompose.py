@@ -23,10 +23,6 @@ class CrossmapDecomposeTests(unittest.TestCase):
             cls.crossmap = Crossmap(config_file)
             cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        #print(str(cls.crossmap.settings))
-        #print(str(cls.crossmap.settings.features))
-        #print(str(cls.crossmap.indexer.feature_map))
-        #print("")
 
     @classmethod
     def tearDownClass(cls):
@@ -79,11 +75,12 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
             cls.crossmap = Crossmap(config_file)
             cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        cls.targets = dict()
+        targets = dict()
         targets_file = cls.crossmap.settings.files("targets")[0]
         with open(targets_file, "rt") as f:
             for id, doc in yaml_document(f):
-                cls.targets[id] = doc
+                targets[id] = doc
+        cls.targets = targets
 
     @classmethod
     def tearDownClass(cls):
