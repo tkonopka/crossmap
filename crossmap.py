@@ -10,7 +10,8 @@ Usage: python3 crossmap.py command
 import argparse
 import logging
 import sys
-from os import environ
+from os import environ, system
+from os.path import join, dirname
 from json import dumps
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap
@@ -19,7 +20,7 @@ from crossmap.crossmap import Crossmap
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "predict", "decompose", "server"])
+                    choices=["build", "predict", "decompose", "server", "ui"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -92,4 +93,9 @@ if config.action == "server":
     environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
     environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
     execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
+    sys.exit()
 
+if config.action == "ui":
+    environ.setdefault('PORT', str(settings.server.ui_port))
+    cmd = "npm start --prefix " + join(dirname(__file__), "crosschat")
+    system(cmd)

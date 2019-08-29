@@ -38,7 +38,7 @@ class CrossmapSettingsTests(unittest.TestCase):
 
         result = CrossmapSettings(data_dir)
         self.assertEqual(result.dir, data_dir)
-        self.assertEqual(result.file, "config-simple.yaml")
+        self.assertEqual(result.file, "crossmap.yaml")
         self.assertTrue(result.valid)
 
     def test_init_file(self):

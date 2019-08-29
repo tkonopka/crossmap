@@ -21,30 +21,22 @@ class CrossmapInitTests(unittest.TestCase):
     """Special cases for initialization"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
+        remove_crossmap_cache(data_dir, "crossmap_default_name")
 
     def test_init_from_settings(self):
         """Initializing a crossmap object create directory structure"""
 
+        # create settings by providing a directory
+        # This will trigger search for crossmap.yaml
         settings = CrossmapSettings(data_dir)
         subdir = settings.data_dir
-        self.assertEqual(subdir, join(data_dir, "crossmap_simple"))
+        self.assertEqual(subdir, join(data_dir, "crossmap_default_name"))
         # data directory does not exist before init, exists after
         self.assertFalse(exists(subdir))
-        crossmap = Crossmap(settings) # initializing using a settings object
+        # initializing using a settings object
+        crossmap = Crossmap(settings)
         self.assertTrue(crossmap.valid)
         self.assertTrue(exists(subdir))
-
-    def test_init_from_dir(self):
-        """Initializing a crossmap object create directory structure"""
-
-        subdir = join(data_dir, "crossmap_simple")
-        # data directory does not exist before init, exists after
-        self.assertFalse(exists(subdir))
-        crossmap = Crossmap(data_dir) # initilizing using a plain directory
-        self.assertTrue(crossmap.valid)
-        self.assertTrue(exists(subdir))
-        self.assertEqual(crossmap.settings.data_dir, subdir)
 
     def test_init_from_invalid(self):
         """Initializing with an invalid configuration file"""

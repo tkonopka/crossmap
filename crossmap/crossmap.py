@@ -37,9 +37,7 @@ class Crossmap:
     def __init__(self, settings):
         """configure a crossmap object.
 
-        Arguments:
-            config  path to a directory containing config-simple.yaml or a
-                    yaml configuration file
+        :param settings: a CrossmapSettings object, or a path to a configuration file
         """
 
         if type(settings) is str:

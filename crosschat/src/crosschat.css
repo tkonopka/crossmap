@@ -3,7 +3,7 @@
 body {
   background-color: #f9e9d1;
   padding: 1.5em;
-  font-size: 1.4em;
+  font-size: 1.3em;
 }
 .crosschat {
   background-color: #f9e9d1;
@@ -32,13 +32,24 @@ body {
   padding: 0px;
   padding-bottom: 0.5em;
 }
+.chat-list table td {
+  padding-right: 1em;
+}
+/** tables within chat **/
+.chat-td-label {
+  color: #555555;
+}
+.chat-td-numeric {
+  color: #555555;
+}
 
 
 /** query panel with text areas **/
 .chat-query {
   clear: both;
   margin-top: 1em;
-  padding-top: 1em;
+  margin-bottom: 1em;
+  padding: 1em 0em;
   border-top: solid 1px #4d243d;
   width: 100%;
 }
@@ -73,5 +84,4 @@ button.button:focus {
 button.button:active {
   opacity: 1;
 }
-
 

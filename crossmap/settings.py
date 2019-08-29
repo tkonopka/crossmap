@@ -87,15 +87,14 @@ class CrossmapServerSettings:
 # ############################################################################
 # Classes for setting groups
 
-
 class CrossmapSettingsDefaults:
     """Container defining all settings for a crossmap project"""
 
     def __init__(self):
-        self.name = ""   # this must be set
+        self.name = ""
         self.dir = getcwd()
         self.data_dir = join(self.dir, self.name)
-        self.file = "config-simple.yaml"
+        self.file = "crossmap.yaml"
         self.targets = []
         self.documents = []
         self.exclude = []
@@ -132,10 +131,10 @@ class CrossmapSettings(CrossmapSettingsDefaults):
     """Container keeping and validating settings for a Crossmap project"""
 
     def __init__(self, config, create_dir=False):
-        """Load and validate settings
+        """create a settings object
 
-        Arguments:
-            config    directory or filepath to configuration
+        :param config: path to a configuration file
+        :param create_dir: logical, create directory automatically
         """
 
         super().__init__()
@@ -153,7 +152,6 @@ class CrossmapSettings(CrossmapSettingsDefaults):
 
         self.data_dir = join(self.dir, self.name)
 
-        # perhaps create directories exist
         if create_dir and not exists(self.data_dir):
             mkdir(self.data_dir)
 
