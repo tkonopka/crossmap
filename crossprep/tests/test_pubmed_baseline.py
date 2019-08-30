@@ -1,6 +1,6 @@
-'''Tests for pubmed baseline downloads
-'''
-
+"""
+Tests for pubmed baseline downloads
+"""
 
 import unittest
 from crossprep.pubmed.baseline import template_format

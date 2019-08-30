@@ -1,4 +1,5 @@
-"""Downloading baseline article data from pubmed.
+"""
+Downloading baseline article data from pubmed.
 """
 
 import time

@@ -1,5 +1,6 @@
-'''Tests for turning documents into tokens
-'''
+"""
+Tests for turning documents into tokens
+"""
 
 import unittest
 from os.path import join, exists
@@ -56,7 +57,7 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertFalse("Extracting" in str(cm2.output))
         # but can ignore cache file and extract from scratch
         with self.assertLogs(level="INFO") as cm3:
-            map = feature_map(self.settings, False)
+            feature_map(self.settings, False)
         self.assertFalse("Reading" in str(cm3.output))
         self.assertTrue("Extracting" in str(cm3.output))
 

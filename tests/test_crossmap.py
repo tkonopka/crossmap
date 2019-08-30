@@ -1,5 +1,6 @@
-'''Tests for mapping across datasets using token similarities
-'''
+"""
+Tests for mapping across datasets using token similarities
+"""
 
 import unittest
 from os.path import join, exists

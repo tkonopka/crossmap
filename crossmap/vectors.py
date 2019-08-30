@@ -1,4 +1,5 @@
-"""handling vectors and vector decompositions
+"""
+Handling vectors and vector decompositions
 """
 
 from numpy import matmul
@@ -42,5 +43,5 @@ def vec_decomposition(vT, BT):
 
     a = matmul(BT, BT.transpose())
     b = matmul(BT, vT.transpose())
-    x, residuals, _, _ = lstsq(a, b)
+    x, residuals, _, _ = lstsq(a, b, rcond=None)
     return x

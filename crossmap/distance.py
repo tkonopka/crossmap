@@ -1,4 +1,5 @@
-"""Distance calculations
+"""
+Distance calculations
 """
 
 import numba
@@ -66,14 +67,4 @@ def euc_dist(a, b):
     for i in range(len(a)):
         dist2 += (a[i]-b[i])*(a[i]-b[i])
     return sqrt(dist2)
-
-
-@numba.jit
-def euc_sq_dist(a, b):
-    """compute the squared euclidean distance between two vectors"""
-
-    dist2 = 0
-    for i in range(len(a)):
-        dist2 += (a[i]-b[i])*(a[i]-b[i])
-    return dist2
 

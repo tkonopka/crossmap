@@ -1,4 +1,6 @@
-"""crossmap_server URL Configuration"""
+"""
+crossmap_server URL Configuration
+"""
 
 from django.urls import path
 from . import views

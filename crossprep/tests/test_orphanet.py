@@ -1,6 +1,6 @@
-'''
+"""
 Tests for building crossmap datasets from orphanet xml
-'''
+"""
 
 
 import unittest

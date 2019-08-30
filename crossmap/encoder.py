@@ -1,7 +1,9 @@
-"""Encoding documents into feature vectors
+"""
+Encoding documents into feature vectors
 """
 
 import gzip
+from numpy import zeros
 from .distance import normalize_vec
 from scipy.sparse import csr_matrix
 from .tools import yaml_document
@@ -74,7 +76,7 @@ class CrossmapEncoder:
 
         def _to_vec(component):
             """helper to transfer from a dict/counter into a vector"""
-            vec = [0.0]*n_features
+            vec = zeros(n_features, dtype=float)
             if component not in tokens:
                 return vec
             for k, v in tokens[component].items():

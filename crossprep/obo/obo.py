@@ -1,4 +1,5 @@
-"""Parsing ontologies from obo files on disk.
+"""
+Parsing ontologies from obo files on disk.
 
 (This file is copied from another project: phenoscoring)
 """

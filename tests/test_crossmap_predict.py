@@ -1,5 +1,6 @@
-'''Tests for predicting new documents
-'''
+"""
+Tests for predicting new documents
+"""
 
 import unittest
 from json import dumps

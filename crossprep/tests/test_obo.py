@@ -1,6 +1,6 @@
-'''
+"""
 Tests for building crossmap datasets from obo
-'''
+"""
 
 
 import unittest

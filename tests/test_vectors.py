@@ -1,5 +1,6 @@
-'''Tests for working with sparse vectors
-'''
+"""
+Tests for working with sparse vectors
+"""
 
 import numpy as np
 import unittest
@@ -95,7 +96,7 @@ class VecDecompositionTests(unittest.TestCase):
         # structure of output - should have coefficients for two basis vectors
         self.assertEqual(result.shape, (2, 1))
         # this is a symmetrical system, coefficients should be equal
-        self.assertEqual(result[0, 0], result[1, 0])
+        self.assertAlmostEqual(result[0, 0], result[1, 0])
         # by manual calculation, the coefficients should be 2/3
         self.assertAlmostEqual(result[0,0], 2.0/3)
         self.assertAlmostEqual(result[1,0], 2.0/3)
@@ -124,8 +125,7 @@ class VecDecompositionTests(unittest.TestCase):
         result = vec_decomposition(vT.toarray(), BT.toarray())
         # this example mirrors one of the nonorthogonal tests above
         self.assertEqual(result.shape, (2, 1))
-        self.assertEqual(result[0, 0], result[1, 0])
+        self.assertAlmostEqual(result[0, 0], result[1, 0])
         self.assertAlmostEqual(result[0,0], 2.0/3)
         self.assertAlmostEqual(result[1,0], 2.0/3)
-
 

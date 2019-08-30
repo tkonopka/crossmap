@@ -1,5 +1,6 @@
-'''Tests for turning datasets into tokens
-'''
+"""
+Tests for turning datasets into tokens
+"""
 
 import unittest
 from os.path import join

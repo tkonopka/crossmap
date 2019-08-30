@@ -1,4 +1,5 @@
-""" Class holding a single term defined in an obo file.
+"""
+Class holding a single term defined in an obo file.
 
 This container/parser only supports a few of the data types in an obo term. 
 

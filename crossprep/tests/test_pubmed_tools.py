@@ -1,6 +1,6 @@
-'''Tests for various tools in pubmed package
-'''
-
+"""
+Tests for various tools in pubmed package
+"""
 
 import unittest
 from crossprep.pubmed.tools import parse_indexes

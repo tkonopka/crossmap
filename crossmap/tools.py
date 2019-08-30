@@ -1,4 +1,5 @@
-"""Multi-purpose tools
+"""
+Multi-purpose tools
 """
 
 import csv
@@ -145,7 +146,7 @@ def yaml_document(stream):
     """generator to read one yaml document at a time from a stream"""
 
     def parse_doc(d):
-        doc = yaml.load("".join(d))
+        doc = yaml.load("".join(d), Loader=yaml.BaseLoader)
         doc_id = list(doc.keys())[0]
         return doc_id, doc[doc_id]
 

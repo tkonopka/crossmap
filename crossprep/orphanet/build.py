@@ -17,7 +17,7 @@ class OrphanetDisorderGenes:
         self.hgnc = []
         self.ensembl = []
 
-        for child in node.getchildren():
+        for child in node:
             if child.tag == "OrphaNumber":
                 self.id = child.text
             elif child.tag == "Name":
@@ -78,7 +78,7 @@ class OrphanetDisorderPhenotypes:
         self.name = ""
         self.phenotypes = []
 
-        for child in node.getchildren():
+        for child in node:
             if child.tag == "OrphaNumber":
                 self.id = child.text
             elif child.tag == "Name":

@@ -1,4 +1,5 @@
-"""Collection of helper functions for pubmed.
+"""
+Collection of helper functions for pubmed.
 """
 
 import logging

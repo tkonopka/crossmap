@@ -1,5 +1,6 @@
-'''Tests for handling the crossmap data db
-'''
+"""
+Tests for handling the crossmap data db
+"""
 
 import unittest
 from scipy.sparse import csr_matrix

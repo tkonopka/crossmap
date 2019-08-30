@@ -1,5 +1,6 @@
-'''Tests for decomposing documents into basis vectors
-'''
+"""
+Tests for decomposing documents into basis vectors
+"""
 
 import unittest
 from os.path import join

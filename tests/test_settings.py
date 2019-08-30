@@ -1,5 +1,5 @@
-'''Tests for parsing settings
-'''
+"""Tests for parsing settings
+"""
 
 import unittest
 from os.path import join

@@ -1,4 +1,5 @@
-"""Build a dataset of crossmap using obo files.
+"""
+Build a dataset of crossmap using obo files.
 """
 
 from .obo import Obo

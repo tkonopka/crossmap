@@ -1,5 +1,6 @@
-'''Tests for turning documents into indexes
-'''
+"""
+Tests for turning documents into indexes
+"""
 
 import unittest
 from os.path import join, exists

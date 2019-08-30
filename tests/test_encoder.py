@@ -1,5 +1,6 @@
-'''Tests for encoding documents into numeric vectors
-'''
+"""
+Tests for encoding documents into numeric vectors
+"""
 
 import unittest
 from os.path import join

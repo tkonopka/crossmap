@@ -1,5 +1,6 @@
-'''Helper functions used within the test suite
-'''
+"""
+Helper functions used within the test suite
+"""
 
 from os import remove, rmdir
 from os.path import join, exists
