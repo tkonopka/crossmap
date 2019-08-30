@@ -1,4 +1,5 @@
-"""Crossmap settings and validation
+"""
+Crossmap settings and validation
 """
 
 import yaml

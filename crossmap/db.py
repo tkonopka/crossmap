@@ -82,8 +82,8 @@ class CrossmapDB:
             cur = conn.cursor()
             CT = "CREATE TABLE "
             sql_map = CT + "features (id TEXT, idx INTEGER, weight REAL)"
-            sql_targets = CT + "targets (id TEXT, idx INTEGER, data BLOB)"
-            sql_docs = CT + "documents (id TEXT, idx INTEGER, data BLOB)"
+            sql_targets = CT + "targets (id TEXT, idx INTEGER, title TEXT, data BLOB)"
+            sql_docs = CT + "documents (id TEXT, idx INTEGER, title TEXT, data BLOB)"
             cur.execute(sql_map)
             cur.execute(sql_targets)
             cur.execute(sql_docs)
@@ -94,9 +94,12 @@ class CrossmapDB:
 
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            i_name = table+"_idx"
-            cur.execute("DROP INDEX IF EXISTS " + i_name)
-            cur.execute("CREATE INDEX " + i_name + " on " + table + " (idx)")
+            index_idx = table+"_idx"
+            index_id = table+"_id"
+            cur.execute("DROP INDEX IF EXISTS " + index_idx)
+            cur.execute("DROP INDEX IF EXISTS " + index_id)
+            cur.execute("CREATE INDEX " + index_idx + " on " + table + " (idx)")
+            cur.execute("CREATE INDEX " + index_id + " on " + table + " (id)")
             conn.commit()
 
     def index(self):
@@ -129,7 +132,7 @@ class CrossmapDB:
             cur.executemany(sql, data_array)
         self.n_features = len(feature_map)
 
-    def _add_data(self, data, ids, indexes=None, tab="targets"):
+    def _add_data(self, data, ids, titles=None, indexes=None, tab="targets"):
         """insert data items into db
 
         Arguments:
@@ -140,27 +143,30 @@ class CrossmapDB:
         """
         if indexes is None:
             indexes = list(range(len(ids)))
+        if titles is None:
+            titles = [""]*len(ids)
 
-        sql = "INSERT INTO " + tab + " (id, idx, data) VALUES (?, ?, ?);"
+        sql = "INSERT INTO " + tab + \
+              " (id, idx, title, data) VALUES (?, ?, ?, ?);"
         data_array = []
         for i in range(len(ids)):
-            idata = csr_to_bytes(data[i])
-            data_array.append((ids[i], indexes[i], sqlite3.Binary(idata)))
+            idata = sqlite3.Binary(csr_to_bytes(data[i]))
+            data_array.append((ids[i], indexes[i], titles[i], idata))
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
             cur.executemany(sql, data_array)
             conn.commit()
 
-    def add_targets(self, data, ids, indexes):
+    def add_targets(self, data, ids, indexes, titles=None):
         """record items in the db as targets"""
-        self._add_data(data, ids, indexes, tab="targets")
+        self._add_data(data, ids, titles=titles, indexes=indexes, tab="targets")
 
-    def add_documents(self, data, ids, indexes):
+    def add_documents(self, data, ids, indexes, titles=None):
         """record items in the db as documents"""
-        self._add_data(data, ids, indexes, tab="documents")
+        self._add_data(data, ids, titles=titles, indexes=indexes, tab="documents")
 
     def _get_data(self, idxs=None, ids=None, table="targets"):
-        """retrieve information from db from targets or documents
+        """worker retrieve information from db from targets or documents
 
         Note: one of ids or idx must be specified other than None
 
@@ -191,6 +197,31 @@ class CrossmapDB:
                 rowdict = dict(id=row["id"], idx=row["idx"],
                                data=bytes_to_csr(row["data"], n_features))
                 result.append(rowdict)
+        return result
+
+    def get_titles(self, idxs=None, ids=None, table="targets"):
+        """retrieve information from db from targets or documents
+
+        :param ids: list of string ids to query in column "id"
+        :param idxs: list of integer indexes to query in column "idx"
+        :param table: one of 'targets' or 'documents'
+        :return: dictionary mapping ids to titles
+        """
+
+        queries, column = idxs, "idx"
+        if ids is not None:
+            queries, column = ids, "id"
+        if queries is None or len(queries) == 0:
+            return dict()
+        sql = "SELECT id, idx, title FROM " + table + " WHERE "
+        sql_where = [column + "=?"]*len(queries)
+        sql += " OR ".join(sql_where)
+        result = dict()
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.execute(sql, queries)
+            for row in cur:
+                result[row[column]] = row["title"]
         return result
 
     def get_targets(self, idxs=None, ids=None):

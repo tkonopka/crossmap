@@ -48,7 +48,7 @@ class Kmerizer():
             alphabet = alphabet.lower()
         self.alphabet = set([_ for _ in alphabet])
 
-    def tokenize(self, filepath):
+    def tokenize_path(self, filepath):
         """scan context of a dataset file and return a tokens dict
 
         Returns:
@@ -56,14 +56,14 @@ class Kmerizer():
         """
 
         result = dict()
-        tokenize_doc = self.tokenize_document
+        tokenize = self.tokenize
         open_fn = gzip.open if filepath.endswith(".gz") else open
         with open_fn(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result[id] = tokenize_doc(doc)
+                result[id] = tokenize(doc)
         return result
 
-    def tokenize_document(self, doc):
+    def tokenize(self, doc):
         """obtain token counts from a single document"""
 
         # count raw tokens in primary and auxiliary fields
@@ -85,7 +85,7 @@ class Kmerizer():
         for word in s.split():
             for i in range(len(word)):
                 if word[i] not in alphabet:
-                    word = word[:i]+" "+word[(i+1):]
+                    word = word[:i] + " " + word[(i+1):]
             word = word.strip()
             if word == "":
                 continue

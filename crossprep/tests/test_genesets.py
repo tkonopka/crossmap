@@ -1,4 +1,5 @@
-'''Tests for building crossmap datasets from gene sets
+'''
+Tests for building crossmap datasets from gene sets
 '''
 
 
@@ -23,6 +24,8 @@ class BuildGenesetDatasetTests(unittest.TestCase):
         self.assertTrue("S:01" in str(list(result.keys())))
         self.assertTrue("small" in result["S:01"]["data"])
         self.assertTrue("medium" in result["S:02"]["data"])
+        self.assertEqual("small", result["S:01"]["title"])
+        self.assertEqual("medium", result["S:02"]["title"])
         self.assertTrue("A1" in result["S:02"]["aux_pos"])
         self.assertTrue("A5" in result["S:02"]["aux_pos"])
 
@@ -43,3 +46,4 @@ class BuildGenesetDatasetTests(unittest.TestCase):
         self.assertTrue("S:01" in result)
         self.assertTrue("S:02" in result)
         self.assertFalse("S:03" in result)
+

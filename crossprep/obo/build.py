@@ -50,7 +50,8 @@ def build_obo_dataset(obo_file, root_id=None, aux_pos=True, aux_neg=True):
                 data_neg.append(obo.terms[sibling].name)
             for child in obo.children(id):
                 data_neg.append(obo.terms[child].name)
-        result[id] = dict(data=data,
+        result[id] = dict(title=term.name,
+                          data=data,
                           aux_pos="; ".join(data_pos),
                           aux_neg="; ".join(data_neg),
                           metadata=metadata)

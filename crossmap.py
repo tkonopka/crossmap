@@ -63,14 +63,15 @@ settings = CrossmapSettings(config.config)
 if not settings.valid:
     sys.exit()
 
-crossmap = Crossmap(settings)
 
 if config.action == "build":
+    crossmap = Crossmap(settings)
     crossmap.build()
     sys.exit()
 
 if config.action == "predict" or config.action == "decompose":
     logging.getLogger().setLevel(level=logging.ERROR)
+    crossmap = Crossmap(settings)
     crossmap.load()
     action_fun = crossmap.predict_file
     if config.action == "decompose":
@@ -89,7 +90,6 @@ if config.action == "server":
         from django.core.management import execute_from_command_line
     except ImportError as exc:
         raise ImportError("Could not import Django.") from exc
-    settings = crossmap.settings
     environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
     environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
     execute_from_command_line(['', 'runserver', str(settings.server.api_port)])

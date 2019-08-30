@@ -1,8 +1,10 @@
 """Encoding documents into feature vectors
 """
 
+import gzip
 from .distance import normalize_vec
 from scipy.sparse import csr_matrix
+from .tools import yaml_document
 
 
 class CrossmapEncoder:
@@ -34,23 +36,25 @@ class CrossmapEncoder:
         """
 
         data = []
-        item_names = []
+        ids_titles = []
         tokenize = self.tokenizer.tokenize
         encode = self.encode
 
         for filepath in filepaths:
-            docs = tokenize(filepath)
-            for doc_name, tokens in docs.items():
-                doc_result, _ = encode(tokens, doc_name)
-                item_names.append(doc_name)
-                data.append(doc_result)
+            open_fn = gzip.open if filepath.endswith(".gz") else open
+            with open_fn(filepath, "rt") as f:
+                for id, doc in yaml_document(f):
+                    tokens, _ = encode(tokenize(doc), id)
+                    title = doc["title"] if "title" in doc else ""
+                    ids_titles.append([id, title])
+                    data.append(tokens)
 
-        return data, item_names
+        return data, ids_titles
 
     def document(self, doc, name="X"):
         """encode one document into a vector"""
 
-        tokens = self.tokenizer.tokenize_document(doc)
+        tokens = self.tokenizer.tokenize(doc)
         return self.encode(tokens, name)
 
     def encode(self, tokens, name="X"):

@@ -5,17 +5,22 @@ import './crosschat.css';
 /** a chat message with a response provided by the server **/
 class CrosschatServerMessage extends React.Component {
     render() {
+        let titles = this.props.data["titles"];
         if (this.props.data["distances"] !== undefined) {
             let dists = this.props.data["distances"].map((x) => {
                 return Number.parseFloat(x).toPrecision(4);
             });
             let rows = this.props.data["targets"].map(function(x, i) {
-                return (<tbody key={i}><tr><td>{x}</td><td className="chat-td-numeric">{dists[i]}</td></tr></tbody>)
+                return (<tbody key={i}><tr>
+                    <td>{x}</td>
+                    <td>{titles[i]}</td>
+                    <td className="chat-td-numeric">{dists[i]}</td>
+                </tr></tbody>)
             });
             return (
                 <div className="chat-response">
                 <table>
-                    <tbody><tr><th>target</th><th>distance</th></tr></tbody>
+                    <tbody><tr><th>target</th><th>title</th><th>distance</th></tr></tbody>
                     {rows}
                 </table>
                 </div>
@@ -25,12 +30,16 @@ class CrosschatServerMessage extends React.Component {
                 return Number.parseFloat(x).toPrecision(4);
             });
             let rows = this.props.data["targets"].map(function(x, i) {
-                return (<tbody key={i}><tr><td>{x}</td><td className="chat-td-numeric">{coeffs[i]}</td></tr></tbody>)
+                return (<tbody key={i}><tr>
+                    <td>{x}</td>
+                    <td>{titles[i]}</td>
+                    <td className="chat-td-numeric">{coeffs[i]}</td>
+                </tr></tbody>)
             });
             return (
                 <div className="chat-response">
                 <table>
-                    <tbody><tr><th>target</th><th>coefficient</th></tr></tbody>
+                    <tbody><tr><th>target</th><th>title</th><th>coefficient</th></tr></tbody>
                     {rows}
                 </table>
                 </div>

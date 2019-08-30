@@ -1,4 +1,5 @@
-"""Build a dataset for crossmap from pubmed baseline data files.
+"""
+Build a dataset for crossmap from pubmed baseline data files.
 """
 
 import gzip
@@ -119,8 +120,7 @@ def build_pubmed_one(config, xmlnode):
     if len(data) < config.pubmed_length:
         return None, None
 
-    result = dict()
-    result["data"] = data
+    result = dict(title=article.title, data=data)
     result["aux_pos"] = "; ".join(article.keywords)
     result["aux_neg"] = ""
     metadata = dict(journal=article.journal, year=article.year)

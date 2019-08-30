@@ -1,4 +1,5 @@
-'''Tests for building crossmap datasets from obo
+'''
+Tests for building crossmap datasets from obo
 '''
 
 
@@ -30,6 +31,13 @@ class BuildOboDatasetTests(unittest.TestCase):
         result = build_obo_dataset(int_file)
         self.assertTrue("unity" in result["int:1"]["data"])
         self.assertTrue("one" in result["int:1"]["data"])
+
+    def test_build_titles(self):
+        """item have titles consisting of term names"""
+
+        result = build_obo_dataset(int_file)
+        self.assertEqual(result["int:1"]["title"], "one")
+        self.assertEqual(result["int:2"]["title"], "positive integer")
 
     def test_aux_P_only(self):
         """elements can have positive auxiliary data fields"""

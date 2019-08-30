@@ -1,4 +1,5 @@
-'''Tests for building crossmap datasets from orphanet xml
+'''
+Tests for building crossmap datasets from orphanet xml
 '''
 
 
@@ -39,6 +40,13 @@ class BuildOrphanetDatasetTests(unittest.TestCase):
         result = self.dataset
         self.assertTrue("Disorder name 1" in result["ORPHA:1"]["data"])
         self.assertTrue("Disorder name 2" in result["ORPHA:2"]["data"])
+
+    def test_disorder_titles(self):
+        """disorder names give item titles"""
+
+        result = self.dataset
+        self.assertEqual("Disorder name 1", result["ORPHA:1"]["title"])
+        self.assertEqual("Disorder name 2", result["ORPHA:2"]["title"])
 
     def test_disorder_phenotypes(self):
         """dataset has two disorders, with phenotypes go into aux"""

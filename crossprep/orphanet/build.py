@@ -1,4 +1,5 @@
-"""Build a dataset for crossmap from orphanet xmls
+"""
+Build a dataset for crossmap from orphanet xmls
 """
 
 import xml.etree.ElementTree as XML
@@ -125,21 +126,22 @@ def combine_phenotypes_genes(phen_data, gene_data):
     all_ids = list(phen_data.keys())
     all_ids.extend(gene_data.keys())
     for id in all_ids:
-        result["ORPHA:"+str(id)] = dict(data="", aux_pos=[], metadata=dict())
+        result["ORPHA:"+str(id)] = dict(title="", data="",
+                                        aux_pos=[], metadata=dict())
 
     # transfer information about phenotypes and genes
     for disorder in phen_data.values():
         terms = [_[1] for _ in disorder.phenotypes]
         ids = [_[0] for _ in disorder.phenotypes]
         data = result["ORPHA:" + str(disorder.id)]
-        data["data"] = disorder.name
+        data["title"] = data["data"] = disorder.name
         data["aux_pos"].extend(terms)
         data["metadata"]["phenotype_ids"] = ids
     for disorder in gene_data.values():
         genes = [_[0] + " - " + _[1] for _ in disorder.genes]
         data = result["ORPHA:" + str(disorder.id)]
         if data["data"] == "":
-            data["data"] = disorder.name
+            data["title"] = data["data"] = disorder.name
         data["aux_pos"].extend(genes)
         data["metadata"]["hgnc"] = disorder.hgnc
         data["metadata"]["ensembl"] = disorder.ensembl

@@ -51,10 +51,14 @@ def process_request(request, process_function):
     if request.method == "OPTIONS":
         return add_access(HttpResponse(""))
     if request.method != "POST":
-        print("seen method "+str(request.method))
         return HttpResponse("Use POST protocol. For curl, set --request POST\n")
+    # perform core processing
     doc, n_targets, n_docs = parse_request(request)
     result = process_function(doc, n_targets, n_docs, "query")
+    # extract target titles
+    targets = result["targets"]
+    target_titles = crossmap.indexer.db.get_titles(ids=targets)
+    result["titles"] = [target_titles[_] for _ in targets]
     return add_access(HttpResponse(dumps(result)))
 
 

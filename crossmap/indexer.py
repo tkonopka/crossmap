@@ -97,10 +97,12 @@ class CrossmapIndexer:
             return
 
         info("Building index for " + label)
-        items, item_names = self.encoder.documents(files)
-        items, item_names = _remove_null_items(items, item_names)
-        info("Number of items: "+str(len(item_names)))
-        self.db._add_data(items, item_names, tab=label)
+        items, ids_titles = self.encoder.documents(files)
+        items, ids_titles = _remove_null_items(items, ids_titles)
+        info("Number of items: "+str(len(ids_titles)))
+        self.db._add_data(items, [_[0] for _ in ids_titles],
+                          titles=[_[1] for _ in ids_titles],
+                          tab=label)
         items = vstack(items)
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)

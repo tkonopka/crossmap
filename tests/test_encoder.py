@@ -50,16 +50,17 @@ class CrossmapEncoderTests(unittest.TestCase):
     def test_encode_documents(self):
         """process several documents on disk"""
 
-        result, names = self.builder.documents([dataset_file])
-        self.assertEqual(len(names), 6,
+        result, ids_titles = self.builder.documents([dataset_file])
+        self.assertEqual(len(ids_titles), 6,
                          "dataset.yaml has six documents")
-        self.assertEqual(sorted(names), ["A", "B", "C", "D", "U", "ZZ"],
+        ids = [_[0] for _ in ids_titles]
+        self.assertEqual(sorted(ids), ["A", "B", "C", "D", "U", "ZZ"],
                          "dataset.yaml has six documents")
         self.assertEqual(len(result), 6)
         r0 = result[0].toarray()[0]
         self.assertEqual(len(r0), len(test_map))
         # entry for item "A" does not have requested features
-        names_dict = {v:k for k,v in enumerate(names)}
+        names_dict = {v[0]:k for k, v in enumerate(ids_titles)}
         index_A = names_dict["A"]
         rA = result[index_A].toarray()[0]
         self.assertEqual(sum(rA), 0, "all values for item A zero")

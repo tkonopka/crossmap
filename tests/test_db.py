@@ -16,7 +16,7 @@ test_feature_map = dict(w=(0,1),
                         z=(3,0.5))
 
 
-class CrossmapDBTests(unittest.TestCase):
+class CrossmapDBBuildTests(unittest.TestCase):
     """Creating a DB for holding"""
 
     def setUp(self):
@@ -72,32 +72,58 @@ class CrossmapDBTests(unittest.TestCase):
         for k, v in result.items():
             self.assertListEqual(list(v), list(test_feature_map[k]))
 
-    def test_db_add_get(self):
-        """can add documents ane retrieve them later"""
 
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO") as cm:
+class CrossmapDBAddGetTests(unittest.TestCase):
+    """Add/Get data from a db"""
+
+    @classmethod
+    def setUpClass(cls):
+        settings = CrossmapSettings(config_plain, create_dir=True)
+        db = CrossmapDB(settings.db_file())
+        with cls.assertLogs(cls, level="INFO"):
             db.build()
             db.set_feature_map(test_feature_map)
         # add data and retrieve data back
         ids = ["a", "b"]
         idxs = [0, 1]
-        vec_a = [0.0, 0.0, 1.0, 0.0]
-        vec_b = [0.0, 2.0, 0.0, 0.0]
-        data = [csr_matrix(vec_a), csr_matrix(vec_b)]
-        db.add_documents(data, ids, idxs)
-        # retrieve object 'a'
-        A = db.get_documents(idxs=[0])
+        cls.vec_a = [0.0, 0.0, 1.0, 0.0]
+        cls.vec_b = [0.0, 2.0, 0.0, 0.0]
+        data = [csr_matrix(cls.vec_a), csr_matrix(cls.vec_b)]
+        db.add_documents(data, ids, idxs, titles=["AA", "BB"])
+        cls.db = db
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_get_data_a(self):
+        """can retrieve data vectors"""
+        A = self.db.get_documents(idxs=[0])
         self.assertEqual(len(A), 1)
         self.assertEqual(A[0]["id"], "a")
         Avec = A[0]["data"].toarray()[0]
-        self.assertListEqual(list(Avec), list(vec_a))
-        # retrieve object 'b'
-        B = db.get_documents(ids=["b"])
+        self.assertListEqual(list(Avec), list(self.vec_a))
+
+    def test_get_data_b(self):
+        """can retrieve data vectors"""
+        B = self.db.get_documents(ids=["b"])
         self.assertEqual(len(B), 1)
         self.assertEqual(B[0]["id"], "b")
         Bvec = B[0]["data"].toarray()[0]
-        self.assertListEqual(list(Bvec), vec_b)
+        self.assertListEqual(list(Bvec), self.vec_b)
+
+    def test_get_titles_by_idx(self):
+        """can retrieve titles"""
+        A = self.db.get_titles(idxs=[0], table="documents")
+        self.assertEqual(len(A), 1)
+        self.assertEqual(A[0], "AA")
+
+    def test_get_titles_by_id(self):
+        """can retrieve titles"""
+        AB = self.db.get_titles(ids=["a", "b"], table="documents")
+        self.assertEqual(len(AB), 2)
+        self.assertEqual(AB["a"], "AA")
+        self.assertEqual(AB["b"], "BB")
 
 
 class CrossmapDBQueriesTests(unittest.TestCase):
