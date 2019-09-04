@@ -116,7 +116,7 @@ def build_pubmed_one(config, xmlnode):
         print("abstract is None "+str(article.pmid))
         print(str(article))
 
-    data = article.title + " " + article.abstract
+    data = re.sub("\n", " ", article.title + " " + article.abstract)
     if len(data) < config.pubmed_length:
         return None, None
 
