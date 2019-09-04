@@ -1,0 +1,4 @@
+name: crossmap_empty
+comment: a configuration object without any data
+targets:
+  - dataset-empty.yaml

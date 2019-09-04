@@ -4,7 +4,7 @@
 import logging
 import nmslib
 from os.path import exists
-from logging import info, warning
+from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
 from .features import feature_map
 from .db import CrossmapDB
@@ -67,6 +67,8 @@ class CrossmapIndexer:
             if features is not None:
                 warning("features in constructor will be ignored")
             self.feature_map = self.db.get_feature_map()
+        if len(self.feature_map) == 0:
+            error("feature map is empty")
         self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
         self.indexes = []
         self.index_files = []
@@ -95,10 +97,13 @@ class CrossmapIndexer:
             warning("Skipping build index for " + label + " - already exists")
             self._load_index(label)
             return
-
         info("Building index for " + label)
         items, ids_titles = self.encoder.documents(files)
         items, ids_titles = _remove_null_items(items, ids_titles)
+        if len(items) == 0:
+            logfun = warning if label == "documents" else error
+            logfun("No content for " + label)
+            return
         info("Number of items: "+str(len(ids_titles)))
         self.db._add_data(items, [_[0] for _ in ids_titles],
                           titles=[_[1] for _ in ids_titles],
@@ -233,4 +238,13 @@ class CrossmapIndexer:
         suggestions = [self.target_ids[i] for i, _ in result]
         distances = [float(d) for _, d in result]
         return suggestions, distances
+
+    @property
+    def valid(self):
+        """summarizes if the object was initialized correctly"""
+        if self.feature_map is None:
+            return False
+        if self.target_ids is None:
+            return False
+        return len(self.feature_map) > 0 and len(self.target_ids) > 0
 

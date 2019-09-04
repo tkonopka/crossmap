@@ -10,13 +10,13 @@ from .vectors import csr_residual, vec_decomposition
 from .tools import open_file, yaml_document
 
 
-def require_valid(function):
+def require_valid(f):
     """Decorator, check if class is valid before computation."""
 
-    @functools.wraps(function)
+    @functools.wraps(f)
     def wrapped(self, *args, **kw):
         if self.valid():
-            return function(self, *args, **kw)
+            return f(self, *args, **kw)
         return None
 
     return wrapped
@@ -57,7 +57,7 @@ class Crossmap:
     @property
     def valid(self):
         """get a boolean stating whether settings are valid"""
-        return self.settings.valid
+        return self.settings.valid and self.indexer.valid
 
     def build(self):
         """create indexes and auxiliary objects"""

@@ -36,8 +36,9 @@ class CrossmapInitTests(unittest.TestCase):
         self.assertFalse(exists(subdir))
         # initializing using a settings object
         crossmap = Crossmap(settings)
-        self.assertTrue(crossmap.valid)
         self.assertTrue(exists(subdir))
+        # the crossmap is not valid because it has not been build yet
+        self.assertFalse(crossmap.valid)
 
     def test_init_from_invalid(self):
         """Initializing with an invalid configuration file"""
@@ -46,6 +47,44 @@ class CrossmapInitTests(unittest.TestCase):
             crossmap = Crossmap(config_noname)
         self.assertTrue("name" in str(cm.output))
         self.assertFalse(crossmap.valid)
+
+
+class CrossmapBuildEmptyTests(unittest.TestCase):
+    """Special cases for initialization - empty datasets"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_empty_targets")
+        remove_crossmap_cache(data_dir, "crossmap_empty_documents")
+        remove_crossmap_cache(data_dir, "crossmap_empty")
+
+    def test_init_empty_targets_no_documents(self):
+        """targets data file cannot be empty"""
+
+        with self.assertLogs(level="ERROR") as cm:
+            crossmap = Crossmap(join(data_dir, "config-empty.yaml"))
+            crossmap.build()
+        self.assertTrue("empty" in str(cm.output))
+        self.assertFalse(crossmap.valid)
+
+    def test_init_empty_targets(self):
+        """targets data file cannot be empty"""
+
+        with self.assertLogs(level="ERROR") as cm:
+            crossmap = Crossmap(join(data_dir, "config-empty-targets.yaml"))
+            crossmap.build()
+        self.assertTrue("No content" in str(cm.output))
+        self.assertTrue("for targets" in str(cm.output))
+        self.assertFalse(crossmap.valid)
+
+    def test_init_empty_documents(self):
+        """Initializing with an invalid configuration file"""
+
+        with self.assertLogs(level="WARNING") as cm:
+            crossmap = Crossmap(join(data_dir, "config-empty-documents.yaml"))
+            crossmap.build()
+        self.assertTrue("No content" in str(cm.output))
+        self.assertTrue("for documents" in str(cm.output))
+        self.assertTrue(crossmap.valid)
 
 
 class CrossmapBuildStandardTests(unittest.TestCase):

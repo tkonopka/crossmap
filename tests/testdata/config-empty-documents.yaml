@@ -1,0 +1,6 @@
+name: crossmap_empty_documents
+comment: a configuration object pointing to a document file that is empty (discouraged, but allowed)
+targets:
+  - dataset.yaml
+documents:
+  - dataset-empty.yaml
