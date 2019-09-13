@@ -49,14 +49,12 @@ def _count_tokens(tokenizer, files):
 
     counts = Counter()
     num_items = 0
-    ids = set()
     for f in files:
         info("Extracting features from file: " + basename(f))
         for id, doc in tokenizer.tokenize_path(f):
             num_items += 1
             if num_items % 100000 == 0:
                 info("Number of items: "+str(num_items))
-            ids.add(id)
             tokens = set()
             for component in ("data", "aux_pos", "aux_neg"):
                 if component in doc:
@@ -86,12 +84,14 @@ def _normalize_ic(count_map, N):
 
 
 def _feature_weights(count_map, N, model_weights):
-    """
+    """convert integer counts into weights (real numbers)
 
-    :param count_map:
-    :param N:
-    :param model_weights:
-    :return:
+    :param count_map: dict mapping features into integers
+    :param N: integer, normalization factor, number of items scanned
+    :param model_weights: list of length 2, used to define mapping
+        between counts and weights, first element is a constant term
+        and second element is coefficient of a logarithmic scaling
+    :return: dict with same components as count_map
     """
     w0 = model_weights[0]
     w1 = model_weights[1]

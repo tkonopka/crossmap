@@ -26,7 +26,7 @@ def token_counts(docs, components=("data", "aux_pos", "aux_neg")):
     return result
 
 
-class Kmerizer():
+class Kmerizer:
     """A tokenizer of documents that splits words into kmers"""
 
     def __init__(self, k=5, case_sensitive=False, alphabet=None):
@@ -81,9 +81,10 @@ class Kmerizer():
             s = s.lower()
         result = []
         for word in s.split():
-            for i in range(len(word)):
-                if word[i] not in alphabet:
-                    word = word[:i] + " " + word[(i+1):]
+            if not all([_ in alphabet for _ in word]):
+                for i in range(len(word)):
+                    if word[i] not in alphabet:
+                        word = word[:i] + " " + word[(i+1):]
             word = word.strip()
             if word == "":
                 continue

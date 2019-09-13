@@ -146,8 +146,8 @@ def yaml_document(stream):
     """generator to read one yaml document at a time from a stream"""
 
     def parse_doc(d):
-        doc = yaml.load("".join(d), Loader=yaml.BaseLoader)
-        doc_id = list(doc.keys())[0]
+        doc = yaml.load("".join(d), Loader=yaml.CBaseLoader)
+        doc_id = next(iter(doc))
         return doc_id, doc[doc_id]
 
     data = []

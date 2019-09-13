@@ -6,7 +6,6 @@ import unittest
 from os.path import join
 from crossmap.tokens import token_counts
 from crossmap.tokens import kmers, Kmerizer
-from crossmap.tools import yaml_document
 
 data_dir = join("tests", "testdata")
 include_file = join(data_dir, "include.txt")
@@ -164,9 +163,8 @@ class KmerizerArraysTests(unittest.TestCase):
 
     def setUp(self):
         tokens = dict()
-        with open(arrays_file, "rt") as f:
-            for id, doc in yaml_document(f):
-                tokens[id] = self.tokenizer.tokenize(doc)
+        for id, data in self.tokenizer.tokenize_path(arrays_file):
+            tokens[id] = data
         self.tokens = tokens
 
     def test_tokenize_arrays_without_quotes(self):
