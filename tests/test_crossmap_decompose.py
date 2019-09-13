@@ -97,3 +97,4 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
             self.assertEqual(len(iresult["targets"]), 1)
             self.assertEqual(len(iresult["coefficients"]), 1)
             self.assertEqual(iresult["coefficients"][0], 1.0)
+

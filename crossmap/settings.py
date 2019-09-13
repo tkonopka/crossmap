@@ -198,20 +198,21 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             error(missing_msg + "valid name")
 
         # target objects to map toward
-        targets = query_files(self.targets, "targets", dir=dir)
-        result["targets"] = all(targets) if len(targets) > 0 else False
+        self.targets, skipped = query_files(self.targets, "targets", dir=dir)
+        result["targets"] = len(self.targets) > 0
         if not result["targets"]:
             error(missing_msg + "'targets'")
 
         # tokens to exclude
-        excludes = query_files(self.exclude, "exclude", dir=dir)
-        result["exclude"] = all(excludes)
-        if len(excludes) > 0 and not result["exclude"]:
-            error(missing_msg + "exclude")
+        #self.excludes, skipped = query_files(self.exclude, "exclude", dir=dir)
+        #result["exclude"] = len(self.excludes) > 0
+        #if len(excludes) > 0 and not result["exclude"]:
+        #    error(missing_msg + "exclude")
 
         # universe (not required, so missing value generates only warning)
-        documents = query_files(self.documents, "documents", dir=dir)
-        if len(documents) == 0 or not all(documents):
+        self.documents, skipped = query_files(self.documents,
+                                              "documents", dir=dir)
+        if len(self.documents) == 0:
             warning(missing_msg + "'documents'")
 
         result["weighting"] = True
@@ -249,7 +250,13 @@ class CrossmapSettings(CrossmapSettingsDefaults):
 
 
 def query_file(filepath, filetype, log=warning):
-    """check if a file or directory exists, emit a message if not"""
+    """assess whether a file is usable or not
+
+    :param filepath: path to file on disk
+    :param filetype: string, used in a logging message
+    :param log: logging function
+    :return: Logical value depending on whether a file is usable or not
+    """
 
     if not exists(filepath):
         if log is not None:
@@ -259,13 +266,27 @@ def query_file(filepath, filetype, log=warning):
 
 
 def query_files(filepaths, filetype, log=warning, dir=None):
-    """check a list of files using query_file()"""
+    """assess whether a set of files are usable or not
+
+    :param filepaths: path to files on disk
+    :param filetype: string, used in logging messages
+    :param log: logging function
+    :param dir: path to a directory
+    :return: a list of usable file paths and an integer indicating skipped files
+    """
 
     if type(filepaths) is str:
         filepaths = [filepaths]
-    if dir is not None:
-        filepaths = [join(dir, _) for _ in filepaths]
-    return [query_file(_, filetype, log) for _ in filepaths]
+    result, skipped = [], 0
+    for filepath in filepaths:
+        fullpath = filepath
+        if dir is not None:
+            fullpath = join(dir, filepath)
+        if query_file(fullpath, filetype, log):
+            result.append(filepath)
+        else:
+            skipped += 1
+    return result, skipped
 
 
 def require_file(filepath, filetype):

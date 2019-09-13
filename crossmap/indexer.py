@@ -22,26 +22,6 @@ def sparse_to_list(v):
     return v.toarray()[0]
 
 
-def _remove_null_items(data, names):
-    """eliminate data vectors that are null"""
-
-    # identify problematic items
-    n = len(data)
-    skip = set()
-    for i in range(n):
-        if all_zero(data[i].toarray()[0]):
-            skip.add(i)
-    if len(skip) == 0:
-        return data, names
-    skipped = [str(names[i]) for i in range(n) if i in skip]
-    s_str = "\n".join(skipped)
-    w_str = "Skipping items - null vectors - "
-    warning(w_str + str(len(skipped)) + "\n" + s_str)
-    data = [data[i] for i in range(n) if i not in skip]
-    names = [names[i] for i in range(n) if i not in skip]
-    return data, names
-
-
 class CrossmapIndexer:
     """Indexing data for crossmap"""
 
@@ -85,7 +65,7 @@ class CrossmapIndexer:
         self.indexes.append(None)
         self.index_files.append(None)
 
-    def _build_index(self, files, label=""):
+    def _build_index(self, files, label="", batch_size=16380):
         """builds an Annoy index using data from documents on disk"""
 
         if len(files) == 0:
@@ -98,20 +78,40 @@ class CrossmapIndexer:
             self._load_index(label)
             return
         info("Building index for " + label)
-        items, ids_titles = self.encoder.documents(files)
-        items, ids_titles = _remove_null_items(items, ids_titles)
-        if len(items) == 0:
+        result = nmslib.init(method="hnsw", space="l2_sparse",
+                             data_type=nmslib.DataType.SPARSE_VECTOR)
+        items, ids, titles, offset = [], [], [], 0
+
+        # internal helper to save a batch of data into the index and db
+        def add_batch(items, ids, titles, offset):
+            if len(items) == 0:
+                return 0
+            info("Processing batch of size "+str(len(items)))
+            local_indexes = [offset+_ for _ in list(range(len(items)))]
+            self.db._add_data(items, ids, titles=titles,
+                              indexes=local_indexes, tab=label)
+            result.addDataPointBatch(vstack(items), local_indexes)
+            return len(items)
+
+        for _item, _id, _title in self.encoder.documents(files):
+            if all_zero(_item.toarray()[0]):
+                warning("Skipping item - null vector for id " + str(_id))
+                continue
+            items.append(_item)
+            ids.append(_id)
+            titles.append(_title)
+            if len(items) >= batch_size:
+                offset += add_batch(items, ids, titles, offset)
+                items, ids, titles = [], [], []
+        # force a batch save at the end of reading data
+        offset += add_batch(items, ids, titles, offset)
+
+        if offset == 0:
             logfun = warning if label == "documents" else error
             logfun("No content for " + label)
             return
-        info("Number of items: "+str(len(ids_titles)))
-        self.db._add_data(items, [_[0] for _ in ids_titles],
-                          titles=[_[1] for _ in ids_titles],
-                          tab=label)
-        items = vstack(items)
-        result = nmslib.init(method="hnsw", space="l2_sparse",
-                             data_type=nmslib.DataType.SPARSE_VECTOR)
-        result.addDataPointBatch(items)
+        info("Total number of items: "+str(offset))
+
         result.createIndex(print_progress=False)
         self.indexes.append(result)
         self.index_files.append(index_file)

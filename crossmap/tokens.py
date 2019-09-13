@@ -49,19 +49,17 @@ class Kmerizer():
         self.alphabet = set([_ for _ in alphabet])
 
     def tokenize_path(self, filepath):
-        """scan context of a dataset file and return a tokens dict
+        """generator for ids and tokens from a data file
 
-        Returns:
-            dict mapping object ids to Counter object with token values
+        :param filepath: path with yaml content
+        :return: id and tokens from each document in the file
         """
 
-        result = dict()
         tokenize = self.tokenize
         open_fn = gzip.open if filepath.endswith(".gz") else open
         with open_fn(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result[id] = tokenize(doc)
-        return result
+                yield id, tokenize(doc)
 
     def tokenize(self, doc):
         """obtain token counts from a single document"""

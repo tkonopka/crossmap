@@ -103,7 +103,7 @@ class CrossmapDB:
             conn.commit()
 
     def index(self):
-        """create indexes on existing tables"""
+        """create indexes on existing tables in the database"""
         info("Indexing database")
         self._index_table("targets")
         self._index_table("documents")
@@ -294,3 +294,4 @@ def std_table(table=0):
     if table not in ["targets", "documents"]:
         raise Exception("unrecognized table: " + str(table))
     return table
+

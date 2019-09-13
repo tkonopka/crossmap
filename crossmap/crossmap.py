@@ -1,6 +1,5 @@
 """Crossmap class"""
 
-import functools
 from os import mkdir
 from os.path import exists
 from scipy.sparse import csr_matrix, vstack
@@ -10,16 +9,17 @@ from .vectors import csr_residual, vec_decomposition
 from .tools import open_file, yaml_document
 
 
-def require_valid(f):
-    """Decorator, check if class is valid before computation."""
-
-    @functools.wraps(f)
-    def wrapped(self, *args, **kw):
-        if self.valid():
-            return f(self, *args, **kw)
-        return None
-
-    return wrapped
+#import functools
+#def require_valid(f):
+#    """Decorator, check if class is valid before computation."""
+#
+#    @functools.wraps(f)
+#    def wrapped(self, *args, **kw):
+#        if self.valid():
+#            return f(self, *args, **kw)
+#        return None
+#
+#    return wrapped
 
 
 def prediction(ids, distances, name):

@@ -50,7 +50,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain tokens for all entries in a dataset"""
 
         tokenizer = Kmerizer()
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         self.assertTrue("A" in tokens)
         self.assertTrue("ZZ" in tokens)
         self.assertGreater(len(tokens), 3)
@@ -59,7 +61,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain tokens for every component of a document"""
 
         tokenizer = Kmerizer()
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         result = tokens["A"]
         self.assertTrue("data" in result)
         self.assertTrue("aux_pos" in result)
@@ -70,7 +74,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain tokens also from aux_neg fields"""
 
         tokenizer = Kmerizer()
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         result = tokens["C"]
         self.assertTrue("aux_neg" in result)
         self.assertTrue("bob" in result["aux_neg"])
@@ -80,7 +86,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain tokens from documents"""
 
         tokenizer = Kmerizer(k=5)
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         result = tokens["D"]
         # data component should only be based on "Daniel"
         self.assertEqual(len(result["data"]), 2)
@@ -95,7 +103,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain tokens in case sensitive manner"""
 
         tokenizer = Kmerizer(k=10, case_sensitive=True)
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         result = tokens["U"]["data"]
         self.assertTrue("ABCDEFG" in result)
         self.assertEqual(result["ABCDEFG"], 1)
@@ -104,7 +114,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain tokens, all in lowercase"""
 
         tokenizer = Kmerizer(k=10, case_sensitive=False)
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         result = tokens["U"]["data"]
         self.assertFalse("ABCDEFG" in result)
         self.assertTrue("abcdefg" in result)
@@ -114,7 +126,9 @@ class KmerizerTests(unittest.TestCase):
         """obtain summary of tokens in all documents"""
 
         tokenizer = Kmerizer(k=10)
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         result = token_counts(tokens)
         self.assertTrue("data" in result)
         self.assertGreater(result["with"], 1)
@@ -124,7 +138,9 @@ class KmerizerTests(unittest.TestCase):
         """tokenizing with alphabet with missing letters introduces spaces"""
 
         tokenizer = Kmerizer(k=5, alphabet="bcdefghijklmnopqrstuvwxyz")
-        tokens = tokenizer.tokenize_path(dataset_file)
+        tokens = dict()
+        for id, data in tokenizer.tokenize_path(dataset_file):
+            tokens[id] = data
         # item Alice - has a word just with letter A
         dataA = tokens["A"]["data"]
         auxA = tokens["A"]["aux_pos"]

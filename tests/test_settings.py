@@ -75,7 +75,8 @@ class CrossmapSettingsTests(unittest.TestCase):
 
         with self.assertLogs(level='WARNING'):
             result = CrossmapSettings(config_typo_file)
-        self.assertFalse(result.valid)
+        # one target file is valid, so the overall config is valid
+        self.assertTrue(result.valid)
 
     def test_full_paths(self):
         """Extract project file paths"""

@@ -8,7 +8,6 @@ from math import log2
 from os.path import exists, basename
 from sys import maxsize
 from .tokens import CrossmapTokenizer
-from .tools import yaml_document
 
 
 # column titles for feature map files
@@ -53,15 +52,16 @@ def _count_tokens(tokenizer, files):
     ids = set()
     for f in files:
         info("Extracting features from file: " + basename(f))
-        docs = tokenizer.tokenize_path(f)
-        num_items += len(docs)
-        for k, v in docs.items():
-            ids.add(k)
-            k_tokens = set()
+        for id, doc in tokenizer.tokenize_path(f):
+            num_items += 1
+            if num_items % 100000 == 0:
+                info("Number of items: "+str(num_items))
+            ids.add(id)
+            tokens = set()
             for component in ("data", "aux_pos", "aux_neg"):
-                if component in v:
-                    k_tokens.update(v[component].keys())
-            counts.update(k_tokens)
+                if component in doc:
+                    tokens.update(doc[component].keys())
+            counts.update(tokens)
 
     return counts, num_items
 

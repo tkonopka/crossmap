@@ -44,24 +44,30 @@ class CrossmapEncoderTests(unittest.TestCase):
     def test_encode_no_documents(self):
         """process an empty documents list"""
 
-        result, names = self.builder.documents([])
-        self.assertEqual(names, [])
+        result, ids = [], []
+        for _item, _id, _title in self.builder.documents([]):
+            result.append(_item)
+            ids.append(_id)
+        self.assertEqual(ids, [])
         self.assertEqual(result, [])
 
     def test_encode_documents(self):
         """process several documents on disk"""
 
-        result, ids_titles = self.builder.documents([dataset_file])
-        self.assertEqual(len(ids_titles), 6,
+        result, ids, titles = [], [], []
+        for _d, _id, _title in self.builder.documents([dataset_file]):
+            result.append(_d)
+            ids.append(_id)
+            titles.append(_title)
+        self.assertEqual(len(ids), 6,
                          "dataset.yaml has six documents")
-        ids = [_[0] for _ in ids_titles]
         self.assertEqual(sorted(ids), ["A", "B", "C", "D", "U", "ZZ"],
                          "dataset.yaml has six documents")
         self.assertEqual(len(result), 6)
         r0 = result[0].toarray()[0]
         self.assertEqual(len(r0), len(test_map))
         # entry for item "A" does not have requested features
-        names_dict = {v[0]:k for k, v in enumerate(ids_titles)}
+        names_dict = {ids[_]:_ for _ in range(len(ids))}
         index_A = names_dict["A"]
         rA = result[index_A].toarray()[0]
         self.assertEqual(sum(rA), 0, "all values for item A zero")

@@ -27,18 +27,13 @@ class CrossmapEncoder:
         self.aux_weight = aux_weight
 
     def documents(self, filepaths):
-        """create a data matrix by parsing data from disk files
+        """generator to parsing data from disk files
 
-        Arguments:
-            filepaths     paths to yaml documents
-
-        Returns:
-            array with encoded  matrix and a dict mapping ids associated with each matrix row
-            array with one string
+        :param filepaths: paths to yaml documents
+        :return: array with encoded  matrix and a dict mapping ids
+            associated with each matrix row array with one string
         """
 
-        data = []
-        ids_titles = []
         tokenize = self.tokenizer.tokenize
         encode = self.encode
 
@@ -48,10 +43,7 @@ class CrossmapEncoder:
                 for id, doc in yaml_document(f):
                     tokens, _ = encode(tokenize(doc), id)
                     title = doc["title"] if "title" in doc else ""
-                    ids_titles.append([id, title])
-                    data.append(tokens)
-
-        return data, ids_titles
+                    yield tokens, id, title
 
     def document(self, doc, name="X"):
         """encode one document into a vector"""
