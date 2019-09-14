@@ -66,7 +66,7 @@ class CrossmapIndexer:
         self.indexes.append(None)
         self.index_files.append(None)
 
-    def _build_index(self, files, label="", batch_size=64000):
+    def _build_index(self, files, label="", batch_size=100000):
         """builds an Annoy index using data from documents on disk"""
 
         if len(files) == 0:
@@ -87,13 +87,13 @@ class CrossmapIndexer:
         def add_batch(items, ids, titles, offset):
             if len(items) == 0:
                 return 0
-            info("Processing batch of size "+str(len(items)))
             local_indexes = [offset+_ for _ in list(range(len(items)))]
             self.db._add_data(items, ids, titles=titles,
                               indexes=local_indexes, tab=label)
             result.addDataPointBatch(vstack(items), local_indexes)
             return len(items)
 
+        num_items = 0
         for _item, _id, _title in self.encoder.documents(files):
             if all_zero(_item.toarray()[0]):
                 warning("Skipping item - null vector for id " + str(_id))
@@ -102,6 +102,8 @@ class CrossmapIndexer:
             ids.append(_id)
             titles.append(_title)
             if len(items) >= batch_size:
+                num_items += batch_size
+                info("Number of items: " + str(num_items))
                 offset += add_batch(items, ids, titles, offset)
                 items, ids, titles = [], [], []
         # force a batch save at the end of reading data
@@ -169,8 +171,7 @@ class CrossmapIndexer:
         return nns, distances
 
     def encode_document(self, doc):
-        result, _ = self.encoder.document(doc)
-        return result
+        return self.encoder.document(doc)
 
     def nearest_targets(self, v, n=5):
         return self._neighbors(v, n, index=0, names=True)

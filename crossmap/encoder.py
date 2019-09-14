@@ -41,46 +41,40 @@ class CrossmapEncoder:
             open_fn = gzip.open if filepath.endswith(".gz") else open
             with open_fn(filepath, "rt") as f:
                 for id, doc in yaml_document(f):
-                    tokens, _ = encode(tokenize(doc), id)
+                    tokens = encode(tokenize(doc))
                     title = doc["title"] if "title" in doc else ""
                     yield tokens, id, title
 
-    def document(self, doc, name="X"):
+    def document(self, doc):
         """encode one document into a vector"""
 
         tokens = self.tokenizer.tokenize(doc)
-        return self.encode(tokens, name)
+        return self.encode(tokens)
 
-    def encode(self, tokens, name="X"):
+    def encode(self, tokens):
         """encode one document into a vector
 
-        Arguments:
-            tokens         a dictionary with tokens for data, aux_pos, aux_neg
-            name           character, default name for this object
-
-        Returns:
-            array with weights for all features based on doc
-            one string
+        :param tokens: dictionary with tokens for data, aux_pos, aux_neg
+        :return: array with a vector representation of the data
         """
 
         feature_map = self.feature_map
-        n_features = len(feature_map)
-
-        def _to_vec(component):
-            """helper to transfer from a dict/counter into a vector"""
-            vec = zeros(n_features, dtype=float)
-            if component not in tokens:
-                return vec
-            for k, v in tokens[component].items():
-                if k not in feature_map:
-                    continue
-                fm = feature_map[k]
-                vec[fm[0]] += fm[1]*v
-            return normalize_vec(vec)
-
-        data = _to_vec("data")
-        aux_pos, aux_neg = _to_vec("aux_pos"), _to_vec("aux_neg")
+        data = _to_vec(tokens, "data", feature_map)
+        aux_pos = _to_vec(tokens, "aux_pos", feature_map)
+        aux_neg = _to_vec(tokens, "aux_neg", feature_map)
         w0, w1 = self.aux_weight[0], self.aux_weight[1]
         data = add_three(data, aux_pos, aux_neg, w0, -w1)
-        return csr_matrix(normalize_vec(data)), name
+        return csr_matrix(normalize_vec(data))
 
+
+def _to_vec(tokens, component, feature_map):
+    """helper to transfer from a dict/counter into a vector"""
+    vec = zeros(len(feature_map), dtype=float)
+    if component not in tokens:
+        return vec
+    for k, v in tokens[component].items():
+        if k not in feature_map:
+            continue
+        fm = feature_map[k]
+        vec[fm[0]] += fm[1]*v
+    return normalize_vec(vec)

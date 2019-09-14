@@ -24,9 +24,8 @@ class CrossmapEncoderTests(unittest.TestCase):
     def test_encode_single_document(self):
         """process a single string into a feature matrix"""
 
-        result, name = self.builder.document({"data": "abcdef"}, "00")
+        result = self.builder.document({"data": "abcdef"})
         arr = result.toarray()[0]
-        self.assertEqual(name, "00", "name is just returned back"),
         self.assertEqual(len(arr), len(test_map), "one row, all features")
         self.assertGreater(arr[0], 0, "first token is present")
         self.assertEqual(sum([_>0 for _ in arr]), 3,
@@ -36,7 +35,7 @@ class CrossmapEncoderTests(unittest.TestCase):
         """process a document with no data"""
 
         doc = dict(data="")
-        result, name = self.builder.document(doc, "X")
+        result = self.builder.document(doc)
         arr = result.toarray()[0]
         self.assertEqual(len(arr), len(test_map), "")
         self.assertEqual(sum([_ for _ in arr]), 0)
