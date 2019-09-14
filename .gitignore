@@ -4,6 +4,7 @@
 .pydevproject
 .coverage
 htmlcov
+profiling
 
 # ignore data files by default
 *xml

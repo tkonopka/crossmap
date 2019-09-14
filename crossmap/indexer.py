@@ -10,7 +10,8 @@ from .features import feature_map
 from .db import CrossmapDB
 from .tokens import CrossmapTokenizer
 from .encoder import CrossmapEncoder
-from .distance import all_zero, euc_dist
+from .vectors import all_zero
+from .distance import euc_dist
 
 
 # this removes the INFO messages from nmslib
@@ -65,7 +66,7 @@ class CrossmapIndexer:
         self.indexes.append(None)
         self.index_files.append(None)
 
-    def _build_index(self, files, label="", batch_size=16380):
+    def _build_index(self, files, label="", batch_size=64000):
         """builds an Annoy index using data from documents on disk"""
 
         if len(files) == 0:

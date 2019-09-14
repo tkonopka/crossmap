@@ -2,9 +2,66 @@
 Handling vectors and vector decompositions
 """
 
+import numba
+from math import sqrt
 from numpy import matmul
 from numpy.linalg import lstsq
 from scipy.sparse import csr_matrix
+
+
+@numba.jit
+def vec_norm(a):
+    """compute the vector norm of a vector"""
+    sum2 = 0
+    for i in range(len(a)):
+        sum2 += a[i] *a[i]
+    return sqrt(sum2)
+
+
+@numba.jit
+def all_zero(a):
+    """evaluate if entire vector is made up of zeros"""
+    for i in range(len(a)):
+        if a[i] != 0.0:
+            return 0
+    return 1
+
+
+@numba.jit
+def num_nonzero(a):
+    """evaluate number of elements in a vector that are nonzero"""
+    result = 0
+    for i in range(len(a)):
+        result += (a[i]!=0.0)
+    return result
+
+
+@numba.jit
+def normalize_vec(a):
+    """compute the vector norm of a vector"""
+    n = vec_norm(a)
+    if n == 0:
+        return a
+    for i in range(len(a)):
+        a[i] = a[i]/n
+    return a
+
+
+@numba.jit
+def add_three(a, b, c, wb, wc):
+    """add three vectors
+
+    :param a: array
+    :param b: array
+    :param c: array
+    :param wb: real number
+    :param wc: real number
+    :return: vector a+ wb*b + wc*c
+    """
+
+    for i in range(len(a)):
+        a[i] += wb*b[i] + wc*c[i]
+    return a
 
 
 def csr_residual(v, mat, weights=None):

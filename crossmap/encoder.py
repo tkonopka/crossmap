@@ -4,7 +4,7 @@ Encoding documents into feature vectors
 
 import gzip
 from numpy import zeros
-from .distance import normalize_vec
+from .vectors import normalize_vec, add_three
 from scipy.sparse import csr_matrix
 from .tools import yaml_document
 
@@ -80,9 +80,7 @@ class CrossmapEncoder:
 
         data = _to_vec("data")
         aux_pos, aux_neg = _to_vec("aux_pos"), _to_vec("aux_neg")
-        w = self.aux_weight
-        result = data
-        for i in range(len(data)):
-            result[i] += w[0]*aux_pos[i] - w[1]*aux_neg[i]
-        return csr_matrix(normalize_vec(result)), name
+        w0, w1 = self.aux_weight[0], self.aux_weight[1]
+        data = add_three(data, aux_pos, aux_neg, w0, -w1)
+        return csr_matrix(normalize_vec(data)), name
 
