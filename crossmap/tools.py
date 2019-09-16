@@ -6,6 +6,7 @@ import csv
 import gzip
 import yaml
 import pickle
+from yaml import CBaseLoader
 from contextlib import contextmanager
 
 
@@ -146,7 +147,11 @@ def yaml_document(stream):
     """generator to read one yaml document at a time from a stream"""
 
     def parse_doc(d):
-        doc = yaml.load("".join(d), Loader=yaml.CBaseLoader)
+        try:
+            doc = yaml.load("".join(d), Loader=CBaseLoader)
+        except Exception:
+            print(str("".join(d)))
+            raise Exception("failed parsing document")
         doc_id = next(iter(doc))
         return doc_id, doc[doc_id]
 

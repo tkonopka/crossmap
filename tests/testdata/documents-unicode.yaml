@@ -1,0 +1,6 @@
+U:alpha:
+  data: "alpha \u03B1"
+  aux_pos: A
+U:beta:
+  data: "beta \u03B2"
+  aux_pos: B

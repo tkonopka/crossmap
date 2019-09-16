@@ -40,7 +40,7 @@ parser.add_argument("--pretty", action="store_true",
 
 # fine-tuning of predictions and output
 parser.add_argument("--logging", action="store",
-                    default="WARNING",
+                    default="WARNING", choices=["WARNING", "INFO", "ERROR"],
                     help="logging levels, use WARNING, INFO, or ERROR")
 
 
