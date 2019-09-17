@@ -157,7 +157,7 @@ def yaml_document(stream):
 
     data = []
     for line in stream:
-        if line.startswith(" ") or line.startswith("\t"):
+        if line.startswith((" ", "\t", "\n")):
             data.append(line)
         elif len(data) == 0:
             data.append(line)

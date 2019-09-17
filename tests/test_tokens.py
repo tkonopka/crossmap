@@ -10,8 +10,7 @@ from crossmap.tokens import kmers, Kmerizer
 data_dir = join("tests", "testdata")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
-arrays_file = join(data_dir, "dataset-arrays.yaml")
-unicode_file = join(data_dir, "documents-unicode.yaml")
+specialcases_file = join(data_dir, "documents-special-cases.yaml")
 
 
 class KmersTests(unittest.TestCase):
@@ -157,55 +156,41 @@ class KmerizerTests(unittest.TestCase):
         self.assertEqual(keysD, [_.strip() for _ in keysD])
 
 
-class KmerizerArraysTests(unittest.TestCase):
-    """Tokenize when yaml data is formatted as an array"""
+class KmerizerSpecialCasesTests(unittest.TestCase):
+    """Tokenize when yaml data has special cases"""
 
-    tokenizer = Kmerizer(k=5)
+    tokenizer = Kmerizer(k=20)
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         tokens = dict()
-        for id, data in self.tokenizer.tokenize_path(arrays_file):
+        for id, data in cls.tokenizer.tokenize_path(specialcases_file):
             tokens[id] = data
-        self.tokens = tokens
+        cls.tokens = tokens
 
     def test_tokenize_arrays_without_quotes(self):
         """tokenize when yaml array does not have quotes"""
 
-        result = self.tokens["without"]["aux_pos"]
-        self.assertTrue("abcde" in result)
-        self.assertTrue("mnopq" in result)
-        self.assertTrue("nopqr" in result)
+        result = self.tokens["array_without_quotes"]["aux_pos"]
+        self.assertTrue("abcdef" in result)
+        self.assertTrue("mnopqr" in result)
 
     def test_tokenize_arrays_with_quotes(self):
         """tokenize when yaml array has quote around each item"""
 
-        result = self.tokens["with"]["aux_pos"]
-        self.assertTrue("abc12" in result)
-        self.assertTrue("bc123" in result)
-        self.assertTrue("abc78" in result)
-        self.assertTrue("bc789" in result)
+        result = self.tokens["array_with_quotes"]["aux_pos"]
+        self.assertTrue("abc123" in result)
+        self.assertTrue("abc789" in result)
 
-
-class KmerizerUnicodeTests(unittest.TestCase):
-    """Tokenize when yaml data has unicode characters"""
-
-    tokenizer = Kmerizer(k=5)
-
-    def setUp(self):
-        tokens = dict()
-        for id, data in self.tokenizer.tokenize_path(unicode_file):
-            tokens[id] = data
-        self.tokens = tokens
-
-    def test_tokenize_arrays_without_quotes(self):
+    def test_tokenize_unicode(self):
         """tokenize when yaml array does not have quotes"""
 
-        result = self.tokens["U:alpha"]
+        result = self.tokens["alpha"]
         self.assertTrue("alpha" in result["data"])
 
-    def test_tokenize_arrays_with_quotes(self):
-        """tokenize when yaml array has quote around each item"""
+    def test_tokenize_multiline(self):
+        """tokenize when yaml has empty lines within items"""
 
-        result = self.tokens["U:beta"]
-        self.assertTrue("beta" in result["data"])
+        result = self.tokens["multiline"]
+        self.assertTrue("multiple" in result["data"])
 
