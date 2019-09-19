@@ -86,6 +86,14 @@ class CrossmapSettingsTests(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result, [documents_file])
 
+    def test_full_paths_featuremap(self):
+        """File path to featuremap is empty"""
+
+        settings = CrossmapSettings(config_file)
+        result = settings.files("featuremap")
+        self.assertEqual(len(result), 0)
+        self.assertEqual(result, [])
+
     def test_full_paths_docs_targets(self):
         """Extract both document and target file paths"""
 

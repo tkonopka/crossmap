@@ -12,6 +12,7 @@ from .tokens import CrossmapTokenizer
 from .encoder import CrossmapEncoder
 from .vectors import all_zero
 from .distance import euc_dist
+from .tools import read_dict
 
 
 # this removes the INFO messages from nmslib
@@ -38,6 +39,10 @@ class CrossmapIndexer:
         self.db = CrossmapDB(self.settings.db_file())
         self.db.build()
         if self.db.count_features() == 0:
+            if features is None and len(self.settings.files("featuremap")) > 0:
+                featuremap_file = self.settings.files("featuremap")[0]
+                features = read_dict(featuremap_file, id_col="id",
+                                     value_col="weight", value_fun=float)
             if features is not None:
                 self.feature_map = {k: (i, 1) for i, k in enumerate(features)}
                 self.db.n_features = len(features)

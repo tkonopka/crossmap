@@ -96,16 +96,18 @@ class CrossmapSettingsDefaults:
         self.dir = getcwd()
         self.data_dir = join(self.dir, self.name)
         self.file = "crossmap.yaml"
+        # paths to disk files
         self.targets = []
         self.documents = []
-        self.exclude = []
-        self.valid = False
+        self.featuremap = []
         # settings for features (e.g. number of features)
         self.features = CrossmapFeatureSettings()
         # settings for tokens (e.g. kmer length)
         self.tokens = CrossmapKmerSettings()
         # settings for server (e.g. port)
         self.server = CrossmapServerSettings()
+        # summary of state
+        self.valid = False
 
     def db_file(self):
         """create path to db file"""
@@ -203,12 +205,6 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if not result["targets"]:
             error(missing_msg + "'targets'")
 
-        # tokens to exclude
-        #self.excludes, skipped = query_files(self.exclude, "exclude", dir=dir)
-        #result["exclude"] = len(self.excludes) > 0
-        #if len(excludes) > 0 and not result["exclude"]:
-        #    error(missing_msg + "exclude")
-
         # universe (not required, so missing value generates only warning)
         self.documents, skipped = query_files(self.documents,
                                               "documents", dir=dir)
@@ -237,8 +233,9 @@ class CrossmapSettings(CrossmapSettingsDefaults):
 
         result = []
         for file_type in file_types:
-            if file_type not in set(["targets", "documents"]):
-                warning("attempting to retrieve unknown file type: "+str(file_type))
+            if file_type not in set(["targets", "documents", "featuremap"]):
+                ft = str(file_type)
+                warning("attempting to retrieve unknown file type: " + ft)
                 continue
             for _ in self.__dict__[file_type]:
                 result.append(join(self.dir, _))

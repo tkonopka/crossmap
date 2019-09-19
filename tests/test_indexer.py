@@ -11,6 +11,7 @@ from .tools import remove_crossmap_cache
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
 config_nodocs = join(data_dir, "config-no-documents.yaml")
+config_featuremap = join(data_dir, "config-featuremap.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
 # not features for feature map should be in lowercase!
 test_features = ["alice", "bob", "catherine", "daniel", "starts", "unique", "file",
@@ -237,3 +238,33 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
         nns, distances = self.indexer.suggest_targets(doc_vector, 2)
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "B")
+
+
+class CrossmapIndexerFixedFeaturemapTests(unittest.TestCase):
+    """An indexer using a file-based featuremap"""
+
+    @classmethod
+    def setUpClass(cls):
+        """build an indexer using a fixed featuremap"""
+        with cls.assertLogs(cls, level="WARNING") as cm:
+            settings = CrossmapSettings(config_featuremap, create_dir=True)
+            settings.tokens.k = 20
+            cls.indexer = CrossmapIndexer(settings)
+            cls.indexer.build()
+        # the indexer should warn that there are no documents
+        cls.assertTrue(cls, "documents" in str(cm.output))
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_featuremap")
+
+    def test_features_from_file(self):
+        """make sure effective feature map was obtained from file"""
+
+        featuremap = self.indexer.feature_map
+        # file has a limited number or tokens (alpha, beta, ..., echo)
+        self.assertEqual(len(featuremap), 8)
+        self.assertTrue("alpha" in featuremap)
+        self.assertTrue("echo" in featuremap)
+        self.assertTrue("entry" in featuremap)
+        self.assertFalse("alice" in featuremap)
