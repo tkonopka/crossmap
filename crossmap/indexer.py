@@ -6,7 +6,7 @@ import nmslib
 from os.path import exists
 from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
-from .features import feature_map
+from .features import feature_map, feature_dict_map
 from .db import CrossmapDB
 from .tokens import CrossmapTokenizer
 from .encoder import CrossmapEncoder
@@ -38,27 +38,35 @@ class CrossmapIndexer:
         tokenizer = CrossmapTokenizer(settings)
         self.db = CrossmapDB(self.settings.db_file())
         self.db.build()
-        if self.db.count_features() == 0:
-            if features is None and len(self.settings.files("featuremap")) > 0:
-                featuremap_file = self.settings.files("featuremap")[0]
-                features = read_dict(featuremap_file, id_col="id",
-                                     value_col="weight", value_fun=float)
-            if features is not None:
-                self.feature_map = {k: (i, 1) for i, k in enumerate(features)}
-                self.db.n_features = len(features)
-            else:
-                self.feature_map = feature_map(settings)
-                self.db.set_feature_map(self.feature_map)
-        else:
-            if features is not None:
-                warning("features in constructor will be ignored")
-            self.feature_map = self.db.get_feature_map()
+        self.feature_map = self._init_features(features)
         if len(self.feature_map) == 0:
             error("feature map is empty")
         self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
         self.indexes = []
         self.index_files = []
         self.target_ids = None
+
+    def _init_features(self, features):
+        """determine the feature_map compoent from db, file, or from scratch"""
+
+        if self.db.count_features() == 0:
+            if features is None and len(self.settings.files("featuremap")) > 0:
+                info("reading features from prepared dictionary")
+                features_file = self.settings.files("featuremap")[0]
+                features = read_dict(features_file, id_col="id",
+                                     value_col="weight", value_fun=float)
+
+            if features is None:
+                result = feature_map(self.settings)
+            else:
+                result = feature_dict_map(self.settings, features)
+            self.db.set_feature_map(result)
+        else:
+            if features is not None:
+                warning("features in constructor will be ignored")
+            result= self.db.get_feature_map()
+
+        return result
 
     def clear(self):
         self.indexes = []

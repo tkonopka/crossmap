@@ -66,9 +66,9 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         self.indexer.build()
         # the second indexer is created from scratch, with the same settings
         # build should detect presence of indexes and load instead
-        newindexer = CrossmapIndexer(self.indexer.settings,
-                                     self.indexer.feature_map)
         with self.assertLogs(level="WARNING") as cm:
+            newindexer = CrossmapIndexer(self.indexer.settings,
+                                         self.indexer.feature_map)
             newindexer.build()
         self.assertTrue("Skip" in str(cm.output))
         self.assertTrue("exists" in str(cm.output))
@@ -258,8 +258,8 @@ class CrossmapIndexerFixedFeaturemapTests(unittest.TestCase):
     def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_featuremap")
 
-    def test_features_from_file(self):
-        """make sure effective feature map was obtained from file"""
+    def test_loads_features_from_file(self):
+        """features should match exactly content of file"""
 
         featuremap = self.indexer.feature_map
         # file has a limited number or tokens (alpha, beta, ..., echo)
@@ -268,3 +268,24 @@ class CrossmapIndexerFixedFeaturemapTests(unittest.TestCase):
         self.assertTrue("echo" in featuremap)
         self.assertTrue("entry" in featuremap)
         self.assertFalse("alice" in featuremap)
+
+    def test_feature_weights_from_file(self):
+        """weights in file are not all equal to 1.0"""
+
+        featuremap = self.indexer.feature_map
+        self.assertEqual(featuremap["alpha"][1], 1.0)
+        self.assertNotEqual(featuremap["beta"][1], 1.0)
+
+    def test_transfers_features_into_db(self):
+        """after creating indexes, features are stored in db"""
+
+        featuremap = self.indexer.feature_map
+        dbmap = self.indexer.db.get_feature_map()
+        self.assertEqual(len(featuremap), len(dbmap))
+
+    def test_saves_features_file(self):
+        """after creating indexes, copies features into project directory"""
+
+        feature_file = self.indexer.settings.tsv_file("feature-map")
+        self.assertTrue(exists(feature_file))
+

@@ -28,8 +28,10 @@ def read_feature_map(filepath):
     return result
 
 
-def write_feature_map(feature_map, filepath):
+def write_feature_map(feature_map, settings):
     """write an id-index map into a file."""
+
+    filepath = settings.tsv_file("feature-map")
     with open(filepath, "wt") as f:
         f.write(id_col + "\t" + index_col + "\t"+ weight_col+"\n")
         for k, v in feature_map.items():
@@ -122,7 +124,18 @@ def feature_map(settings, use_cache=True):
     info("Feature map size: "+str(len(result)))
     if use_cache:
         info("Saving feature map")
-        write_feature_map(result, cache_file)
+        write_feature_map(result, settings)
+    return result
+
+
+def feature_dict_map(settings, weights):
+    """construct a dict with features from a weights dictionary"""
+
+    if type(weights) is dict:
+        result = {k: (i, weights[k]) for i, k in enumerate(weights)}
+    else:
+        result = {k: (i, 1) for i, k in enumerate(weights)}
+    write_feature_map(result, settings)
     return result
 
 

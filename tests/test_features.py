@@ -150,7 +150,7 @@ class CrossmapFeatureMapIOTests(unittest.TestCase):
         """read and write a custom-made object"""
         map = dict(a=(0,1), b=(1,0.5))
         map_file = self.settings.tsv_file("feature-map")
-        write_feature_map(map, map_file)
+        write_feature_map(map, self.settings)
         map2 = read_feature_map(map_file)
         self.assertEqual(len(map2), len(map))
         self.assertEqual(map2["a"], map["a"])
