@@ -25,6 +25,14 @@ class CrossmapFeatureMapTests(unittest.TestCase):
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
+    def test_feature_map_unique_ids(self):
+        """features in targets and documents must have unique ids"""
+
+        map = feature_map(self.settings)
+        # map is a dict from strings into (index, weight)
+        all_indexes = set([v[0] for k,v in map.items()])
+        self.assertEqual(len(all_indexes), len(map))
+
     def test_feature_map_wo_cache(self):
         """scan for features in targets and documents"""
 

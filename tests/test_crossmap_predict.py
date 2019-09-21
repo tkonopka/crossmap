@@ -87,6 +87,21 @@ class CrossmapPredictTests(unittest.TestCase):
         self.assertEqual(result["targets"][0], "C")
         self.assertEqual(result["targets"][1], "A")
 
+    def test_predict_report_docs(self):
+        """auxiliary documents should map onto dataset targets"""
+
+        doc = {"data": "Bob B Alice A B"}
+        result = self.crossmap.predict(doc, n_targets=2, n_docs=2,
+                                       options=dict(report_docs=True))
+        # targets should match this document to C and A
+        self.assertEqual(len(result["targets"]), 2)
+        self.assertEqual(result["targets"][0], "B")
+        self.assertEqual(result["targets"][1], "A")
+        # helper documents should include U:C and U:A
+        self.assertEqual(len(result["documents"]), 2)
+        self.assertEqual(result["documents"][0], "U:B")
+        self.assertEqual(result["documents"][1], "U:A")
+
 
 class CrossmapPredictNoDocsTests(unittest.TestCase):
     """Mapping new objects onto targets without documents"""

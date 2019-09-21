@@ -35,6 +35,8 @@ parser.add_argument("--n_targets", action="store",
 parser.add_argument("--n_docs", action="store",
                     type=int, default=1,
                     help="number of documents used")
+parser.add_argument("--report_docs", action="store_true",
+                    help="include document ids in prediction output")
 parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
 
@@ -77,7 +79,8 @@ if config.action == "predict" or config.action == "decompose":
     if config.action == "decompose":
         action_fun = crossmap.decompose_file
     result = action_fun(config.data,
-                        n_targets=config.n_targets, n_docs=config.n_docs)
+                        n_targets=config.n_targets, n_docs=config.n_docs,
+                        options=config)
     if config.pretty:
         result = dumps(result, indent=2)
     else:

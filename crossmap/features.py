@@ -39,7 +39,7 @@ def write_feature_map(feature_map, settings):
 
 
 def _count_tokens(tokenizer, files):
-    """count totkens in files on disk
+    """count tokens in files on disk
 
     :param tokenizer: object with function .tokenize()
     :param files: list with file paths
@@ -160,15 +160,16 @@ def _feature_map(settings):
     target_files = settings.files("targets")
     target_counts, n_targets = _count_tokens(tokenizer, target_files)
     result = dict()
-    for k,v in target_counts.items():
+    for k, v in target_counts.items():
         result[k] = [len(result), v]
     doc_counts, n_docs = _count_tokens(tokenizer, settings.files("documents"))
     for k, v in doc_counts.most_common():
-        if k in result:
-            result[k][1] += v
         if len(result) >= max_features:
             break
-        result[k] = [len(result), v]
+        if k in result:
+            result[k][1] += v
+        else:
+            result[k] = [len(result), v]
 
     N = n_targets + n_docs
     result = _feature_weights(result, N, settings.features.weighting)

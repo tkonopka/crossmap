@@ -9,19 +9,6 @@ from .vectors import csr_residual, vec_decomposition
 from .tools import open_file, yaml_document
 
 
-#import functools
-#def require_valid(f):
-#    """Decorator, check if class is valid before computation."""
-#
-#    @functools.wraps(f)
-#    def wrapped(self, *args, **kw):
-#        if self.valid():
-#            return f(self, *args, **kw)
-#        return None
-#
-#    return wrapped
-
-
 def prediction(ids, distances, name):
     """structure an object describing a nn prediction"""
     return dict(query=name, targets=ids, distances=distances)
@@ -68,32 +55,39 @@ class Crossmap:
         """load indexes from prepared files"""
         self.indexer.load()
 
-    def predict(self, doc, n_targets=3, n_docs=3, query_name="query"):
+    def predict(self, doc, n_targets=3, n_docs=3, query_name="query",
+                options=dict()):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
         :param n_targets: integer, number of target to report
         :param n_docs: integer, number of documents to use in the calculation
         :param query_name: character, a name for the document
+        :param options: dictionary
         :return: a dictionary containing an id, and lists to target ids and
             distances
         """
 
-        n = n_targets
         doc_data = self.indexer.encode_document(doc)
         if doc_data.sum() == 0:
             return prediction([], [], query_name)
+        n = n_targets
         suggest_targets = self.indexer.suggest_targets
         targets, distances = suggest_targets(doc_data, n, n_docs)
-        return prediction(targets[:n], distances[:n], query_name)
+        result = prediction(targets[:n], distances[:n], query_name)
+        if "report_docs" in options:
+            result["documents"], _ = self.indexer.nearest_documents(doc_data, n_docs)
+        return result
 
-    def decompose(self, doc, n_targets=3, n_docs=3, query_name="query"):
+    def decompose(self, doc, n_targets=3, n_docs=3, query_name="query",
+                  options=dict()):
         """provide a decomposition of a query in terms of targets
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
         :param n_targets: integer, number of target to report
         :param n_docs: integer, number of documents to use in the calculation
         :param query_name:  character, a name for the document
+        :param options: dictionary
         :return: dictionary containing an id, and list with target ids and
             decomposition coefficients
         """
@@ -129,7 +123,7 @@ class Crossmap:
 
         return decomposition(ids, coefficients, query_name)
 
-    def predict_file(self, filepath, n_targets=3, n_docs=3):
+    def predict_file(self, filepath, n_targets=3, n_docs=3, options=dict()):
         """perform predictions of nearest targets for documents defined in a file
 
         :param filepath: character, path to a file with documents
@@ -141,10 +135,11 @@ class Crossmap:
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.predict(doc, n_targets, n_docs, id))
+                result.append(self.predict(doc, n_targets, n_docs,
+                                           id, options))
         return result
 
-    def decompose_file(self, filepath, n_targets=3, n_docs=3):
+    def decompose_file(self, filepath, n_targets=3, n_docs=3, options=dict()):
         """perform decomposition for documents defined in a file
 
         :param filepath: character, path to a file with documents
@@ -156,6 +151,7 @@ class Crossmap:
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.decompose(doc, n_targets, n_docs, id))
+                result.append(self.decompose(doc, n_targets, n_docs,
+                                             id, options))
         return result
 
