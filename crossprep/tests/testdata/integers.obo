@@ -8,7 +8,7 @@ ontology: small
 [Term]
 id: int:0
 name: integer
-def: "integer."
+def: "integer. ontology root."
 
 [Term]
 id: int:1

@@ -46,8 +46,8 @@ parser.add_argument("--obo_root", action="store",
                     help="filtering by root node",
                     default=None)
 parser.add_argument("--obo_aux", action="store",
-                    help="types of auxiliary data to include, use P,N, or B",
-                    default="")
+                    help="types of auxiliary data to include",
+                    default="parents")
 
 # settings for orphanet
 parser.add_argument("--orphanet_phenotypes", action="store",
@@ -125,10 +125,8 @@ if config.name is None or config.name == "":
 if config.action == "obo":
     if missing_arguments(["obo"]):
         exit()
-    aux_pos = config.obo_aux in set(["P", "B"])
-    aux_neg = config.obo_aux in set(["N", "B"])
     result = build_obo_dataset(config.obo, config.obo_root,
-                               aux_pos=aux_pos, aux_neg=aux_neg)
+                               aux=config.obo_aux)
     save_dataset(result, config.outdir, config.name)
 
 elif config.action == "baseline":

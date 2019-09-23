@@ -39,10 +39,10 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertEqual(result["int:1"]["title"], "one")
         self.assertEqual(result["int:2"]["title"], "positive integer")
 
-    def test_aux_P_only(self):
+    def test_aux_parents_only(self):
         """elements can have positive auxiliary data fields"""
 
-        result = build_obo_dataset(int_file, aux_pos=True, aux_neg=False)
+        result = build_obo_dataset(int_file, aux="parents")
         self.assertTrue("integer" in result["int:1"]["aux_pos"])
         # r4
         r4 = result["int:4"]
@@ -50,18 +50,18 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertTrue("zero" in r4["aux_pos"])
         self.assertEqual(r4["aux_neg"], "")
 
-    def test_aux_N_siblings(self):
+    def test_aux_siblings(self):
         """elements can have negative auxiliary data fields from siblings"""
 
-        result = build_obo_dataset(int_file, aux_pos=False, aux_neg=True)
+        result = build_obo_dataset(int_file, aux="siblings")
         r4 = result["int:4"]
         self.assertEqual(r4["aux_pos"], "")
         self.assertTrue("prime" in r4["aux_neg"])
 
-    def test_aux_N_children(self):
+    def test_aux_children(self):
         """elements can have negative auxiliary data fields from siblings"""
 
-        result = build_obo_dataset(int_file, aux_pos=False, aux_neg=True)
+        result = build_obo_dataset(int_file, aux="children")
         r2 = result["int:2"]
         self.assertEqual(r2["aux_pos"], "")
         self.assertTrue("prime" in r2["aux_neg"])
@@ -69,7 +69,7 @@ class BuildOboDatasetTests(unittest.TestCase):
     def test_aux_both_intermediate(self):
         """elements can have both positive and negative aux fields"""
 
-        result = build_obo_dataset(int_file, aux_pos=True, aux_neg=True)
+        result = build_obo_dataset(int_file, aux="parents,children,siblings")
         # int:4 is a node with both parent and siblings
         r4 = result["int:4"]
         self.assertTrue("prime" in r4["aux_neg"])
@@ -78,7 +78,7 @@ class BuildOboDatasetTests(unittest.TestCase):
     def test_aux_both_nosib(self):
         """elements can have both positive and negative aux fields"""
 
-        result = build_obo_dataset(int_file, aux_pos=True, aux_neg=True)
+        result = build_obo_dataset(int_file, aux="parents,children,siblings")
         # check that some negative data are provided in the result
         r4 = result["int:4"]
         self.assertTrue("prime" in r4["aux_neg"])
@@ -103,3 +103,9 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertLess(len(result), num_ids)
         self.assertTrue("int:2" in result)
 
+    def test_aux_ancestors(self):
+        """elements can have all ancestors listed"""
+
+        result = build_obo_dataset(int_file, aux="ancestors")
+        self.assertTrue("integer" in result["int:5"]["aux_pos"])
+        self.assertTrue("root" in result["int:5"]["aux_pos"])

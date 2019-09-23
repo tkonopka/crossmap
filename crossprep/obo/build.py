@@ -22,8 +22,16 @@ def name_def(term, sep="; "):
     return result
 
 
-def build_obo_dataset(obo_file, root_id=None, aux_pos=True, aux_neg=True):
-    """transfer data from an obo into a dictionary"""
+def build_obo_dataset(obo_file, root_id=None, aux="none"):
+    """transfer data from an obo into a dictionary
+
+    :param obo_file: path to obo file
+    :param root_id: character, id of root node. This can be used to
+        build a dataset for an ontology branch
+    :param aux: character, the type of data to include in
+        aux_pos and aux_neg fields
+    :return:
+    """
 
     obo = Obo(obo_file)
     if root_id is None:
@@ -31,6 +39,11 @@ def build_obo_dataset(obo_file, root_id=None, aux_pos=True, aux_neg=True):
     else:
         hits = set(obo.descendants(root_id))
         hits.add(root_id)
+
+    aux_parents = ("parents" in aux)
+    aux_ancestors = ("ancestors" in aux)
+    aux_siblings = ("siblings" in aux)
+    aux_children = ("children" in aux)
 
     result = dict()
     for id in obo.ids():
@@ -40,15 +53,21 @@ def build_obo_dataset(obo_file, root_id=None, aux_pos=True, aux_neg=True):
         data = name_def(term)
         data_pos = []
         data_neg = []
-        metadata = dict(is_a=[])
-        for parent in obo.parents(id):
-            metadata["is_a"].append(parent)
-            if aux_pos:
+        metadata = dict()
+        if aux_parents:
+            metadata["parents"] = []
+            for parent in obo.parents(id):
+                metadata["parents"].append(parent)
                 data_pos.append(name_def(obo.terms[parent]))
-        if aux_neg:
-            # consider non-parent relations (siblings and children)
+        if aux_ancestors:
+            metadata["ancestors"] = []
+            for ancestor in obo.ancestors(id):
+                metadata["ancestors"].append(ancestor)
+                data_pos.append(name_def(obo.terms[ancestor]))
+        if aux_siblings:
             for sibling in obo.siblings(id):
                 data_neg.append(obo.terms[sibling].name)
+        if aux_children:
             for child in obo.children(id):
                 data_neg.append(obo.terms[child].name)
         result[id] = dict(title=term.name,
