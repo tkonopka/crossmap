@@ -10,18 +10,13 @@ from .features import feature_map, feature_dict_map
 from .db import CrossmapDB
 from .tokens import CrossmapTokenizer
 from .encoder import CrossmapEncoder
-from .vectors import all_zero
+from .vectors import all_zero, sparse_to_list
 from .distance import euc_dist
 from .tools import read_dict
 
 
 # this removes the INFO messages from nmslib
 logging.getLogger('nmslib').setLevel(logging.WARNING)
-
-
-def sparse_to_list(v):
-    """convert a one-row sparse matrix into a list"""
-    return v.toarray()[0]
 
 
 class CrossmapIndexer:
@@ -262,4 +257,8 @@ class CrossmapIndexer:
         if self.target_ids is None:
             return False
         return len(self.feature_map) > 0 and len(self.target_ids) > 0
+
+    def distance(self, a, b):
+        """compute distance between two sparse vectors items"""
+        return euc_dist(sparse_to_list(a), sparse_to_list(b))
 

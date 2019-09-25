@@ -20,7 +20,7 @@ from crossmap.crossmap import Crossmap
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "predict", "decompose", "server", "ui"])
+                    choices=["build", "predict", "decompose", "server", "ui", "distance"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -39,6 +39,11 @@ parser.add_argument("--report_docs", action="store_true",
                     help="include document ids in prediction output")
 parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
+
+# manual investigation/debugging
+parser.add_argument("--ids", action="store",
+                    help="comma-separate ids")
+
 
 # fine-tuning of predictions and output
 parser.add_argument("--logging", action="store",
@@ -81,6 +86,17 @@ if config.action == "predict" or config.action == "decompose":
     result = action_fun(config.data,
                         n_targets=config.n_targets, n_docs=config.n_docs,
                         options=config)
+    if config.pretty:
+        result = dumps(result, indent=2)
+    else:
+        result = dumps(result)
+    print(result)
+    sys.exit()
+
+if config.action == "distance":
+    crossmap = Crossmap(settings)
+    crossmap.load()
+    result = crossmap.distance_file(config.data, ids=config.ids.split(","))
     if config.pretty:
         result = dumps(result, indent=2)
     else:

@@ -155,3 +155,46 @@ class Crossmap:
                                              id, options))
         return result
 
+    def distance(self, doc, ids=[], doc_id="query"):
+        """compute distances from one document to specific items in db
+
+        :param doc: dictionary with text
+        :param ids: array of string ids, targets or documents
+        :return: list of objects containing id and distance
+        """
+
+        result = []
+        doc_data = self.indexer.encode_document(doc)
+        distance = self.indexer.distance
+        db = self.indexer.db
+        for x in ids:
+            x_target = db.get_targets(ids=[x])
+            x_doc = db.get_documents(ids=[x])
+            x_result = dict(id=doc_id)
+            if len(x_target) > 0:
+                x_vector = x_target[0]["data"]
+                x_result["target"] = x
+            elif len(x_doc) > 0:
+                x_vector = x_doc[0]["data"]
+                x_result["document"] = x
+            else:
+                continue
+            x_result["distance"] = distance(doc_data, x_vector)
+            result.append(x_result)
+
+        return result
+
+    def distance_file(self, filepath, ids=[]):
+        """compute distances from items in a file to specific items in db
+
+        :param filepath:
+        :param ids:
+        :return:
+        """
+
+        result = []
+        with open_file(filepath, "rt") as f:
+            for id, doc in yaml_document(f):
+                result.append(self.distance(doc, ids, doc_id=id))
+        return result
+

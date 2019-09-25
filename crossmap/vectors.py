@@ -102,3 +102,8 @@ def vec_decomposition(vT, BT):
     b = matmul(BT, vT.transpose())
     x, residuals, _, _ = lstsq(a, b, rcond=None)
     return x
+
+
+def sparse_to_list(v):
+    """convert a one-row sparse matrix into a list"""
+    return v.toarray()[0]
