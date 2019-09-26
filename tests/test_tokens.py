@@ -95,8 +95,8 @@ class KmerizerTests(unittest.TestCase):
         # aux_pos component will have other items
         self.assertTrue("with" in result["aux_pos"])
         self.assertEqual(result["aux_pos"]["with"], 1)
-        self.assertEqual(result["aux_pos"]["danie"], 1)
-        self.assertEqual(result["aux_pos"]["aniel"], 1)
+        self.assertLess(result["aux_pos"]["danie"], 1.0)
+        self.assertLess(result["aux_pos"]["aniel"], 1.0)
 
     def test_tokenize_case_sensitive(self):
         """obtain tokens in case sensitive manner"""

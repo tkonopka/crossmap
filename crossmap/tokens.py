@@ -3,6 +3,7 @@
 
 
 import gzip
+from math import sqrt
 from collections import Counter
 from .tools import yaml_document
 
@@ -64,12 +65,10 @@ class Kmerizer:
     def tokenize(self, doc):
         """obtain token counts from a single document"""
 
-        # count raw tokens in primary and auxiliary fields
         parse = self.parse
         result = dict()
         for k, data in doc.items():
-            k_counter = Counter(parse(str(data)))
-            result[k] = k_counter
+            result[k] = parse(str(data))
         return result
 
     def parse(self, s):
@@ -79,7 +78,7 @@ class Kmerizer:
         alphabet = self.alphabet
         if not self.case_sensitive:
             s = s.lower()
-        result = []
+        result = Counter()
         for word in s.split():
             if not all([_ in alphabet for _ in word]):
                 for i in range(len(word)):
@@ -88,7 +87,10 @@ class Kmerizer:
             word = word.strip()
             if word == "":
                 continue
-            result.extend([_.strip() for _ in kmers(word, k)])
+            wlen = len(word)
+            weight = sqrt(max(1.0, wlen/k) / max(1.0, wlen - k + 1))
+            for _ in kmers(word, k):
+                result[_.strip()] += weight
         return result
 
 
