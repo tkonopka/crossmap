@@ -104,6 +104,6 @@ def vec_decomposition(vT, BT):
     return x
 
 
-def sparse_to_list(v):
-    """convert a one-row sparse matrix into a list"""
+def sparse_to_dense(v):
+    """convert a one-row sparse matrix into a dense ndarray"""
     return v.toarray()[0]

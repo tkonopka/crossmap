@@ -5,7 +5,7 @@ from os.path import exists
 from scipy.sparse import csr_matrix, vstack
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
-from .vectors import csr_residual, vec_decomposition
+from .vectors import csr_residual, vec_decomposition, sparse_to_dense
 from .tools import open_file, yaml_document
 
 
@@ -187,14 +187,52 @@ class Crossmap:
     def distance_file(self, filepath, ids=[]):
         """compute distances from items in a file to specific items in db
 
-        :param filepath:
-        :param ids:
-        :return:
+        :param filepath: string, path to a data file
+        :param ids: list of string ids
+        :return: list
         """
 
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 result.append(self.distance(doc, ids, doc_id=id))
+        return result
+
+    def vectors(self, filepath, ids=[]):
+        """
+
+        :param filepath: string, path to a data file
+        :param ids: list of string ids
+        :return: list
+        """
+
+        result = []
+
+        # convert db items into vectors
+        db = self.indexer.db
+        for x in ids:
+            x_target = db.get_targets(ids=[x])
+            x_doc = db.get_documents(ids=[x])
+            x_result = dict()
+            if len(x_target) > 0:
+                x_vector = x_target[0]["data"]
+                x_result["target"] = x
+            elif len(x_doc) > 0:
+                x_vector = x_doc[0]["data"]
+                x_result["document"] = x
+            else:
+                continue
+            x_result["vector"] = list(sparse_to_dense(x_vector))
+            result.append(x_result)
+
+        if filepath is None:
+            return result
+
+        # convert from-file items into vectors
+        with open_file(filepath, "rt") as f:
+            for id, doc in yaml_document(f):
+                doc_vec = self.indexer.encode_document(doc)
+                doc_vec = list(sparse_to_dense(doc_vec))
+                result.append(dict(id=id, vector=doc_vec))
         return result
 

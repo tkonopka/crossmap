@@ -10,7 +10,7 @@ from .features import feature_map, feature_dict_map
 from .db import CrossmapDB
 from .tokens import CrossmapTokenizer
 from .encoder import CrossmapEncoder
-from .vectors import all_zero, sparse_to_list
+from .vectors import all_zero, sparse_to_dense
 from .distance import euc_dist
 from .tools import read_dict
 
@@ -201,7 +201,7 @@ class CrossmapIndexer:
             second list has composite/weighted distances
         """
         v = csr_matrix(v)
-        vlist = sparse_to_list(v)
+        vlist = sparse_to_dense(v)
         db = self.db
 
         # get direct distances from vector to targets
@@ -210,13 +210,13 @@ class CrossmapIndexer:
         target_data = dict()
         hits_targets = db.get_targets(idxs=nn0)
         for _, val in enumerate(hits_targets):
-            target_data[val["idx"]] = sparse_to_list(val["data"])
+            target_data[val["idx"]] = sparse_to_dense(val["data"])
         # collect relevant documents
         nn1, dist1 = self._neighbors(v, n_doc, index=1)
         hit_docs = db.get_documents(idxs=nn1)
         doc_data = dict()
         for _, val in enumerate(hit_docs):
-            doc_data[val["idx"]] = sparse_to_list(val["data"])
+            doc_data[val["idx"]] = sparse_to_dense(val["data"])
 
         # record distances from docs to targets
         # (some docs may introduce new targets to consider)
@@ -229,7 +229,7 @@ class CrossmapIndexer:
                 if i_target in target_dist:
                     continue
                 i_target_data = db.get_targets(idxs=[i_target])[0]
-                target_data[i_target] = sparse_to_list(i_target_data["data"])
+                target_data[i_target] = sparse_to_dense(i_target_data["data"])
                 target_dist[i_target] = euc_dist(target_data[i_target], vlist)
 
         # compute weighted distances from vector to targets
@@ -260,5 +260,5 @@ class CrossmapIndexer:
 
     def distance(self, a, b):
         """compute distance between two sparse vectors items"""
-        return euc_dist(sparse_to_list(a), sparse_to_list(b))
+        return euc_dist(sparse_to_dense(a), sparse_to_dense(b))
 

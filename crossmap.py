@@ -20,7 +20,8 @@ from crossmap.crossmap import Crossmap
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "predict", "decompose", "server", "ui", "distance"])
+                    choices=["build", "predict", "decompose", "server", "ui",
+                             "distance", "vectors"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -71,6 +72,16 @@ if not settings.valid:
     sys.exit()
 
 
+def print_exit(x, pretty=False):
+    """helper to print something and terminate"""
+    if pretty:
+        x = dumps(x, indent=2)
+    else:
+        x = dumps(x)
+    print(x)
+    sys.exit()
+
+
 if config.action == "build":
     crossmap = Crossmap(settings)
     crossmap.build()
@@ -86,23 +97,16 @@ if config.action == "predict" or config.action == "decompose":
     result = action_fun(config.data,
                         n_targets=config.n_targets, n_docs=config.n_docs,
                         options=config)
-    if config.pretty:
-        result = dumps(result, indent=2)
-    else:
-        result = dumps(result)
-    print(result)
-    sys.exit()
+    print_exit(result, config.pretty)
 
-if config.action == "distance":
+if config.action == "distance" or config.action == "vectors":
     crossmap = Crossmap(settings)
     crossmap.load()
-    result = crossmap.distance_file(config.data, ids=config.ids.split(","))
-    if config.pretty:
-        result = dumps(result, indent=2)
-    else:
-        result = dumps(result)
-    print(result)
-    sys.exit()
+    action_fun = crossmap.distance_file
+    if config.action == "vectors":
+        action_fun = crossmap.vectors
+    result = action_fun(config.data, ids=config.ids.split(","))
+    print_exit(result, config.pretty)
 
 if config.action == "server":
     try:
