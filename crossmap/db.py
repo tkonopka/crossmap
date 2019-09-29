@@ -22,9 +22,9 @@ def csr_to_bytes(x):
     :param x: csr matrix
     :return: bytes-like object
     """
-    result = ([float(_) for _ in x.data],
-              [int(_) for _ in x.indices],
-              [int(_) for _ in x.indptr])
+    result = (tuple([float(_) for _ in x.data]),
+              tuple([int(_) for _ in x.indices]),
+              tuple([int(_) for _ in x.indptr]))
     return dumps(result)
 
 
@@ -41,11 +41,30 @@ def bytes_to_csr(x, n_features):
 class CrossmapDB:
     """Management of a DB for features and data vectors"""
 
+    table_names = {"features", "targets", "documents",
+                   "counts_targets", "counts_documents"}
+
     def __init__(self, db_file):
         """sets up path to db, operations performed via functions"""
 
         self.db_file = db_file
         self.n_features = None
+
+    def _clear_table(self, table="targets"):
+        """remove all content from a table
+
+        :param table: string, name of table
+        :return: nothing
+        """
+
+        if table not in self.table_names:
+            raise Exception("clearing not supported for: " + table)
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM "+table)
+            conn.commit()
+        if table == "features":
+            self.n_features = 0
 
     def _count_rows(self, table="features"):
         """generic function to count rows in any table within db
@@ -54,9 +73,8 @@ class CrossmapDB:
         :return: integer number of rows
         """
 
-        if table not in ["features", "targets", "documents"]:
+        if table not in self.table_names:
             return 0
-
         with get_conn(self.db_file) as conn:
             count_sql = "SELECT COUNT(*) FROM " + table
             result = conn.cursor().execute(count_sql).fetchone()[0]
@@ -80,26 +98,32 @@ class CrossmapDB:
         info("Creating database")
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            CT = "CREATE TABLE "
-            sql_map = CT + "features (id TEXT, idx INTEGER, weight REAL)"
-            sql_targets = CT + "targets (id TEXT, idx INTEGER, title TEXT, data BLOB)"
-            sql_docs = CT + "documents (id TEXT, idx INTEGER, title TEXT, data BLOB)"
+            ct = "CREATE TABLE "
+            columns = ["id TEXT", "idx INTEGER"]
+            sql_map = ct + "features (" + ",".join(columns) + ", weight REAL)"
+            columns.extend(["title TEXT", "data BLOB"])
+            sql_targets = ct + "targets (" + ",".join(columns) + ")"
+            sql_docs = ct + "documents (" + ",".join(columns) + ")"
             cur.execute(sql_map)
             cur.execute(sql_targets)
             cur.execute(sql_docs)
+            columns = ["idx INTEGER", "counts BLOB"]
+            counts_targets = ct + "counts_targets (" + ",".join(columns) + ")"
+            counts_docs = ct + "counts_documents (" + ",".join(columns) + ")"
+            cur.execute(counts_targets)
+            cur.execute(counts_docs)
             conn.commit()
 
-    def _index_table(self, table="targets"):
+    def _index_table(self, table="targets", types=("id", "idx")):
         """create an index on one db table"""
 
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            index_idx = table+"_idx"
-            index_id = table+"_id"
-            cur.execute("DROP INDEX IF EXISTS " + index_idx)
-            cur.execute("DROP INDEX IF EXISTS " + index_id)
-            cur.execute("CREATE INDEX " + index_idx + " on " + table + " (idx)")
-            cur.execute("CREATE INDEX " + index_id + " on " + table + " (id)")
+            ci = "CREATE INDEX "
+            for x in types:
+                index_id = table + "_" + x
+                cur.execute("DROP INDEX IF EXISTS " + index_id)
+                cur.execute(ci + index_id + " on " + table + " (" + x + ")")
             conn.commit()
 
     def index(self):
@@ -107,6 +131,8 @@ class CrossmapDB:
         info("Indexing database")
         self._index_table("targets")
         self._index_table("documents")
+        self._index_table("counts_targets", ["idx"])
+        self._index_table("counts_documents", ["idx"])
 
     def get_feature_map(self):
         """construct a feature map"""
@@ -131,6 +157,24 @@ class CrossmapDB:
             cur = conn.cursor()
             cur.executemany(sql, data_array)
         self.n_features = len(feature_map)
+
+    def _set_counts(self, data, tab="targets"):
+        """insert a counts table into db
+
+        Arguments:
+            data      list with vectors
+            tab       string, one of 'targets' or 'documents'
+        """
+
+        sql = "INSERT INTO counts_" + tab + " (idx, counts) VALUES (?, ?);"
+        data_array = []
+        for i in range(len(data)):
+            idata = sqlite3.Binary(csr_to_bytes(data[i]))
+            data_array.append((i, idata))
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.executemany(sql, data_array)
+            conn.commit()
 
     def _add_data(self, data, ids, titles=None, indexes=None, tab="targets"):
         """insert data items into db
@@ -165,8 +209,29 @@ class CrossmapDB:
         """record items in the db as documents"""
         self._add_data(data, ids, titles=titles, indexes=indexes, tab="documents")
 
+    def _get_counts(self, idxs, table="targets"):
+        """retrieve information from counts tables
+
+        :param idxs: list of integers
+        :param table: one of 'target' or 'documents'
+        :return: dictionary mapping indexes to count objects
+        """
+
+        n_features = self.n_features
+        sql = "SELECT idx, counts FROM counts_" + table + " WHERE "
+        sql_where = ["idx=?"]*len(idxs)
+        sql += " OR ".join(sql_where)
+        result = dict()
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.execute(sql, idxs)
+            for row in cur:
+                row_counts = bytes_to_csr(row["counts"], n_features)
+                result[row["idx"]] = row_counts
+        return result
+
     def _get_data(self, idxs=None, ids=None, table="targets"):
-        """worker retrieve information from db from targets or documents
+        """retrieve information from db from targets or documents
 
         Note: one of ids or idx must be specified other than None
 

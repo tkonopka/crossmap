@@ -12,7 +12,7 @@ from .tools import yaml_document
 class CrossmapEncoder:
     """Processing of raw data objects into feature vectors"""
 
-    def __init__(self, feature_map, tokenizer, aux_weight=[0.5, 0.5]):
+    def __init__(self, feature_map, tokenizer, aux_weight=(0.5, 0.5)):
         """intialize with a specific feature set and tokenization strategy
 
         Arguments:

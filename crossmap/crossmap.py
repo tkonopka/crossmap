@@ -56,7 +56,7 @@ class Crossmap:
         self.indexer.load()
 
     def predict(self, doc, n_targets=3, n_docs=3, query_name="query",
-                options=dict()):
+                diffuse=0.5, options=dict()):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"

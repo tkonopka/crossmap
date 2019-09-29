@@ -50,7 +50,6 @@ class CrossmapIndexer:
                 features_file = self.settings.files("featuremap")[0]
                 features = read_dict(features_file, id_col="id",
                                      value_col="weight", value_fun=float)
-
             if features is None:
                 result = feature_map(self.settings)
             else:
@@ -102,11 +101,11 @@ class CrossmapIndexer:
             return len(items)
 
         num_items = 0
-        for _item, _id, _title in self.encoder.documents(files):
-            if all_zero(_item.toarray()[0]):
+        for _tokens, _id, _title in self.encoder.documents(files):
+            if all_zero(_tokens.toarray()[0]):
                 warning("Skipping item - null vector for id " + str(_id))
                 continue
-            items.append(_item)
+            items.append(_tokens)
             ids.append(_id)
             titles.append(_title)
             if len(items) >= batch_size:
@@ -137,6 +136,7 @@ class CrossmapIndexer:
         self._build_index(settings.files("targets"), "targets")
         self._build_index(settings.files("documents"), "documents")
         self._target_ids()
+        self.db.count_features()
 
     def _load_index(self, label=""):
         index_file = self.settings.index_file(label)

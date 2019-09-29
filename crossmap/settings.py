@@ -121,9 +121,9 @@ class CrossmapSettingsDefaults:
         """create a file path for project binary data object"""
         return join(self.data_dir, self.name + "-" + label)
 
-    def annoy_file(self, label):
-        """create a file path for a project index file"""
-        return join(self.data_dir, self.name + "-index-" + label + ".ann")
+    #def annoy_file(self, label):
+    #    """create a file path for a project index file"""
+    #    return join(self.data_dir, self.name + "-index-" + label + ".ann")
 
     def index_file(self, label):
         """create a file path for a project index file"""

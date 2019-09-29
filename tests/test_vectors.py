@@ -8,9 +8,9 @@ from numpy import array
 from math import sqrt
 from scipy.sparse import csr_matrix, vstack
 from crossmap.vectors import csr_residual, vec_decomposition
-from crossmap.vectors import num_nonzero
-from crossmap.vectors import vec_norm, normalize_vec, all_zero
-
+from crossmap.vectors import num_nonzero, all_zero
+from crossmap.vectors import vec_norm, normalize_vec, normalize_csr
+from crossmap.vectors import sparse_to_dense
 
 class VecNormTests(unittest.TestCase):
     """Vector normalization"""
@@ -57,6 +57,16 @@ class VecNormTests(unittest.TestCase):
         """produce a unit-norm vector"""
         nvec = normalize_vec
         self.assertListEqual(list(nvec(array([0, 0]))), [0, 0])
+
+    def test_normalize_csr(self):
+        """produce a unit-norm vector from csr"""
+
+        ncsr = normalize_csr
+        result1 = sparse_to_dense(ncsr(csr_matrix([0, 2, 0])))
+        self.assertListEqual(list(result1), [0, 1, 0])
+        result2 = sparse_to_dense(ncsr(csr_matrix([4,0])))
+        self.assertListEqual(list(result2), [1, 0])
+
 
 
 class VecResidualTests(unittest.TestCase):

@@ -74,6 +74,40 @@ class CrossmapDBBuildTests(unittest.TestCase):
             self.assertListEqual(list(v), list(test_feature_map[k]))
 
 
+class CrossmapDBMaintenanceTests(unittest.TestCase):
+    """Maintenance of db tables"""
+
+    def setUp(self):
+        self.settings = CrossmapSettings(config_plain, create_dir=True)
+        self.db_file = self.settings.db_file()
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_db_clear_features(self):
+        """can remove contents from a db table"""
+
+        db = CrossmapDB(self.db_file)
+        with self.assertLogs(level="INFO") as cm:
+            db.build()
+        db.set_feature_map(test_feature_map)
+        n_features = len(test_feature_map)
+        self.assertEqual(db.n_features, n_features)
+        self.assertEqual(db._count_rows("features"), n_features)
+        db._clear_table("features")
+        self.assertEqual(db.n_features, 0)
+        self.assertEqual(db._count_rows("features"), 0)
+
+    def test_db_clear_safety(self):
+        """clear table implements some safety mechanism"""
+
+        db = CrossmapDB(self.db_file)
+        with self.assertLogs(level="INFO") as cm:
+            db.build()
+        with self.assertRaises(Exception) as cm:
+            db._clear_table("abc")
+
+
 class CrossmapDBAddGetTests(unittest.TestCase):
     """Add/Get data from a db"""
 

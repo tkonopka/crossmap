@@ -38,13 +38,21 @@ def num_nonzero(a):
 
 @numba.jit
 def normalize_vec(a):
-    """compute the vector norm of a vector"""
+    """normalize a dense vector"""
     n = vec_norm(a)
     if n == 0:
         return a
     for i in range(len(a)):
         a[i] = a[i]/n
     return a
+
+
+def normalize_csr(a):
+    """normalize a csr vector"""
+    n2 = (a.dot(a.transpose())).data[0]
+    if n2 == 0:
+        return a
+    return a.dot(1/sqrt(n2))
 
 
 @numba.jit

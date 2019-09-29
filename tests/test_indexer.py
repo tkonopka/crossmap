@@ -27,7 +27,7 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         settings.tokens.k = 10
         self.indexer = CrossmapIndexer(settings, test_features)
         self.feature_map = self.indexer.feature_map
-        self.index_file = settings.annoy_file("index-0")
+        self.index_file = settings.index_file("targets")
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
