@@ -17,8 +17,54 @@ test_feature_map = dict(w=(0,1),
                         z=(3,0.5))
 
 
-class CrossmapDBBuildTests(unittest.TestCase):
-    """Creating a DB for holding"""
+class CrossmapDBBuildEmptyTests(unittest.TestCase):
+    """Creating an empty DB with basic structure"""
+
+    @classmethod
+    def setUpClass(cls):
+        settings = CrossmapSettings(config_plain, create_dir=True)
+        db_file = settings.db_file()
+        cls.assertFalse(cls, exists(db_file))
+        with cls.assertLogs(cls, level="INFO"):
+            db = CrossmapDB(db_file)
+            db.build()
+            db.register_dataset("targets")
+            db.register_dataset("documents")
+        cls.assertTrue(cls, exists(db_file))
+        cls.db = db
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_db_empty_tables(self):
+        """all tables should initialy be empty database"""
+
+        # all tables should be empty
+        self.assertEqual(self.db._count_rows("features"), 0)
+        self.assertEqual(self.db._count_rows("data"), 0)
+        self.assertEqual(self.db._count_rows("other_table"), 0)
+
+    def test_db_registered_datasets(self):
+        """init script registers two datasets"""
+
+        self.assertEqual(self.db._count_rows("datasets"), 2)
+
+    def test_db_get_data(self):
+        """extraction of data from empty db gives empty"""
+
+        self.assertListEqual(self.db.get_data("targets", idxs=[0]), [])
+        self.assertListEqual(self.db.get_data("documents", idxs=[0]), [])
+
+    def test_db_get_data_from_nonexistent_table(self):
+        """cannot extract data associated with a nonexistent label"""
+
+        with self.assertRaises(Exception):
+            db.get_data(idxs=[0], label="abc")
+
+
+class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
+    """Creating a DB, reseting, filling features"""
 
     def setUp(self):
         self.settings = CrossmapSettings(config_plain, create_dir=True)
@@ -27,47 +73,14 @@ class CrossmapDBBuildTests(unittest.TestCase):
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    def test_db_build(self):
-        """build empty database"""
-
-        self.assertFalse(exists(self.db_file))
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO"):
-            db.build()
-        self.assertTrue(exists(self.db_file))
-        # all tables should be empty
-        self.assertEqual(db._count_rows("features"), 0)
-        self.assertEqual(db._count_rows("data_targets"), 0)
-        self.assertEqual(db._count_rows("data_documents"), 0)
-        self.assertEqual(db._count_rows("other_table"), 0)
-
-    def test_db_get_data(self):
-        """build empty database and extract data"""
-
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO"):
-            db.build(["targets", "documents"])
-        # db should be empty, so get_data should return empty arrays
-        self.assertListEqual(db.get_data("targets", idxs=[0]), [])
-        self.assertListEqual(db.get_data("documents", idxs=[0]), [])
-
-    def test_db_get_data_from_nonexistent_table(self):
-        """build empty database and extract data"""
-
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO"):
-            db.build()
-        with self.assertRaises(Exception):
-            db.get_data(idxs=[0], table="abc")
-
     def test_db_build_and_rebuild(self):
         """build indexes from a simple configuration"""
 
         db = CrossmapDB(self.db_file)
         # first pass can create a db with an info message
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(level="INFO") as cm1:
             db.build()
-        self.assertTrue("Creating" in str(cm.output))
+        self.assertTrue("Creating" in str(cm1.output))
         # second build can remove existing file and create a new db
         with self.assertLogs(level="WARNING") as cm2:
             db.build(reset=True)
@@ -118,9 +131,9 @@ class CrossmapDBMaintenanceTests(unittest.TestCase):
         """clear table implements some safety mechanism"""
 
         db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(level="INFO"):
             db.build()
-        with self.assertRaises(Exception) as cm:
+        with self.assertRaises(Exception):
             db._clear_table("abc")
 
 
@@ -133,6 +146,8 @@ class CrossmapDBAddGetTests(unittest.TestCase):
         db = CrossmapDB(settings.db_file())
         with cls.assertLogs(cls, level="INFO"):
             db.build()
+            db.register_dataset("targets")
+            db.register_dataset("documents")
             db.set_feature_map(test_feature_map)
         # add data and retrieve data back
         ids = ["a", "b"]
@@ -140,7 +155,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
         cls.vec_a = [0.0, 0.0, 1.0, 0.0]
         cls.vec_b = [0.0, 2.0, 0.0, 0.0]
         data = [csr_matrix(cls.vec_a), csr_matrix(cls.vec_b)]
-        db.add_documents(data, ids, idxs, titles=["AA", "BB"])
+        db.add_data("documents", data, ids, indexes=idxs, titles=["AA", "BB"])
         cls.db = db
 
     @classmethod
@@ -149,7 +164,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
 
     def test_get_data_a(self):
         """can retrieve data vectors"""
-        A = self.db.get_documents(idxs=[0])
+        A = self.db.get_data("documents", idxs=[0])
         self.assertEqual(len(A), 1)
         self.assertEqual(A[0]["id"], "a")
         Avec = A[0]["data"].toarray()[0]
@@ -157,7 +172,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
 
     def test_get_data_b(self):
         """can retrieve data vectors"""
-        B = self.db.get_documents(ids=["b"])
+        B = self.db.get_data("documents", ids=["b"])
         self.assertEqual(len(B), 1)
         self.assertEqual(B[0]["id"], "b")
         Bvec = B[0]["data"].toarray()[0]
@@ -165,13 +180,13 @@ class CrossmapDBAddGetTests(unittest.TestCase):
 
     def test_get_titles_by_idx(self):
         """can retrieve titles"""
-        A = self.db.get_titles(idxs=[0], table="documents")
+        A = self.db.get_titles("documents", idxs=[0])
         self.assertEqual(len(A), 1)
         self.assertEqual(A[0], "AA")
 
     def test_get_titles_by_id(self):
         """can retrieve titles"""
-        AB = self.db.get_titles(ids=["a", "b"], table="documents")
+        AB = self.db.get_titles("documents", ids=["a", "b"])
         self.assertEqual(len(AB), 2)
         self.assertEqual(AB["a"], "AA")
         self.assertEqual(AB["b"], "BB")
@@ -187,13 +202,15 @@ class CrossmapDBQueriesTests(unittest.TestCase):
         cls.db = CrossmapDB(cls.db_file)
         with cls.assertLogs(cls, level="INFO"):
             cls.db.build()
+            cls.db.register_dataset("targets")
+            cls.db.register_dataset("documents")
         # insert some data
         target_ids = [_ + "_target" for _ in ["a", "b"]]
         doc_ids = [_ + "_doc" for _ in ["a", "b"]]
         data = [csr_matrix([0.0, 1.0]),
                 csr_matrix([1.0, 0.0])]
-        cls.db.add_targets(data, target_ids, [0,1])
-        cls.db.add_documents(data, doc_ids, [0,1])
+        cls.db.add_data("targets", data, target_ids, indexes=[0,1])
+        cls.db.add_data("documents", data, doc_ids, indexes=[0,1])
 
     @classmethod
     def tearDownClass(self):
@@ -202,33 +219,26 @@ class CrossmapDBQueriesTests(unittest.TestCase):
     def test_raises_unknown_table(self):
         # raise errors when query strange table
         with self.assertRaises(Exception):
-            self.db.ids([0,1], table="abc")
+            self.db.ids("abc", [0,1])
 
     def test_ids_from_named_table(self):
         """standard retrieval, user specifying table by string name"""
         # raise errors when query strange table
-        self.assertListEqual(self.db.ids([0,1], table="targets"),
+        self.assertListEqual(self.db.ids("targets", [0,1]),
                              ["a_target", "b_target"])
-        self.assertListEqual(self.db.ids([0,1], table="documents"),
-                             ["a_doc", "b_doc"])
-
-    def test_ids_from_int_table(self):
-        """standard retrieveal, user specifying table by 0/1"""
-        self.assertListEqual(self.db.ids([0,1], table=0),
-                             ["a_target", "b_target"])
-        self.assertListEqual(self.db.ids([0,1], table=1),
+        self.assertListEqual(self.db.ids("documents", [0,1]),
                              ["a_doc", "b_doc"])
 
     def test_ids_empty_queries(self):
         """retrieval, input is emptyy"""
-        self.assertListEqual(self.db.ids([], table=0), [])
+        self.assertListEqual(self.db.ids("targets", []), [])
 
     def test_ids_singles(self):
-        self.assertListEqual(self.db.ids([0], table=0), ["a_target"])
+        self.assertListEqual(self.db.ids("targets", [0]), ["a_target"])
 
     def test_ids_error_out_of_bounds(self):
         """when provided indexes are out-of-range, ids will give error"""
         with self.assertRaises(KeyError):
-            self.db.ids([0,5], table=0)
+            self.db.ids("targets", [0,5])
         with self.assertRaises(KeyError):
-            self.db.ids([6,5], table=0)
+            self.db.ids("targets", [6,5])

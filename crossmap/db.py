@@ -77,6 +77,7 @@ class CrossmapDB:
 
         self.db_file = db_file
         self.n_features = None
+        self.datasets = dict()
 
     def _clear_table(self, table="targets"):
         """remove all content from a table
@@ -94,7 +95,7 @@ class CrossmapDB:
         if table == "features":
             self.n_features = 0
 
-    def _count_rows(self, table="features"):
+    def _count_rows(self, table):
         """generic function to count rows in any table within db
 
         :param table: string, table name
@@ -102,6 +103,7 @@ class CrossmapDB:
         """
 
         if table not in self.table_names:
+            print("returning zero by fiat")
             return 0
         with get_conn(self.db_file) as conn:
             count_sql = "SELECT COUNT(*) FROM " + table
@@ -134,35 +136,58 @@ class CrossmapDB:
         cols_counts = columns_sql(("dataset", "idx", "counts"))
 
         info("Creating database")
-        table_names = {"features"}
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
             cur.execute("CREATE TABLE features " + cols_features)
             cur.execute("CREATE TABLE datasets " + cols_datasets)
-            cur.execute("CREATE TABLE data"  + cols_data)
+            cur.execute("CREATE TABLE data" + cols_data)
             cur.execute("CREATE TABLE counts" + cols_counts)
             conn.commit()
-        self.table_names = table_names
 
-    def _index_table(self, table="targets", types=("id", "idx")):
+    def register_dataset(self, label, title=""):
+        """register a dataset label
+
+        :param label: string, a new data set label
+        :param title: string, an additional descriptor for the dataset
+        :return:
+        """
+
+        # identify existing labels
+        sql = "SELECT dataset, label FROM datasets ORDER by dataset"
+        existing = set()
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.execute(sql)
+            for row in cur:
+                existing.add(row["label"])
+
+        if label in existing:
+            error("dataset label already exists")
+            return
+
+        s = "INSERT INTO datasets (dataset, label, title) VALUES (?, ?, ?);"
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.executemany(s, [(len(existing), label, title)])
+            self.datasets[label] = len(existing)
+            conn.commit()
+
+    def _index(self, prefix="data", types=("id", "idx")):
         """create an index on one db table"""
 
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
             ci = "CREATE INDEX "
             for x in types:
-                index_id = table + "_" + x
+                index_id = prefix + "_" + x
                 cur.execute("DROP INDEX IF EXISTS " + index_id)
-                cur.execute(ci + index_id + " on " + table + " (" + x + ")")
+                cur.execute(ci + index_id + " on " + prefix + " (" + x + ")")
             conn.commit()
 
     def index(self):
         """create indexes on existing tables in the database"""
         info("Indexing database")
-        self._index_table("targets")
-        self._index_table("documents")
-        self._index_table("counts_targets", ["idx"])
-        self._index_table("counts_documents", ["idx"])
+        self._index()
 
     def get_feature_map(self):
         """construct a feature map"""
@@ -206,38 +231,35 @@ class CrossmapDB:
             cur.executemany(sql, data_array)
             conn.commit()
 
-    def _add_data(self, data, ids, titles=None, indexes=None, tab="targets"):
-        """insert data items into db
-
-        Arguments:
-            data      list with vectors
-            ids       list with string-like identifiers
-            indexes   list with integers identifiers
-            tab       string, one of 'targets' or 'documents'
+    def add_data(self, label, data, ids, titles=None, indexes=None):
         """
+
+        :param label: string, dataset identifier
+        :param data: list with vectors
+        :param ids: list with string-like identifiers
+        :param titles: list with string-like descriptions
+        :param indexes: list with integer identifiers
+        :return:
+        """
+
         if indexes is None:
             indexes = list(range(len(ids)))
         if titles is None:
             titles = [""]*len(ids)
+        if label not in self.datasets:
+            raise Exception("invalid dataset label: " + label)
+        d_index = self.datasets[label]
 
-        sql = "INSERT INTO data_" + tab + \
-              " (id, idx, title, data) VALUES (?, ?, ?, ?);"
+        sql = "INSERT INTO data" +\
+              " (dataset, id, idx, title, data) VALUES (?, ?, ?, ?, ?);"
         data_array = []
         for i in range(len(ids)):
             idata = sqlite3.Binary(csr_to_bytes(data[i]))
-            data_array.append((ids[i], indexes[i], titles[i], idata))
+            data_array.append((d_index, ids[i], indexes[i], titles[i], idata))
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
             cur.executemany(sql, data_array)
             conn.commit()
-
-    def add_targets(self, data, ids, indexes, titles=None):
-        """record items in the db as targets"""
-        self._add_data(data, ids, titles=titles, indexes=indexes, tab="targets")
-
-    def add_documents(self, data, ids, indexes, titles=None):
-        """record items in the db as documents"""
-        self._add_data(data, ids, titles=titles, indexes=indexes, tab="documents")
 
     def _get_counts(self, idxs, table="targets"):
         """retrieve information from counts tables
@@ -260,19 +282,19 @@ class CrossmapDB:
                 result[row["idx"]] = row_counts
         return result
 
-    def get_data(self, table="targets", idxs=None, ids=None):
+    def get_data(self, label, idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
         Note: one of ids or idx must be specified other than None
 
+        :param label: string, an identifier for a table
         :param ids: list of string ids to query in column "id"
         :param idxs: list of integer indexes to query in column "idx"
-        :param table: one of 'targets' or 'documents'
         :return: list with content of database table
         """
 
-        if "data_"+table not in self.table_names:
-            raise Exception("data table does not exist: "+table)
+        if label not in self.datasets:
+            raise("incorrect dataset label: "+label)
 
         # determine whether to query by test id or numeric indexes
         queries, column = idxs, "idx"
@@ -285,61 +307,72 @@ class CrossmapDB:
             self.n_features = self.count_features()
         n_features = self.n_features
         # perform query
-        sql = "SELECT id, idx, data FROM data_" + table + " WHERE "
+        sql = "SELECT id, idx, data FROM data WHERE dataset=? AND "
         sql_where = [column + "=?"]*len(queries)
-        sql += " OR ".join(sql_where)
+        sql += "(" + " OR ".join(sql_where) + ")"
         result = []
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            cur.execute(sql, queries)
+            vals = [self.datasets[label]]
+            vals.extend(queries)
+            cur.execute(sql, vals)
             for row in cur:
                 rowdict = dict(id=row["id"], idx=row["idx"],
                                data=bytes_to_csr(row["data"], n_features))
                 result.append(rowdict)
         return result
 
-    def get_titles(self, idxs=None, ids=None, table="targets"):
+    def get_titles(self, label, idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
+        :param label: string identifier for a dataset
         :param ids: list of string ids to query in column "id"
         :param idxs: list of integer indexes to query in column "idx"
-        :param table: one of 'targets' or 'documents'
         :return: dictionary mapping ids to titles
         """
+
+        if label not in self.datasets:
+            raise Exception("invalid dataset label: " + label)
 
         queries, column = idxs, "idx"
         if ids is not None:
             queries, column = ids, "id"
         if queries is None or len(queries) == 0:
             return dict()
-        sql = "SELECT id, idx, title FROM " + table + " WHERE "
+        sql = "SELECT id, idx, title FROM data WHERE dataset=? AND "
         sql_where = [column + "=?"]*len(queries)
-        sql += " OR ".join(sql_where)
+        sql += "(" + " OR ".join(sql_where) + ")"
         result = dict()
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            cur.execute(sql, queries)
+            vals = [self.datasets[label]]
+            vals.extend(queries)
+            cur.execute(sql, vals)
             for row in cur:
                 result[row[column]] = row["title"]
         return result
 
-    def ids(self, idxs, table="targets"):
+    def ids(self, label, idxs):
         """convert integer indexes to string ids
 
+        :param label: string, identifier for a table
         :param idxs: iterable with numeric indexes. This function only supports
             small vectors of indexes.
-        :param table: string, indicating to query targets or documents
         :return: list with ids corresponding to those indexes
         """
 
+        if label not in self.datasets:
+            raise Exception("invalid dataset label: " + label)
+
         if len(idxs) == 0:
             return []
-        table = std_table(table)
-        sql = "SELECT id, idx FROM " + table + " WHERE "
-        sql +=  " OR ".join(["idx=?"]*len(idxs))
+        sql = "SELECT id, idx FROM data WHERE dataset=? AND "
+        sql += "(" + " OR ".join(["idx=?"]*len(idxs)) + " )"
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            cur.execute(sql, idxs)
+            vals = [self.datasets[label]]
+            vals.extend(idxs)
+            cur.execute(sql, vals)
             map = {row["idx"]: row["id"] for row in cur}
         # arrange into a list
         result = [None]*len(idxs)
