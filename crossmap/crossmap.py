@@ -34,8 +34,8 @@ class Crossmap:
             return
 
         # ensure directories exist
-        if not exists(self.settings.data_dir):
-            mkdir(self.settings.data_dir)
+        if not exists(self.settings.prefix):
+            mkdir(self.settings.prefix)
 
         # prepare objects
         self.indexer = CrossmapIndexer(settings)
@@ -72,7 +72,7 @@ class Crossmap:
         if doc_data.sum() == 0:
             return prediction([], [], query_name)
         n = n_targets
-        suggest_targets = self.indexer.suggest_targets
+        suggest_targets = self.indexer.suggest
         targets, distances = suggest_targets(doc_data, n, n_docs)
         result = prediction(targets[:n], distances[:n], query_name)
         if "report_docs" in options:
@@ -94,7 +94,7 @@ class Crossmap:
 
         ids, components, distances = [], [], []
         # shortcuts to functions
-        suggest_targets = self.indexer.suggest_targets
+        suggest_targets = self.indexer.suggest
         get_targets = self.indexer.db.get_targets
         decompose = vec_decomposition
         # representation of the query document

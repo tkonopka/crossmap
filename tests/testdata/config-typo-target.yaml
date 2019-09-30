@@ -1,6 +1,0 @@
-name: no_targets
-documents:
-  - dataset.yaml
-targets:
-  - dataset.yaml
-  - nonexistant.yaml

@@ -23,7 +23,7 @@ class CrossmapIndexer:
     """Indexing data for crossmap"""
 
     def __init__(self, settings, features=None):
-        """
+        """initialize indexes and their links with the crossmap db
 
         :param settings:  CrossmapSettings object
         :param features:  list with feature items (used for testing)
@@ -37,17 +37,17 @@ class CrossmapIndexer:
         if len(self.feature_map) == 0:
             error("feature map is empty")
         self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
-        self.indexes = []
-        self.index_files = []
+        self.indexes = dict()
+        self.index_files = dict()
         self.target_ids = None
 
     def _init_features(self, features):
         """determine the feature_map compoent from db, file, or from scratch"""
 
         if self.db.count_features() == 0:
-            if features is None and len(self.settings.files("featuremap")) > 0:
+            features_file = self.settings.feature_map_file
+            if features is None and features_file is not None:
                 info("reading features from prepared dictionary")
-                features_file = self.settings.files("featuremap")[0]
                 features = read_dict(features_file, id_col="id",
                                      value_col="weight", value_fun=float)
             if features is None:
@@ -63,22 +63,11 @@ class CrossmapIndexer:
         return result
 
     def clear(self):
-        self.indexes = []
-        self.index_files = []
+        self.indexes = dict()
+        self.index_files = dict()
 
-    def _build_index_none(self, label=""):
-        """a helper to build an empty index"""
-
-        warning("Skipping build index for " + label + " - no data")
-        self.indexes.append(None)
-        self.index_files.append(None)
-
-    def _build_index(self, files, label="", batch_size=100000):
+    def _build_index(self, files, label, batch_size=100000):
         """builds an Annoy index using data from documents on disk"""
-
-        if len(files) == 0:
-            self._build_index_none(label)
-            return
 
         index_file = self.settings.index_file(label)
         if exists(index_file):
@@ -123,8 +112,8 @@ class CrossmapIndexer:
         info("Total number of items: "+str(offset))
 
         result.createIndex(print_progress=False)
-        self.indexes.append(result)
-        self.index_files.append(index_file)
+        self.indexes[label] = result
+        self.index_files[label] = index_file
         result.saveIndex(index_file, save_data=True)
 
     def build(self):
@@ -133,25 +122,28 @@ class CrossmapIndexer:
         # build an index just for the targets, then just for documents
         settings = self.settings
         self.clear()
-        self._build_index(settings.files("targets"), "targets")
-        self._build_index(settings.files("documents"), "documents")
+        for label, filepath in settings.data_files.items():
+            self._build_index(filepath, label)
         self._target_ids()
         self.db.count_features()
 
-    def _load_index(self, label=""):
+    def _load_index(self, label):
+        """retrieve a nmslib index from disk into memory
+
+        :param label: string, label identifier for the index
+        :return: nothing, the internal state changes
+        """
         index_file = self.settings.index_file(label)
         if not exists(index_file):
             warning("Skipping loading index for " + label)
-            self.indexes.append(None)
-            self.index_files.append(None)
             return
 
         info("Loading index for " + label)
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         result.loadIndex(index_file, load_data=True)
-        self.indexes.append(result)
-        self.index_files.append(index_file)
+        self.indexes[label] = result
+        self.index_files[label] = index_file
 
     def load(self):
         """Load indexes from disk files"""
@@ -165,72 +157,86 @@ class CrossmapIndexer:
         """grab a map of target indexes and ids"""
         self.target_ids = self.db.all_ids(table="targets")
 
-    def _neighbors(self, v, n=5, index=0, names=False):
+    def _neighbors(self, v, label, n=5, names=False):
         """get a set of neighbors for a document"""
 
-        if self.indexes[index] is None:
+        if label not in self.indexes:
             return [], []
-        get_nns = self.indexes[index].knnQueryBatch
+        get_nns = self.indexes[label].knnQueryBatch
         temp = get_nns(csr_matrix(v), n)
         nns, distances = temp[0][0], temp[0][1]
         nns = [int(_) for _ in nns]
         if names:
-            nns = self.db.ids(nns, table=index)
+            nns = self.db.ids(nns, table=label)
         return nns, distances
 
     def encode_document(self, doc):
         return self.encoder.document(doc)
 
-    def nearest_targets(self, v, n=5):
-        return self._neighbors(v, n, index=0, names=True)
+    def nearest(self, v, label, n):
+        """look up nearest neighbors for a data vector
 
-    def nearest_documents(self, v, n=5):
-        return self._neighbors(v, n, index=1, names=True)
-
-    def suggest_targets(self, v, n=5, n_doc=5):
-        """suggest nearest neighbors for a vector
-
-        Arguments:
-            v     list with float values
-            n     integer, number of suggestions
-            n_doc integer, number of helper documents
-
-        Returns:
-            two lists:
-            first list has with target ids
-            second list has composite/weighted distances
+        :param v: csr matrix with data vector
+        :param label: string, name of index
+        :param n: integer, number of neighbors
+        :return: a list of ids for nearest neighbors, a list with distances
         """
+        return self._neighbors(v, label, n, names=True)
+
+    def suggest(self, v, label, n=5, aux=None):
+        """suggest nearest neighbors using a composite algorithm
+
+        :param v:
+        :param label: string, name of index of integer
+        :param n: integer, number of nearest neighbors
+        :param n_aux: dictionary linking index labels to nearest neighbors
+        :return: a list of items ids, a list of composite distances
+        """
+
         v = csr_matrix(v)
         vlist = sparse_to_dense(v)
         db = self.db
+        _n = self._neighbors
+
+        if aux is None:
+            aux = dict()
 
         # get direct distances from vector to targets
-        nn0, dist0 = self._neighbors(v, n, index=0)
+        nn0, dist0 = _n(v, label, n)
         target_dist = {i: d for i, d in zip(nn0, dist0)}
         target_data = dict()
         hits_targets = db.get_targets(idxs=nn0)
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_dense(val["data"])
-        # collect relevant documents
-        nn1, dist1 = self._neighbors(v, n_doc, index=1)
-        hit_docs = db.get_documents(idxs=nn1)
-        doc_data = dict()
-        for _, val in enumerate(hit_docs):
-            doc_data[val["idx"]] = sparse_to_dense(val["data"])
+        # collect relevant auxiliary documents
+        nn1, dist1, doc1, data1 = dict(), dict(), dict(), dict()
+        for aux_label, aux_n in aux.items():
+            nn1[aux_label], dist1[aux_label] = _n(v, aux_label, aux_n)
+            doc1[aux_label] = db.get_documents(idxs=nn1[aux_label])
+            data1[aux_label] = dict()
+            for _, val in enumerate(doc1[aux_label]):
+                data1[aux_label][val["idx"]] = sparse_to_dense(val["data"])
+        print("nn1 "+str(nn1))
+        print("dist1 "+str(dist1))
+        print("doc1 "+str(doc1))
+        print("data1 "+str(data1))
 
-        # record distances from docs to targets
+        # record distances from auxiliary documents to targets
         # (some docs may introduce new targets to consider)
         doc_target_dist = dict()
-        for i_doc in nn1:
-            i_doc_data = doc_data[i_doc]
-            nn2, dist2 = self._neighbors(i_doc_data, n, index=0)
-            doc_target_dist[i_doc] = {j: d for j, d in zip(nn2, dist2)}
-            for i_target in nn2:
-                if i_target in target_dist:
-                    continue
-                i_target_data = db.get_targets(idxs=[i_target])[0]
-                target_data[i_target] = sparse_to_dense(i_target_data["data"])
-                target_dist[i_target] = euc_dist(target_data[i_target], vlist)
+        for aux_label in nn1.keys():
+            for doc in nn1[aux_label]:
+                i_data = data1[aux_label][doc]
+                nn2, dist2 = self._neighbors(i_data, label, n)
+                doc_target_dist[doc] = dict()
+                for j, d in zip(nn2, dist2):
+                    doc_target_dist[doc][aux_label+j] = d
+                for target in nn2:
+                    if target in target_dist:
+                        continue
+                    i_target_data = db.get_targets(idxs=[target])[0]
+                    target_data[target] = sparse_to_dense(i_target_data["data"])
+                    target_dist[target] = euc_dist(target_data[target], vlist)
 
         # compute weighted distances from vector to targets
         result = target_dist.copy()
@@ -260,5 +266,6 @@ class CrossmapIndexer:
 
     def distance(self, a, b):
         """compute distance between two sparse vectors items"""
+        raise("This should be implemented as a static method")
         return euc_dist(sparse_to_dense(a), sparse_to_dense(b))
 

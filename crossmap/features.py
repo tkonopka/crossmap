@@ -42,7 +42,7 @@ def _count_tokens(tokenizer, files):
     """count tokens in files on disk
 
     :param tokenizer: object with function .tokenize()
-    :param files: list with file paths
+    :param files: dict mapping labels to file paths
 
     :return: two objects.
         a counter with token frequencies
@@ -51,8 +51,8 @@ def _count_tokens(tokenizer, files):
 
     counts = Counter()
     num_items = 0
-    for f in files:
-        info("Extracting features from file: " + basename(f))
+    for label, f in files.items():
+        info("Extracting features: " + label + " (" + basename(f)+")")
         for id, doc in tokenizer.tokenize_path(f):
             num_items += 1
             if num_items % 100000 == 0:
@@ -157,12 +157,17 @@ def _feature_map(settings):
     else:
         info("Max features is "+str(max_features))
     tokenizer = CrossmapTokenizer(settings)
-    target_files = settings.files("targets")
-    target_counts, n_targets = _count_tokens(tokenizer, target_files)
+    # partition the dataset into the primary one (first one) and the rest
+    primary_label = list(settings.data_files.keys())[0]
+    primary_file = {primary_label: settings.data_files[primary_label]}
+    other_files = settings.data_files.copy()
+    other_files.pop(primary_label)
+    # scan the files and count tokens
+    target_counts, n_targets = _count_tokens(tokenizer, primary_file)
     result = dict()
     for k, v in target_counts.items():
         result[k] = [len(result), v]
-    doc_counts, n_docs = _count_tokens(tokenizer, settings.files("documents"))
+    doc_counts, n_docs = _count_tokens(tokenizer, other_files)
     for k, v in doc_counts.most_common():
         if len(result) >= max_features:
             break
@@ -172,7 +177,5 @@ def _feature_map(settings):
             result[k] = [len(result), v]
 
     N = n_targets + n_docs
-    result = _feature_weights(result, N, settings.features.weighting)
-
-    return result
+    return _feature_weights(result, N, settings.features.weighting)
 

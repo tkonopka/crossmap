@@ -32,17 +32,33 @@ class CrossmapDBBuildTests(unittest.TestCase):
 
         self.assertFalse(exists(self.db_file))
         db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(level="INFO"):
             db.build()
         self.assertTrue(exists(self.db_file))
         # all tables should be empty
         self.assertEqual(db._count_rows("features"), 0)
-        self.assertEqual(db._count_rows("targets"), 0)
-        self.assertEqual(db._count_rows("documents"), 0)
+        self.assertEqual(db._count_rows("data_targets"), 0)
+        self.assertEqual(db._count_rows("data_documents"), 0)
         self.assertEqual(db._count_rows("other_table"), 0)
-        # data grab should be empty
-        self.assertListEqual(db._get_data(idxs=[0], table="targets"), [])
-        self.assertListEqual(db._get_data(idxs=[0], table="documents"), [])
+
+    def test_db_get_data(self):
+        """build empty database and extract data"""
+
+        db = CrossmapDB(self.db_file)
+        with self.assertLogs(level="INFO"):
+            db.build(["targets", "documents"])
+        # db should be empty, so get_data should return empty arrays
+        self.assertListEqual(db.get_data("targets", idxs=[0]), [])
+        self.assertListEqual(db.get_data("documents", idxs=[0]), [])
+
+    def test_db_get_data_from_nonexistent_table(self):
+        """build empty database and extract data"""
+
+        db = CrossmapDB(self.db_file)
+        with self.assertLogs(level="INFO"):
+            db.build()
+        with self.assertRaises(Exception):
+            db.get_data(idxs=[0], table="abc")
 
     def test_db_build_and_rebuild(self):
         """build indexes from a simple configuration"""
@@ -61,7 +77,7 @@ class CrossmapDBBuildTests(unittest.TestCase):
         """build process produces a feature map in db"""
 
         db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(level="INFO"):
             db.build()
         # store a feature map
         self.assertEqual(db.n_features, None)
@@ -88,7 +104,7 @@ class CrossmapDBMaintenanceTests(unittest.TestCase):
         """can remove contents from a db table"""
 
         db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(level="INFO"):
             db.build()
         db.set_feature_map(test_feature_map)
         n_features = len(test_feature_map)

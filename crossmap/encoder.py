@@ -37,6 +37,9 @@ class CrossmapEncoder:
         tokenize = self.tokenizer.tokenize
         encode = self.encode
 
+        if type(filepaths) is str:
+            filepaths = [filepaths]
+
         for filepath in filepaths:
             open_fn = gzip.open if filepath.endswith(".gz") else open
             with open_fn(filepath, "rt") as f:

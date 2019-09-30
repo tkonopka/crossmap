@@ -10,7 +10,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
-config_nodocs = join(data_dir, "config-no-documents.yaml")
+config_nodocs = join(data_dir, "config-single.yaml")
 config_featuremap = join(data_dir, "config-featuremap.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
 # not features for feature map should be in lowercase!
@@ -43,8 +43,8 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         self.assertGreater(num_docs, 6, "documents have several items")
         self.assertEqual(len(self.indexer.index_files), 2,
                          "one index for targets, one for documents")
-        self.assertTrue(exists(self.indexer.index_files[0]))
-        self.assertTrue(exists(self.indexer.index_files[1]))
+        self.assertTrue(exists(self.indexer.index_files["targets"]))
+        self.assertTrue(exists(self.indexer.index_files["documents"]))
 
     def test_indexer_load(self):
         """prepared indexes from disk"""
@@ -77,8 +77,8 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         num_docs = newindexer.db._count_rows(table="documents")
         self.assertEqual(num_targets, 6, "dataset still has six items")
         self.assertGreater(num_docs, 6, "targets have many items")
-        self.assertTrue(exists(newindexer.index_files[0]))
-        self.assertTrue(exists(newindexer.index_files[1]))
+        self.assertTrue(exists(newindexer.index_files["targets"]))
+        self.assertTrue(exists(newindexer.index_files["documents"]))
 
 
 class CrossmapIndexerSkippingTests(unittest.TestCase):
@@ -111,7 +111,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         cls.indexer.build()
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def test_setup(self):
@@ -125,8 +125,8 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
 
         # this doc should be close to A and D
         doc = {"data": "Alice A and Daniel"}
-        doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.nearest_targets(doc_vector, 2)
+        v = self.indexer.encode_document(doc)
+        nns, distances = self.indexer.nearest(v, "targets", 2)
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "D")
 
@@ -135,10 +135,8 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
 
         # this doc should be close to B, A, U
         doc = {"data": "Bob Bob Alice", "aux_pos": "Alice unique"}
-        doc_vector = self.indexer.encode_document(doc)
-        target_ids = self.indexer.db.all_ids(table="targets")
-        doc_ids = self.indexer.db.all_ids(table="documents")
-        nns, distances = self.indexer.nearest_targets(doc_vector, 3)
+        v = self.indexer.encode_document(doc)
+        nns, distances = self.indexer.nearest(v, "targets", 3)
         self.assertEqual(nns[0], "B")
         self.assertEqual(nns[1], "A")
         self.assertEqual(nns[2], "U")
@@ -148,18 +146,29 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
 
         # this doc should be close to A and D
         doc = {"data": "Alpha A Delta D E"}
-        doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.nearest_documents(doc_vector, 2)
+        v = self.indexer.encode_document(doc)
+        nns, distances = self.indexer.nearest(v, "documents", 2)
         self.assertEqual(nns[0], "U:D")
         self.assertEqual(nns[1], "U:A")
 
-    def test_suggest_A(self):
+    def test_suggest_A_wo_docs(self):
         """target suggestion, direct hits possible"""
 
         # this doc should be close to first two items in target dataset
         doc = {"data": "Alice", "aux_pos": "A B", "aux_neg": "unique token"}
-        doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.suggest_targets(doc_vector, 2)
+        v = self.indexer.encode_document(doc)
+        nns, distances = self.indexer.suggest(v, "targets", 2)
+        self.assertEqual(nns[0], "A")
+        self.assertEqual(nns[1], "B")
+
+    def test_suggest_A_w_docs(self):
+        """target suggestion, direct hits possible, using aux docs"""
+
+        # this doc should be close to first two items in target dataset
+        doc = {"data": "Alice", "aux_pos": "A B", "aux_neg": "unique token"}
+        v = self.indexer.encode_document(doc)
+        aux = dict(documents=2)
+        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "B")
 
@@ -168,8 +177,9 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
 
         # this doc should be close to two auxiliary items
         doc = {"data": "alpha", "aux_pos": "A bravo"}
-        doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.suggest_targets(doc_vector, 2, 2)
+        v = self.indexer.encode_document(doc)
+        aux = dict(documents=2)
+        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "B")
         # the distances should not be equal
@@ -181,8 +191,9 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         # this doc should be close to two auxiliary items
         # but no overlap with target items
         doc = {"data": "alpha", "aux_pos": "bravo"}
-        doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.suggest_targets(doc_vector, 2, 0)
+        v = self.indexer.encode_document(doc)
+        aux = dict(documents=0)
+        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
         # without any help from the documents,
         # all distances to targets should be equal
         self.assertEqual(distances[0], distances[1])
@@ -193,8 +204,9 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         # this doc should be close to two auxiliary items
         # but no overlap with target items
         doc = {"data": "alpha", "aux_pos": "bravo"}
-        doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.suggest_targets(doc_vector, 2, 2000)
+        v = self.indexer.encode_document(doc)
+        aux = dict(documents=100)
+        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
         # the objective here is for the calculation not to crash
         self.assertLess(distances[0], distances[1])
 
@@ -235,7 +247,7 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
         # this doc should be close to first two items in target dataset
         doc = {"data": "Alice", "aux_pos": "A Bob"}
         doc_vector = self.indexer.encode_document(doc)
-        nns, distances = self.indexer.suggest_targets(doc_vector, 2)
+        nns, distances = self.indexer.suggest(doc_vector, "targets", 2)
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "B")
 

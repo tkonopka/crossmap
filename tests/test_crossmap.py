@@ -13,7 +13,7 @@ from .tools import remove_crossmap_cache
 data_dir = join("tests", "testdata")
 config_simple = join(data_dir, "config-simple.yaml")
 config_noname = join(data_dir, "config-no-name.yaml")
-config_nodocs = join(data_dir, "config-no-documents.yaml")
+config_nodocs = join(data_dir, "config-single.yaml")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
@@ -30,7 +30,7 @@ class CrossmapInitTests(unittest.TestCase):
         # create settings by providing a directory
         # This will trigger search for crossmap.yaml
         settings = CrossmapSettings(data_dir)
-        subdir = settings.data_dir
+        subdir = settings.prefix
         self.assertEqual(subdir, join(data_dir, "crossmap_default_name"))
         # data directory does not exist before init, exists after
         self.assertFalse(exists(subdir))

@@ -12,7 +12,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
-config_nodocs = join(data_dir, "config-no-documents.yaml")
+config_nodocs = join(data_dir, "config-single.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
 aux_file = join(data_dir, "documents.yaml")
 

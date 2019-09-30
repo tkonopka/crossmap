@@ -1,0 +1,4 @@
+name: crossmap_single
+comment: configuration with a single dataset
+data:
+  targets: dataset.yaml

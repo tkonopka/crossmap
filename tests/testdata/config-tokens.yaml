@@ -1,9 +1,8 @@
 name: crossmap_tokens
 comment: non-default token length, non-default alphabet
-targets:
-  - dataset.yaml
-documents:
-  - documents.yaml
+data:
+  targets: dataset.yaml
+  documents: documents.yaml
 tokens:
   k: 6
   alphabet: bcdfghjklmnpqrstvwxz

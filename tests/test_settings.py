@@ -7,31 +7,57 @@ from crossmap.settings import CrossmapSettings
 from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
+
+# good configurations
 config_file = join(data_dir, "config-simple.yaml")
-custom_config_file = join(data_dir, "config.yaml")
-config_no_target_file = join(data_dir, "config-no-targets.yaml")
-config_no_documents_file = join(data_dir, "config-no-documents.yaml")
-config_typo_file = join(data_dir, "config-typo-target.yaml")
+config_complete_file = join(data_dir, "config-complete.yaml")
 config_tokens_file = join(data_dir, "config-tokens.yaml")
+config_single_file = join(data_dir, "config-single.yaml")
+
+# invalid or problematic configurations
+config_no_data_file = join(data_dir, "config-no-data.yaml")
+config_nonexistent_file = join(data_dir, "config-nonexistent.yaml")
+
+# configuration that trigger sub-parsers
 config_server_file = join(data_dir, "config-server.yaml")
 config_weighting_file = join(data_dir, "config-weighting.yaml")
 
+# paths to data files
 documents_file = join(data_dir, "documents.yaml")
-
-include_file = join(data_dir, "include.txt")
-exclude_file = join(data_dir, "exclude.txt")
-exclude_file2 = join(data_dir, "exclude_2.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
 
-class CrossmapSettingsTests(unittest.TestCase):
-    """Recording settings for a crossmap analysis"""
+class CrossmapSettingsErrorTests(unittest.TestCase):
+    """detecting invalid attempts to set up settings"""
+
+    def test_init_missing_file(self):
+        """Attempt to configure with a non-existent file"""
+
+        with self.assertLogs(level='ERROR'):
+            result = CrossmapSettings(join(data_dir, "missing.yaml"))
+            self.assertFalse(result.valid)
+
+    def test_init_no_data(self):
+        """Attempt to configure with a configuration file without any data"""
+
+        with self.assertLogs(level='ERROR'):
+            result = CrossmapSettings(config_no_data_file)
+            self.assertFalse(result.valid)
+
+    def test_warnings_nonexistent_files(self):
+        """Attempt to configure with a configuration with a typo"""
+
+        with self.assertLogs(level='WARNING'):
+            result = CrossmapSettings(config_nonexistent_file)
+        # one target file is valid, so the overall config is valid
+        self.assertTrue(result.valid)
+
+
+class CrossmapSettingsDirTests(unittest.TestCase):
+    """intialize based only a directory name and file crossmap.yaml"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "default0")
-        remove_crossmap_cache(data_dir, "no_universe")
-        remove_crossmap_cache(data_dir, "no_targets")
-        remove_crossmap_cache(data_dir, "crossmap")
+        remove_crossmap_cache(data_dir, "crossmap_default")
 
     def test_init_dir(self):
         """Configure with just a directory"""
@@ -41,97 +67,94 @@ class CrossmapSettingsTests(unittest.TestCase):
         self.assertEqual(result.file, "crossmap.yaml")
         self.assertTrue(result.valid)
 
-    def test_init_file(self):
-        """Configure with valid configuration file"""
 
-        result = CrossmapSettings(join(data_dir, "config.yaml"))
-        self.assertEqual(result.dir, data_dir)
-        self.assertEqual(result.file, "config.yaml")
-        self.assertTrue(result.valid)
+class CrossmapSettingsSimpleTests(unittest.TestCase):
+    """parsing settings from a simple file"""
 
-    def test_init_missing_file(self):
-        """Attempt to configure with a non-existent file"""
+    @classmethod
+    def setUpClass(cls):
+        cls.settings = CrossmapSettings(config_file)
 
-        with self.assertLogs(level='ERROR'):
-            result = CrossmapSettings(join(data_dir, "missing.yaml"))
-            self.assertFalse(result.valid)
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_default")
 
-    def test_init_no_target(self):
-        """Attempt to configure with a configuration file without target"""
-
-        with self.assertLogs(level='ERROR'):
-            result = CrossmapSettings(config_no_target_file)
-            self.assertFalse(result.valid)
-
-    def test_init_no_documents(self):
-        """Attempt to configure with a configuration file without docs"""
-
-        with self.assertLogs(level='WARNING'):
-            result = CrossmapSettings(config_no_documents_file)
-            self.assertTrue(result.valid)
-
-    def test_warnings_missing_files(self):
-        """Attempt to configure with a configuration with a typo"""
-
-        with self.assertLogs(level='WARNING'):
-            result = CrossmapSettings(config_typo_file)
-        # one target file is valid, so the overall config is valid
-        self.assertTrue(result.valid)
-
-    def test_full_paths(self):
+    def test_full_paths_data(self):
         """Extract project file paths"""
 
-        settings = CrossmapSettings(config_file)
-        result = settings.files("documents")
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result, [documents_file])
+        settings = self.settings
+        self.assertEqual(len(settings.data_files), 2)
+        self.assertEqual(settings.data_files["documents"], documents_file)
+        self.assertEqual(settings.data_files["targets"], dataset_file)
 
     def test_full_paths_featuremap(self):
         """File path to featuremap is empty"""
 
-        settings = CrossmapSettings(config_file)
-        result = settings.files("featuremap")
-        self.assertEqual(len(result), 0)
-        self.assertEqual(result, [])
-
-    def test_full_paths_docs_targets(self):
-        """Extract both document and target file paths"""
-
-        settings = CrossmapSettings(config_file)
-        result = settings.files(["documents", "targets"])
-        self.assertEqual(len(result), 2)
-        self.assertEqual(set(result), set([dataset_file, documents_file]))
+        settings = self.settings
+        self.assertEqual(settings.feature_map_file, None)
 
     def test_warning_upon_faulty_file_retrieval(self):
         """Retrieving a non-canonical file type gives warning"""
 
-        settings = CrossmapSettings(config_file)
-        with self.assertLogs(level='WARNING') as cm:
-            settings.files(["documents", "badname"])
-        self.assertTrue("badname" in str(cm.output))
+        with self.assertRaises(Exception):
+            self.settings.data["badname"]
 
     def test_tsv_file(self):
         """settings object can create a file path to a tsv file"""
-        settings = CrossmapSettings(config_file)
-        result = settings.tsv_file("abc")
+
+        result = self.settings.tsv_file("abc")
         cs = "crossmap_simple"
         self.assertEqual(result, join(data_dir, cs, cs + "-abc.tsv"))
 
     def test_pickle_file(self):
         """settings object can create a file path to a pickle object"""
-        settings = CrossmapSettings(config_file)
-        result = settings.pickle_file("abc")
+
+        result = self.settings.pickle_file("abc")
         cs = "crossmap_simple"
         self.assertEqual(result, join(data_dir, cs, cs + "-abc"))
 
     def test_str(self):
         """summarize the settings in a single string"""
-        settings = CrossmapSettings(config_file)
-        self.assertTrue("simple" in str(settings))
+
+        self.assertTrue("simple" in str(self.settings))
+
+
+class CrossmapSettingsCompleteTests(unittest.TestCase):
+    """parsing settings from a complete file with many options"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.settings = CrossmapSettings(config_complete_file)
+
+    @classmethod
+    def tearDown(cls):
+        remove_crossmap_cache(data_dir, "crossmap_complete")
+
+    def test_init_file(self):
+        """Configure with valid configuration file"""
+
+        self.assertEqual(self.settings.dir, data_dir)
+        self.assertEqual(self.settings.file, "config-complete.yaml")
+        self.assertTrue(self.settings.valid)
+
+
+class CrossmapSettingsMiscTests(unittest.TestCase):
+    """parsing settings from misc files"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_single")
+        remove_crossmap_cache(data_dir, "crossmap_weighting")
+
+    def test_init_single(self):
+        """a configuration file can specify a single dataset"""
+
+        result = CrossmapSettings(config_single_file)
+        self.assertTrue(result.valid)
 
     def test_validate_weights(self):
         """validation can detect misspecified feature weighting scheme"""
-        with self.assertLogs(level="WARNING") as cm:
+
+        with self.assertLogs(level="WARNING"):
             settings = CrossmapSettings(config_weighting_file)
             settings._validate()
 
@@ -148,20 +171,20 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
     def test_max_features(self):
         """configure number of features in data vectors"""
 
-        result = CrossmapSettings(join(data_dir, "config.yaml"))
+        result = CrossmapSettings(join(data_dir, "config-complete.yaml"))
         self.assertEqual(result.features.max_number, 200)
 
     def test_aux_weight(self):
         """configure weight assigned to auxiliary data fields"""
 
-        result = CrossmapSettings(join(data_dir, "config.yaml"))
+        result = CrossmapSettings(join(data_dir, "config-complete.yaml"))
         self.assertEqual(result.features.aux_weight[0], 0.4)
         self.assertEqual(result.features.aux_weight[1], 0.2)
 
     def test_str(self):
         """summarize settings in a string"""
 
-        settings = CrossmapSettings(join(data_dir, "config.yaml"))
+        settings = CrossmapSettings(join(data_dir, "config-complete.yaml"))
         self.assertTrue("0.4" in str(settings.features))
         self.assertTrue("0.2" in str(settings.features))
 

@@ -94,12 +94,11 @@ class CrossmapSettingsDefaults:
     def __init__(self):
         self.name = ""
         self.dir = getcwd()
-        self.data_dir = join(self.dir, self.name)
+        self.prefix = join(self.dir, self.name)
         self.file = "crossmap.yaml"
         # paths to disk files
-        self.targets = []
-        self.documents = []
-        self.featuremap = []
+        self.data_files = dict()
+        self.feature_map_file = None
         # settings for features (e.g. number of features)
         self.features = CrossmapFeatureSettings()
         # settings for tokens (e.g. kmer length)
@@ -111,23 +110,19 @@ class CrossmapSettingsDefaults:
 
     def db_file(self):
         """create path to db file"""
-        return join(self.data_dir, self.name + ".sqlite")
+        return join(self.prefix, self.name + ".sqlite")
 
     def tsv_file(self, label):
         """create a file path for project tsv data"""
-        return join(self.data_dir, self.name + "-" + label + ".tsv")
+        return join(self.prefix, self.name + "-" + label + ".tsv")
 
     def pickle_file(self, label):
         """create a file path for project binary data object"""
-        return join(self.data_dir, self.name + "-" + label)
-
-    #def annoy_file(self, label):
-    #    """create a file path for a project index file"""
-    #    return join(self.data_dir, self.name + "-index-" + label + ".ann")
+        return join(self.prefix, self.name + "-" + label)
 
     def index_file(self, label):
         """create a file path for a project index file"""
-        return join(self.data_dir, self.name + "-" + label + "-index")
+        return join(self.prefix, self.name + "-" + label + "-index")
 
 
 class CrossmapSettings(CrossmapSettingsDefaults):
@@ -153,10 +148,10 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if self._load(self.dir, self.file):
             self.valid = all(list((self._validate()).values()))
 
-        self.data_dir = join(self.dir, self.name)
+        self.prefix = join(self.dir, self.name)
 
-        if create_dir and not exists(self.data_dir):
-            mkdir(self.data_dir)
+        if create_dir and not exists(self.prefix):
+            mkdir(self.prefix)
 
     def _load(self, dirpath, filename):
         """load settings from a file, return True/False of success"""
@@ -170,7 +165,11 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         with open(filepath, "r") as f:
             result = yaml.safe_load(f)
         for k, v in result.items():
-            if k == "tokens":
+            if k == "data":
+                self.data_files = v
+            elif k == "feature_map":
+                self.feature_map_file = v
+            elif k == "tokens":
                 self.tokens = CrossmapKmerSettings(v)
             elif k == "features":
                 self.features = CrossmapFeatureSettings(v)
@@ -200,16 +199,10 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             error(missing_msg + "valid name")
 
         # target objects to map toward
-        self.targets, skipped = query_files(self.targets, "targets", dir=dir)
-        result["targets"] = len(self.targets) > 0
-        if not result["targets"]:
-            error(missing_msg + "'targets'")
-
-        # universe (not required, so missing value generates only warning)
-        self.documents, skipped = query_files(self.documents,
-                                              "documents", dir=dir)
-        if len(self.documents) == 0:
-            warning(missing_msg + "'documents'")
+        self.data_files, skipped = query_files(self.data_files, "data file", dir=dir)
+        result["data"] = len(self.data_files) > 0
+        if not result["data"]:
+            error(missing_msg + "'data'")
 
         result["weighting"] = True
         if len(self.features.weighting) != 2:
@@ -218,7 +211,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
 
         return result
 
-    def files(self, file_types):
+    def files_deprecated(self, file_types):
         """Get paths to project files.
 
         Argument:
@@ -262,7 +255,7 @@ def query_file(filepath, filetype, log=warning):
     return True
 
 
-def query_files(filepaths, filetype, log=warning, dir=None):
+def query_files_list(filepaths, filetype, log=warning, dir=None):
     """assess whether a set of files are usable or not
 
     :param filepaths: path to files on disk
@@ -271,6 +264,8 @@ def query_files(filepaths, filetype, log=warning, dir=None):
     :param dir: path to a directory
     :return: a list of usable file paths and an integer indicating skipped files
     """
+
+    raise("Is this ever used?")
 
     if type(filepaths) is str:
         filepaths = [filepaths]
@@ -285,6 +280,27 @@ def query_files(filepaths, filetype, log=warning, dir=None):
             skipped += 1
     return result, skipped
 
+
+def query_files(filepaths, filetype, log=warning, dir=None):
+    """assess whether files in a dict are usable or not
+
+    :param filepaths: dict to paths to files on disk
+    :param filetype: string, used in logging messages
+    :param log: logging function
+    :param dir: path to a directory
+    :return: dict of usable file paths and an integer indicating skipped files
+    """
+
+    result, skipped = dict(), 0
+    for k, filepath in filepaths.items():
+        fullpath = filepath
+        if dir is not None:
+            fullpath = join(dir, filepath)
+        if query_file(fullpath, filetype, log):
+            result[k] = fullpath
+        else:
+            skipped += 1
+    return result, skipped
 
 def require_file(filepath, filetype):
     """check if a file or directory exists, emit a message if not"""

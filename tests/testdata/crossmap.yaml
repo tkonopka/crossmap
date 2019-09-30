@@ -1,6 +1,5 @@
-name: crossmap_default_name
+name: crossmap_default
 comment: a configuration object named crossmap.yaml (default name)
-targets:
-  - dataset.yaml
-documents:
-  - documents.yaml
+data:
+  targets: dataset.yaml
+  documents: documents.yaml

@@ -38,11 +38,39 @@ def bytes_to_csr(x, n_features):
     return csr_matrix(loads(x), shape=(1, n_features))
 
 
+# categorization of column names by field type
+_text_cols = set(["id", "title", "label"])
+_int_cols = set(["idx", "dataset"])
+_real_cols = set(["weight"])
+_blob_cols = set(["data", "counts"])
+
+
+def columns_sql(colnames):
+    """construct a partial sql command with column names
+
+    :param colnames: list with strings
+    :return: one string with a partial sql
+    """
+
+    result = []
+    for x in colnames:
+        if x in _text_cols:
+            result.append(x + " TEXT")
+        elif x in _int_cols:
+            result.append(x + " INTEGER")
+        elif x in _real_cols:
+            result.append(x + " REAL")
+        elif x in _blob_cols:
+            result.append(x + " BLOB")
+        else:
+            raise Exception("invalid columns name")
+    return "(" + ", ".join(result) + ")"
+
+
 class CrossmapDB:
     """Management of a DB for features and data vectors"""
 
-    table_names = {"features", "targets", "documents",
-                   "counts_targets", "counts_documents"}
+    table_names = {"features", "datasets", "data", "counts"}
 
     def __init__(self, db_file):
         """sets up path to db, operations performed via functions"""
@@ -87,7 +115,12 @@ class CrossmapDB:
         return self.n_features
 
     def build(self, reset=False):
-        """create empty tables in a new db"""
+        """create a database with empty tables
+
+        :param datasets: labels for data tables
+        :param reset: boolean, set True to remove existing db and recreate
+        :return:
+        """
 
         if exists(self.db_file):
             if not reset:
@@ -95,24 +128,21 @@ class CrossmapDB:
             warning("Removing existing database")
             remove(self.db_file)
 
+        cols_features = columns_sql(("id", "idx", "weight"))
+        cols_datasets = columns_sql(("dataset", "label", "title"))
+        cols_data = columns_sql(("dataset", "id", "idx", "title", "data"))
+        cols_counts = columns_sql(("dataset", "idx", "counts"))
+
         info("Creating database")
+        table_names = {"features"}
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            ct = "CREATE TABLE "
-            columns = ["id TEXT", "idx INTEGER"]
-            sql_map = ct + "features (" + ",".join(columns) + ", weight REAL)"
-            columns.extend(["title TEXT", "data BLOB"])
-            sql_targets = ct + "targets (" + ",".join(columns) + ")"
-            sql_docs = ct + "documents (" + ",".join(columns) + ")"
-            cur.execute(sql_map)
-            cur.execute(sql_targets)
-            cur.execute(sql_docs)
-            columns = ["idx INTEGER", "counts BLOB"]
-            counts_targets = ct + "counts_targets (" + ",".join(columns) + ")"
-            counts_docs = ct + "counts_documents (" + ",".join(columns) + ")"
-            cur.execute(counts_targets)
-            cur.execute(counts_docs)
+            cur.execute("CREATE TABLE features " + cols_features)
+            cur.execute("CREATE TABLE datasets " + cols_datasets)
+            cur.execute("CREATE TABLE data"  + cols_data)
+            cur.execute("CREATE TABLE counts" + cols_counts)
             conn.commit()
+        self.table_names = table_names
 
     def _index_table(self, table="targets", types=("id", "idx")):
         """create an index on one db table"""
@@ -190,7 +220,7 @@ class CrossmapDB:
         if titles is None:
             titles = [""]*len(ids)
 
-        sql = "INSERT INTO " + tab + \
+        sql = "INSERT INTO data_" + tab + \
               " (id, idx, title, data) VALUES (?, ?, ?, ?);"
         data_array = []
         for i in range(len(ids)):
@@ -230,7 +260,7 @@ class CrossmapDB:
                 result[row["idx"]] = row_counts
         return result
 
-    def _get_data(self, idxs=None, ids=None, table="targets"):
+    def get_data(self, table="targets", idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
         Note: one of ids or idx must be specified other than None
@@ -240,6 +270,10 @@ class CrossmapDB:
         :param table: one of 'targets' or 'documents'
         :return: list with content of database table
         """
+
+        if "data_"+table not in self.table_names:
+            raise Exception("data table does not exist: "+table)
+
         # determine whether to query by test id or numeric indexes
         queries, column = idxs, "idx"
         if ids is not None:
@@ -251,7 +285,7 @@ class CrossmapDB:
             self.n_features = self.count_features()
         n_features = self.n_features
         # perform query
-        sql = "SELECT id, idx, data FROM " + table + " WHERE "
+        sql = "SELECT id, idx, data FROM data_" + table + " WHERE "
         sql_where = [column + "=?"]*len(queries)
         sql += " OR ".join(sql_where)
         result = []
@@ -288,24 +322,6 @@ class CrossmapDB:
             for row in cur:
                 result[row[column]] = row["title"]
         return result
-
-    def get_targets(self, idxs=None, ids=None):
-        """get information on target items
-
-        :param idxs: list of integer indexes, or None to use ids instead
-        :param ids: list of text ids, or None to use idxs instead
-        :return: array of dicts
-        """
-        return self._get_data(idxs=idxs, ids=ids, table="targets")
-
-    def get_documents(self, idxs=None, ids=None):
-        """get information on documents
-
-        :param idxs: list of integer indexes, or None to use ids instead
-        :param ids: list of text ids, or None to use idxs instead
-        :return: array of dicts
-        """
-        return self._get_data(idxs=idxs, ids=ids, table="documents")
 
     def ids(self, idxs, table="targets"):
         """convert integer indexes to string ids
@@ -347,16 +363,3 @@ class CrossmapDB:
             for row in cur:
                 result[row["idx"]] = row["id"]
         return result
-
-
-def std_table(table=0):
-    """standardize a description of an table"""
-
-    if table == 0:
-        table = "targets"
-    elif table == 1:
-        table = "documents"
-    if table not in ["targets", "documents"]:
-        raise Exception("unrecognized table: " + str(table))
-    return table
-

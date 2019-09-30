@@ -1,0 +1,10 @@
+name: config_complete
+comment: description of configuration
+data:
+  targets: dataset.yaml
+  documents: documents.yaml
+tokens:
+  k: 5
+features:
+  max_number: 200
+  aux_weight: [0.4, 0.2]

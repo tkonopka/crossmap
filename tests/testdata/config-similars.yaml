@@ -1,7 +1,7 @@
 name: crossmap_similars
 comment: a configuration object using a dataset that has pairs of similar items
-targets:
-  - dataset-similars.yaml
+data:
+  targets: dataset-similars.yaml
 features:
   weighting: [1, 0]
 tokens:

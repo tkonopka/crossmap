@@ -2,5 +2,5 @@ name: crossmap_featuremap
 comment: a configuration reading features and weights from a file
 featuremap:
    - featuremap.tsv
-targets:
-  - dataset.yaml
+data:
+  targets: dataset.yaml

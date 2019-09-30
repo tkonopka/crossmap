@@ -1,0 +1,5 @@
+name: crossmap_nonexistent
+comment: configuration where one of the files does not exist (or a typo)
+data:
+  targets: dataset.yaml
+  documents: nonexistent.yaml
