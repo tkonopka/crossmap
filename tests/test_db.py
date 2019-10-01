@@ -149,13 +149,20 @@ class CrossmapDBAddGetTests(unittest.TestCase):
             db.register_dataset("targets")
             db.register_dataset("documents")
             db.set_feature_map(test_feature_map)
-        # add data and retrieve data back
+        # add data to documents
         ids = ["a", "b"]
         idxs = [0, 1]
         cls.vec_a = [0.0, 0.0, 1.0, 0.0]
         cls.vec_b = [0.0, 2.0, 0.0, 0.0]
         data = [csr_matrix(cls.vec_a), csr_matrix(cls.vec_b)]
-        db.add_data("documents", data, ids, indexes=idxs, titles=["AA", "BB"])
+        db.add_data("documents", data, ids, indexes=idxs,
+                    titles=["A title", "B title"])
+        # add data to targets
+        ids = ["x"]
+        idxs = [0]
+        cls.vec_x = [0.0, 0.0, 0.0, 0.5]
+        data = [csr_matrix(cls.vec_x)]
+        db.add_data("targets", data, ids, indexes=idxs, titles=["X title"])
         cls.db = db
 
     @classmethod
@@ -182,14 +189,21 @@ class CrossmapDBAddGetTests(unittest.TestCase):
         """can retrieve titles"""
         A = self.db.get_titles("documents", idxs=[0])
         self.assertEqual(len(A), 1)
-        self.assertEqual(A[0], "AA")
+        self.assertEqual(A[0], "A title")
 
     def test_get_titles_by_id(self):
         """can retrieve titles"""
         AB = self.db.get_titles("documents", ids=["a", "b"])
         self.assertEqual(len(AB), 2)
-        self.assertEqual(AB["a"], "AA")
-        self.assertEqual(AB["b"], "BB")
+        self.assertEqual(AB["a"], "A title")
+        self.assertEqual(AB["b"], "B title")
+
+    def test_get_ids(self):
+        """retrieve ids associated with specific datasets"""
+        target_ids = self.db.all_ids("targets")
+        documents_ids = self.db.all_ids("documents")
+        self.assertEqual(len(target_ids), 1)
+        self.assertEqual(len(documents_ids), 2)
 
 
 class CrossmapDBQueriesTests(unittest.TestCase):

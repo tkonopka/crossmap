@@ -126,19 +126,20 @@ class CrossmapFeatureMapTests(unittest.TestCase):
 
 
 class CrossmapFeatureMapWeightingTests(unittest.TestCase):
-    """Turning text data into tokens with Log weighting"""
+    """Assigning weights to tokens based on their frequencies"""
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_constant")
 
-    def test_ic(self):
+    def test_nonzero_weight(self):
+        """all features must have nonzero weight"""
 
-        with self.assertLogs(level="WARNING") as cm1:
-            settings = CrossmapSettings(config_constant_file,
-                                        create_dir=True)
-        with self.assertLogs(level="INFO") as cm2:
+        # use a configuration with log weights
+        settings = CrossmapSettings(config_constant_file, create_dir=True)
+        with self.assertLogs(level="INFO") as cm:
             settings.features.weighting = [0, 1]
             map_const = feature_map(settings, False)
+        self.assertTrue("Extracting" in str(cm.output))
         # all features should have >0 weights
         for k, v in map_const.items():
             kmsg = "feature "+str(k)+" should have weight >0"

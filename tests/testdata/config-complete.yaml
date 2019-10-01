@@ -1,5 +1,6 @@
 name: config_complete
 comment: description of configuration
+feature_map: featuremap.tsv
 data:
   targets: dataset.yaml
   documents: documents.yaml

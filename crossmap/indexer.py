@@ -33,13 +33,13 @@ class CrossmapIndexer:
         tokenizer = CrossmapTokenizer(settings)
         self.db = CrossmapDB(self.settings.db_file())
         self.db.build()
+        print("db feature map is "+str(self.db.get_feature_map()))
         self.feature_map = self._init_features(features)
         if len(self.feature_map) == 0:
             error("feature map is empty")
         self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
         self.indexes = dict()
         self.index_files = dict()
-        self.target_ids = None
 
     def _init_features(self, features):
         """determine the feature_map compoent from db, file, or from scratch"""
@@ -84,8 +84,8 @@ class CrossmapIndexer:
             if len(items) == 0:
                 return 0
             local_indexes = [offset+_ for _ in list(range(len(items)))]
-            self.db._add_data(items, ids, titles=titles,
-                              indexes=local_indexes, tab=label)
+            self.db.add_data(label, items, ids, titles=titles,
+                             indexes=local_indexes)
             result.addDataPointBatch(vstack(items), local_indexes)
             return len(items)
 
@@ -122,9 +122,11 @@ class CrossmapIndexer:
         # build an index just for the targets, then just for documents
         settings = self.settings
         self.clear()
+        for label in self.settings.data_files.keys():
+            if label not in self.db.datasets:
+                self.db.register_dataset(label)
         for label, filepath in settings.data_files.items():
             self._build_index(filepath, label)
-        self._target_ids()
         self.db.count_features()
 
     def _load_index(self, label):
@@ -151,11 +153,6 @@ class CrossmapIndexer:
         self.clear()
         self._load_index("targets")
         self._load_index("documents")
-        self._target_ids()
-
-    def _target_ids(self):
-        """grab a map of target indexes and ids"""
-        self.target_ids = self.db.all_ids(table="targets")
 
     def _neighbors(self, v, label, n=5, names=False):
         """get a set of neighbors for a document"""
@@ -167,7 +164,7 @@ class CrossmapIndexer:
         nns, distances = temp[0][0], temp[0][1]
         nns = [int(_) for _ in nns]
         if names:
-            nns = self.db.ids(nns, table=label)
+            nns = self.db.ids(label, nns)
         return nns, distances
 
     def encode_document(self, doc):
@@ -195,8 +192,7 @@ class CrossmapIndexer:
 
         v = csr_matrix(v)
         vlist = sparse_to_dense(v)
-        db = self.db
-        _n = self._neighbors
+        db, _n = self.db, self._neighbors
 
         if aux is None:
             aux = dict()
@@ -204,22 +200,28 @@ class CrossmapIndexer:
         # get direct distances from vector to targets
         nn0, dist0 = _n(v, label, n)
         target_dist = {i: d for i, d in zip(nn0, dist0)}
+        #print("target_dist "+str(target_dist))
         target_data = dict()
-        hits_targets = db.get_targets(idxs=nn0)
+        hits_targets = db.get_data(label, idxs=nn0)
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_dense(val["data"])
         # collect relevant auxiliary documents
+        # nn1 - integer indexes in the auxiliary datasets
+        # dist1 - distances from v to the auxiliary items
+        # doc1 - dict of arrays with sparse vectors
+        # data1 - dict of dicts holding dense vectors
         nn1, dist1, doc1, data1 = dict(), dict(), dict(), dict()
         for aux_label, aux_n in aux.items():
+            #print("querying aux label: "+aux_label)
             nn1[aux_label], dist1[aux_label] = _n(v, aux_label, aux_n)
-            doc1[aux_label] = db.get_documents(idxs=nn1[aux_label])
+            doc1[aux_label] = db.get_data(aux_label, idxs=nn1[aux_label])
             data1[aux_label] = dict()
             for _, val in enumerate(doc1[aux_label]):
                 data1[aux_label][val["idx"]] = sparse_to_dense(val["data"])
-        print("nn1 "+str(nn1))
-        print("dist1 "+str(dist1))
-        print("doc1 "+str(doc1))
-        print("data1 "+str(data1))
+        #print("nn1 " + str(nn1))
+        #print("dist1 " + str(dist1))
+        #print("doc1 " + str(doc1))
+        #print("data1 " + str(data1))
 
         # record distances from auxiliary documents to targets
         # (some docs may introduce new targets to consider)
@@ -227,31 +229,40 @@ class CrossmapIndexer:
         for aux_label in nn1.keys():
             for doc in nn1[aux_label]:
                 i_data = data1[aux_label][doc]
-                nn2, dist2 = self._neighbors(i_data, label, n)
-                doc_target_dist[doc] = dict()
+                nn2, dist2 = _n(i_data, label, n)
+                doc_target_dist[aux_label+str(doc)] = dict()
                 for j, d in zip(nn2, dist2):
-                    doc_target_dist[doc][aux_label+j] = d
+                    doc_target_dist[aux_label+str(doc)][j] = d
                 for target in nn2:
                     if target in target_dist:
                         continue
-                    i_target_data = db.get_targets(idxs=[target])[0]
+                    temp = db.get_data(label, idxs=[target])
+                    i_target_data = db.get_data(label, idxs=[target])[0]
                     target_data[target] = sparse_to_dense(i_target_data["data"])
                     target_dist[target] = euc_dist(target_data[target], vlist)
 
+        #print("target_dist "+str(target_dist))
+        #print("doc target dist "+str(doc_target_dist))
         # compute weighted distances from vector to targets
         result = target_dist.copy()
-        for i, d_v_i in zip(nn1, dist1):
-            i_data = doc_data[i]
-            i_target_dist = doc_target_dist[i]
-            for j in target_dist.keys():
-                if j in i_target_dist:
-                    d_i_j = i_target_dist[j]
-                else:
-                    d_i_j = euc_dist(i_data, target_data[j])
-                result[j] += (d_v_i + d_i_j)/n_doc
+        n_doc = sum([_ for _ in aux.values()])
+        #print("n_doc "+str(n_doc))
+        for aux_label in nn1.keys():
+            for i, d_v_i in zip(nn1[aux_label], dist1[aux_label]):
+                i_data = data1[aux_label][i]
+                i_target_dist = doc_target_dist[aux_label+str(i)]
+                for j in target_dist.keys():
+                    if j in i_target_dist:
+                        d_i_j = i_target_dist[j]
+                    else:
+                        d_i_j = euc_dist(i_data, target_data[j])
+                    result[j] += (d_v_i + d_i_j)/n_doc
 
         result = sorted(result.items(), key=lambda x: x[1])
-        suggestions = [self.target_ids[i] for i, _ in result]
+        print(str(result))
+        target_ids = self.db.ids(label, [i for i,_ in result])
+        print(str(target_ids))
+        suggestions = [target_ids[i] for i in range(len(result))]
         distances = [float(d) for _, d in result]
         return suggestions, distances
 

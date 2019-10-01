@@ -25,6 +25,7 @@ config_weighting_file = join(data_dir, "config-weighting.yaml")
 # paths to data files
 documents_file = join(data_dir, "documents.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
+features_file = join(data_dir, "featuremap.tsv")
 
 
 class CrossmapSettingsErrorTests(unittest.TestCase):
@@ -137,6 +138,11 @@ class CrossmapSettingsCompleteTests(unittest.TestCase):
         self.assertEqual(self.settings.file, "config-complete.yaml")
         self.assertTrue(self.settings.valid)
 
+    def test_featuremap_file(self):
+        """obtain path to feature file"""
+
+        self.assertEqual(self.settings.feature_map_file, features_file)
+
 
 class CrossmapSettingsMiscTests(unittest.TestCase):
     """parsing settings from misc files"""
@@ -230,3 +236,4 @@ class CrossmapServerSettingsTests(unittest.TestCase):
         """summarize settings in a string"""
         settings = CrossmapSettings(config_server_file)
         self.assertTrue("8081" in str(settings.server))
+

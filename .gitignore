@@ -6,10 +6,12 @@
 htmlcov
 profiling
 
-# ignore data files by default
+# ignore some data files
 *xml
-*sqlite3
+*sqlite
 *gz
+*tsv
+*csv
 
 # ignore temporary files in python code
 */*pyc

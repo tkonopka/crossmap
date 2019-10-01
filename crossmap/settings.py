@@ -204,6 +204,10 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if not result["data"]:
             error(missing_msg + "'data'")
 
+        if self.feature_map_file is not None:
+            self.feature_map_file = join(dir, self.feature_map_file)
+        result["feature_map"] = query_file(self.feature_map_file, "feature_map")
+
         result["weighting"] = True
         if len(self.features.weighting) != 2:
             self.features.weighting = [1, 0]
@@ -253,32 +257,6 @@ def query_file(filepath, filetype, log=warning):
             log(filetype + " does not exist: " + filepath)
         return False
     return True
-
-
-def query_files_list(filepaths, filetype, log=warning, dir=None):
-    """assess whether a set of files are usable or not
-
-    :param filepaths: path to files on disk
-    :param filetype: string, used in logging messages
-    :param log: logging function
-    :param dir: path to a directory
-    :return: a list of usable file paths and an integer indicating skipped files
-    """
-
-    raise("Is this ever used?")
-
-    if type(filepaths) is str:
-        filepaths = [filepaths]
-    result, skipped = [], 0
-    for filepath in filepaths:
-        fullpath = filepath
-        if dir is not None:
-            fullpath = join(dir, filepath)
-        if query_file(fullpath, filetype, log):
-            result.append(filepath)
-        else:
-            skipped += 1
-    return result, skipped
 
 
 def query_files(filepaths, filetype, log=warning, dir=None):

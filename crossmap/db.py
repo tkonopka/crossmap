@@ -3,7 +3,7 @@
 
 import sqlite3
 from pickle import loads, dumps
-from logging import info, warning
+from logging import info, warning, error
 from os.path import exists
 from os import remove
 from scipy.sparse import csr_matrix
@@ -78,6 +78,23 @@ class CrossmapDB:
         self.db_file = db_file
         self.n_features = None
         self.datasets = dict()
+        self.datasets = self._load_datasets()
+
+    def _load_datasets(self):
+        """read dataset labels from db
+
+        :return: dict with mapping from label to integer identifier
+        """
+
+        result = dict()
+        if not exists(self.db_file):
+            return result
+        with get_conn(self.db_file) as conn:
+            c = conn.cursor()
+            c.execute("SELECT dataset, label FROM datasets")
+            for row in c:
+                result[row["label"]] = row["dataset"]
+        return result
 
     def _clear_table(self, table="targets"):
         """remove all content from a table
@@ -103,7 +120,6 @@ class CrossmapDB:
         """
 
         if table not in self.table_names:
-            print("returning zero by fiat")
             return 0
         with get_conn(self.db_file) as conn:
             count_sql = "SELECT COUNT(*) FROM " + table
@@ -130,9 +146,9 @@ class CrossmapDB:
             warning("Removing existing database")
             remove(self.db_file)
 
-        cols_features = columns_sql(("id", "idx", "weight"))
+        cols_features = columns_sql(("idx", "id", "weight"))
         cols_datasets = columns_sql(("dataset", "label", "title"))
-        cols_data = columns_sql(("dataset", "id", "idx", "title", "data"))
+        cols_data = columns_sql(("dataset", "idx", "id", "title", "data"))
         cols_counts = columns_sql(("dataset", "idx", "counts"))
 
         info("Creating database")
@@ -149,27 +165,20 @@ class CrossmapDB:
 
         :param label: string, a new data set label
         :param title: string, an additional descriptor for the dataset
-        :return:
+        :return: nothing, changes are made to the db
         """
 
-        # identify existing labels
-        sql = "SELECT dataset, label FROM datasets ORDER by dataset"
-        existing = set()
-        with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
-            cur.execute(sql)
-            for row in cur:
-                existing.add(row["label"])
-
-        if label in existing:
+        # check if dataset label already exists
+        self.datasets = self._load_datasets()
+        if label in self.datasets:
             error("dataset label already exists")
             return
 
         s = "INSERT INTO datasets (dataset, label, title) VALUES (?, ?, ?);"
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
-            cur.executemany(s, [(len(existing), label, title)])
-            self.datasets[label] = len(existing)
+            cur.executemany(s, [(len(self.datasets), label, title)])
+            self.datasets[label] = len(self.datasets)
             conn.commit()
 
     def _index(self, prefix="data", types=("id", "idx")):
@@ -232,7 +241,7 @@ class CrossmapDB:
             conn.commit()
 
     def add_data(self, label, data, ids, titles=None, indexes=None):
-        """
+        """insert rows into the 'data' table
 
         :param label: string, dataset identifier
         :param data: list with vectors
@@ -257,8 +266,7 @@ class CrossmapDB:
             idata = sqlite3.Binary(csr_to_bytes(data[i]))
             data_array.append((d_index, ids[i], indexes[i], titles[i], idata))
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
-            cur.executemany(sql, data_array)
+            conn.cursor().executemany(sql, data_array)
             conn.commit()
 
     def _get_counts(self, idxs, table="targets"):
@@ -275,9 +283,9 @@ class CrossmapDB:
         sql += " OR ".join(sql_where)
         result = dict()
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
-            cur.execute(sql, idxs)
-            for row in cur:
+            c = conn.cursor()
+            c.execute(sql, idxs)
+            for row in c:
                 row_counts = bytes_to_csr(row["counts"], n_features)
                 result[row["idx"]] = row_counts
         return result
@@ -312,11 +320,11 @@ class CrossmapDB:
         sql += "(" + " OR ".join(sql_where) + ")"
         result = []
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
+            c = conn.cursor()
             vals = [self.datasets[label]]
             vals.extend(queries)
-            cur.execute(sql, vals)
-            for row in cur:
+            c.execute(sql, vals)
+            for row in c:
                 rowdict = dict(id=row["id"], idx=row["idx"],
                                data=bytes_to_csr(row["data"], n_features))
                 result.append(rowdict)
@@ -344,11 +352,11 @@ class CrossmapDB:
         sql += "(" + " OR ".join(sql_where) + ")"
         result = dict()
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
+            c = conn.cursor()
             vals = [self.datasets[label]]
             vals.extend(queries)
-            cur.execute(sql, vals)
-            for row in cur:
+            c.execute(sql, vals)
+            for row in c:
                 result[row[column]] = row["title"]
         return result
 
@@ -369,30 +377,33 @@ class CrossmapDB:
         sql = "SELECT id, idx FROM data WHERE dataset=? AND "
         sql += "(" + " OR ".join(["idx=?"]*len(idxs)) + " )"
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
+            c = conn.cursor()
             vals = [self.datasets[label]]
             vals.extend(idxs)
-            cur.execute(sql, vals)
-            map = {row["idx"]: row["id"] for row in cur}
-        # arrange into a list
+            c.execute(sql, vals)
+            map = {row["idx"]: row["id"] for row in c}
         result = [None]*len(idxs)
         for i,v in enumerate(idxs):
             result[i] = map[v]
         return result
 
-    def all_ids(self, table="targets"):
-        """get all ids
+    def all_ids(self, label):
+        """get all ids associated with a dataset
 
-        :param table: string, indicating to query targets or documents
+        :param label: string, indicating to query targets or documents
         :return: list with ids corresponding to those indexes
         """
 
-        table = std_table(table)
-        n_rows = self._count_rows(table)
-        result = [None]*n_rows
+        d_index = self.datasets[label]
+        count_sql = "SELECT COUNT(*) FROM data WHERE dataset=?"
+        select_sql = "SELECT id, idx FROM data WHERE dataset=?"
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT id, idx FROM " + table)
-            for row in cur:
+            c = conn.cursor()
+            # first count rows that belong to this dataset
+            n_rows = c.execute(count_sql, (d_index,)).fetchone()[0]
+            # second query retrieve ids and idx
+            result = [None]*n_rows
+            c.execute(select_sql, (d_index,))
+            for row in c:
                 result[row["idx"]] = row["id"]
         return result
