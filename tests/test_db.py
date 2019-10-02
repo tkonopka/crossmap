@@ -74,7 +74,7 @@ class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def test_db_build_and_rebuild(self):
-        """build indexes from a simple configuration"""
+        """build a db from a simple configuration"""
 
         db = CrossmapDB(self.db_file)
         # first pass can create a db with an info message
@@ -168,6 +168,16 @@ class CrossmapDBAddGetTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_count_data_rows(self):
+        """build and count rows in data table for each dataset"""
+
+        documents_size = self.db.dataset_size("documents")
+        targets_size = self.db.dataset_size("targets")
+        abc_size = self.db.dataset_size("abc")
+        self.assertEqual(documents_size, 2)
+        self.assertEqual(targets_size, 1)
+        self.assertEqual(abc_size, 0)
 
     def test_get_data_a(self):
         """can retrieve data vectors"""

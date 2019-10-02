@@ -63,6 +63,23 @@ class CrossmapFeatureSettings:
         return result
 
 
+class CrossmapDiffusionSettings:
+
+    def __init__(self, config=None):
+        self.min = 0.0
+
+        if config is None:
+            return
+        for key, val in config.items():
+            if key == "min":
+                self.min = float(val)
+
+    def __str__(self):
+        result = "Crossmap Diffusion Settings:\n"
+        result += "min diffusion factor=" + str(self.min)
+        return result
+
+
 class CrossmapServerSettings:
     """Container for settings for server"""
 

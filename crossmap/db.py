@@ -181,6 +181,22 @@ class CrossmapDB:
             self.datasets[label] = len(self.datasets)
             conn.commit()
 
+    def dataset_size(self, label):
+        """get current number of rows in data table for a dataset
+
+        :param label: string, identifier for a dataset
+        :return: integer, number of data rows associated to a dataset
+        """
+
+        if label not in self.datasets:
+            return 0
+        d_index = self.datasets[label]
+        with get_conn(self.db_file) as conn:
+            sql = "SELECT COUNT(*) FROM data WHERE dataset=?"
+            c = conn.cursor()
+            result = c.execute(sql, (d_index, )).fetchone()[0]
+        return result
+
     def _index(self, prefix="data", types=("id", "idx")):
         """create an index on one db table"""
 
@@ -312,7 +328,7 @@ class CrossmapDB:
         """
 
         if label not in self.datasets:
-            raise("incorrect dataset label: "+label)
+            raise Exception("incorrect dataset: "+label)
 
         # determine whether to query by test id or numeric indexes
         queries, column = idxs, "idx"

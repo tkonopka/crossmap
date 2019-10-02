@@ -29,7 +29,7 @@ class CrossmapDiffuser:
         if len(self.feature_map) == 0:
             error("feature map is empty")
 
-    def _build_counts(self, files, label=""):
+    def _build_counts_files(self, files, label=""):
         """scan files to generate a counts table"""
 
         info("Building diffusion index for " + label)
@@ -42,6 +42,33 @@ class CrossmapDiffuser:
             for i in _tokens.indices:
                 result[i] += _tokens
 
+        stats = [str(round(_, 3)) for _ in evaluate_sparsity(result)]
+        info("Sparsity (min, avg, max): (" + ", ".join(stats) + ")")
+
+        self.db.set_counts(label, result)
+
+    def _build_counts(self, label="", chunk_size=10000):
+        """scan files to generate a counts table"""
+
+        info("Building diffusion index for " + label)
+        fm = self.feature_map
+        nf = len(fm)
+
+        n_items = self.db.dataset_size(label)
+        result = [csr_matrix([0]*len(fm)) for _ in range(nf)]
+
+        # fetch encoded vectors from db in chunks and sum up values
+        for i in range(0, n_items, chunk_size):
+            idxs = list(range(i, min(n_items, i+chunk_size)))
+            data = self.db.get_data(label, idxs=idxs)
+            for row in data:
+                v = row["data"]
+                for k in v.indices:
+                    result[k] += v
+
+        stats = [str(round(_, 3)) for _ in evaluate_sparsity(result)]
+        info("Sparsity (min, avg, max): (" + ", ".join(stats) + ")")
+
         self.db.set_counts(label, result)
 
     def build(self):
@@ -52,7 +79,7 @@ class CrossmapDiffuser:
             if label not in self.db.datasets:
                 self.db.register_dataset(label)
         for label, filepath in settings.data_files.items():
-            self._build_counts(filepath, label)
+            self._build_counts(label)
 
     def diffuse(self, v, strength, normalize=True):
         """create a new vector by diffusing values
@@ -77,4 +104,18 @@ class CrossmapDiffuser:
         if normalize:
             result = normalize_csr(result)
         return result
+
+
+def evaluate_sparsity(data):
+    """evaluate some metrics of sparsity in an array
+
+    :param data: array of csr_matrix objects
+    :return: mean, min, max relative load
+    """
+
+    sparsity = [None]*len(data)
+    for i in range(len(data)):
+        idata = data[i]
+        sparsity[i] = len(idata.indices)/idata.shape[1]
+    return min(sparsity), sum(sparsity)/len(sparsity), max(sparsity)
 
