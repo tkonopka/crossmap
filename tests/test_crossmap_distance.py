@@ -3,10 +3,9 @@ Tests for computing specific distances (for debugging/inspection purposes)
 """
 
 import unittest
-from os.path import join, exists
+from os.path import join
 from crossmap.crossmap import Crossmap
 from crossmap.settings import CrossmapSettings
-from crossmap.tools import read_dict
 from .tools import remove_crossmap_cache
 
 
@@ -17,8 +16,7 @@ dataset_file = join(data_dir, "dataset.yaml")
 
 
 class CrossmapDistanceTests(unittest.TestCase):
-    """Use crossmap interface to compute distance betwee data objects
-    and items in db"""
+    """compute distance between data objects and items in db"""
 
     @classmethod
     def setUpClass(cls):
@@ -36,11 +34,11 @@ class CrossmapDistanceTests(unittest.TestCase):
         doc = {"data": "Bob B Alice A B"}
         result = self.crossmap.distance(doc, ids=["A", "C"])
         self.assertEqual(len(result), 2)
-        self.assertTrue("target" in result[0] and "document" not in result[0])
-        self.assertTrue("target" in result[1] and "document" not in result[1])
+        self.assertTrue("targets" in str(result[0]))
+        self.assertTrue("target" in str(result[1]))
         # outputs are in same order as ids in array
-        self.assertEqual(result[0]["target"], "A")
-        self.assertEqual(result[1]["target"], "C")
+        self.assertEqual(result[0]["id"], "A")
+        self.assertEqual(result[1]["id"], "C")
 
     def test_distance_to_documents(self):
         """extract individual distance values"""
@@ -48,11 +46,11 @@ class CrossmapDistanceTests(unittest.TestCase):
         doc = {"data": "Bob B Alice A B"}
         result = self.crossmap.distance(doc, ids=["U:B", "U:E"])
         self.assertEqual(len(result), 2)
-        self.assertTrue("target" not in result[0] and "document" in result[0])
-        self.assertTrue("target" not in result[1] and "document" in result[1])
+        self.assertTrue("documents" in str(result[0]))
+        self.assertTrue("documents" in str(result[1]))
         # outputs are in same order as ids in array
-        self.assertEqual(result[0]["document"], "U:B")
-        self.assertEqual(result[1]["document"], "U:E")
+        self.assertEqual(result[0]["id"], "U:B")
+        self.assertEqual(result[1]["id"], "U:E")
 
     def test_distance_to_mix_targets_documents(self):
         """extract individual distance values to targets and documents at once"""
@@ -60,8 +58,10 @@ class CrossmapDistanceTests(unittest.TestCase):
         doc = {"data": "Bob B Alice A B"}
         result = self.crossmap.distance(doc, ids=["C", "U:E"])
         self.assertEqual(len(result), 2)
-        self.assertTrue("target" in result[0] and "document" not in result[0])
-        self.assertTrue("target" not in result[1] and "document" in result[1])
+        self.assertTrue("target" in str(result[0]))
+        self.assertFalse("document" in str(result[0]))
+        self.assertFalse("target" in str(result[1]))
+        self.assertTrue("document" in str(result[1]))
         # outputs are in same order as ids in array
-        self.assertEqual(result[0]["target"], "C")
-        self.assertEqual(result[1]["document"], "U:E")
+        self.assertEqual(result[0]["id"], "C")
+        self.assertEqual(result[1]["id"], "U:E")

@@ -19,9 +19,8 @@ class CrossmapDecomposeTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with cls.assertLogs(cls, level="WARNING"):
-            cls.crossmap = Crossmap(config_file)
-            cls.crossmap.build()
+        cls.crossmap = Crossmap(config_file)
+        cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
 
     @classmethod
@@ -33,12 +32,12 @@ class CrossmapDecomposeTests(unittest.TestCase):
 
         doc = dict(data="Bob Bravo Delta David", aux_pos="Bob Bernard")
         # standard nearest neighbors should return two Bs
-        prediction = self.crossmap.predict(doc, n_targets=2)
+        prediction = self.crossmap.predict(doc, "targets", n=2)
         self.assertTrue("B1" in prediction["targets"])
         self.assertTrue("B2" in prediction["targets"])
         self.assertEqual(len(prediction["targets"]), 2)
         # decomposition should give one B and one D
-        decomposition = self.crossmap.decompose(doc, n_targets=2)
+        decomposition = self.crossmap.decompose(doc, "targets", n=2)
         self.assertTrue(decomposition["targets"][0] in set(["B1", "B2"]))
         self.assertTrue(decomposition["targets"][1] in set(["D1", "D2"]))
 
@@ -47,12 +46,12 @@ class CrossmapDecomposeTests(unittest.TestCase):
 
         doc = dict(data="Charlie Christine Camilla", aux_pos="Bob Charlie Charlie")
         # standard nearest neighbors should return two Cs
-        prediction = self.crossmap.predict(doc, n_targets=2)
+        prediction = self.crossmap.predict(doc, "targets", n=2)
         self.assertTrue("C1" in prediction["targets"])
         self.assertTrue("C2" in prediction["targets"])
         self.assertEqual(len(prediction["targets"]), 2)
         # decomposition should also give Cs
-        decomposition = self.crossmap.decompose(doc, n_targets=2)
+        decomposition = self.crossmap.decompose(doc, "targets", n=2)
         self.assertTrue(decomposition["targets"][0] in set(["C1", "C2"]))
         self.assertTrue(decomposition["targets"][1] in set(["C1", "C2"]))
 
@@ -60,7 +59,7 @@ class CrossmapDecomposeTests(unittest.TestCase):
         """decomposing an empty document should not raise exceptions"""
 
         doc = dict(data="", aux_pos="")
-        decomposition = self.crossmap.decompose(doc, n_targets=3)
+        decomposition = self.crossmap.decompose(doc, "targets", n=3)
         self.assertEqual(decomposition["targets"], [])
         self.assertEqual(decomposition["coefficients"], [])
 
@@ -70,12 +69,11 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with cls.assertLogs(cls, level="WARNING"):
-            cls.crossmap = Crossmap(config_file)
-            cls.crossmap.build()
+        cls.crossmap = Crossmap(config_file)
+        cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
         targets = dict()
-        targets_file = cls.crossmap.settings.files("targets")[0]
+        targets_file = cls.crossmap.settings.data_files["targets"]
         with open(targets_file, "rt") as f:
             for id, doc in yaml_document(f):
                 targets[id] = doc
@@ -88,8 +86,8 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
     def test_decompose_documents(self):
         """exact document matches should produce short decomposition vectors"""
 
-        targets_file = self.crossmap.settings.files("targets")[0]
-        result = self.crossmap.decompose_file(targets_file, 2)
+        targets_file = self.crossmap.settings.data_files["targets"]
+        result = self.crossmap.decompose_file(targets_file, "targets", 2)
         for i in range(len(result)):
             iresult = result[i]
             # all targets should match to themselves only, with coeff 1.0

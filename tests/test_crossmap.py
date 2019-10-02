@@ -22,7 +22,7 @@ class CrossmapInitTests(unittest.TestCase):
     """Special cases for initialization"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap_default_name")
+        remove_crossmap_cache(data_dir, "crossmap_default")
 
     def test_init_from_settings(self):
         """Initializing a crossmap object create directory structure"""
@@ -31,7 +31,7 @@ class CrossmapInitTests(unittest.TestCase):
         # This will trigger search for crossmap.yaml
         settings = CrossmapSettings(data_dir)
         subdir = settings.prefix
-        self.assertEqual(subdir, join(data_dir, "crossmap_default_name"))
+        self.assertEqual(subdir, join(data_dir, "crossmap_default"))
         # data directory does not exist before init, exists after
         self.assertFalse(exists(subdir))
         # initializing using a settings object
@@ -53,7 +53,6 @@ class CrossmapBuildEmptyTests(unittest.TestCase):
     """Special cases for initialization - empty datasets"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap_empty_targets")
         remove_crossmap_cache(data_dir, "crossmap_empty_documents")
         remove_crossmap_cache(data_dir, "crossmap_empty")
 
@@ -63,27 +62,17 @@ class CrossmapBuildEmptyTests(unittest.TestCase):
         with self.assertLogs(level="ERROR") as cm:
             crossmap = Crossmap(join(data_dir, "config-empty.yaml"))
             crossmap.build()
-        self.assertTrue("empty" in str(cm.output))
-        self.assertFalse(crossmap.valid)
-
-    def test_init_empty_targets(self):
-        """targets data file cannot be empty"""
-
-        with self.assertLogs(level="ERROR") as cm:
-            crossmap = Crossmap(join(data_dir, "config-empty-targets.yaml"))
-            crossmap.build()
-        self.assertTrue("No content" in str(cm.output))
-        self.assertTrue("for targets" in str(cm.output))
+        self.assertTrue("data" in str(cm.output))
         self.assertFalse(crossmap.valid)
 
     def test_init_empty_documents(self):
-        """Initializing with an invalid configuration file"""
+        """Initializing with an empty dataset file"""
 
         with self.assertLogs(level="WARNING") as cm:
             crossmap = Crossmap(join(data_dir, "config-empty-documents.yaml"))
             crossmap.build()
         self.assertTrue("No content" in str(cm.output))
-        self.assertTrue("for documents" in str(cm.output))
+        self.assertTrue("documents" in str(cm.output))
         self.assertTrue(crossmap.valid)
 
 
@@ -127,19 +116,13 @@ class CrossmapBuildNoDocsTests(unittest.TestCase):
     """Building a crossmap object without documents"""
 
     def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap_nodocs")
+        remove_crossmap_cache(data_dir, "crossmap_single")
 
     def test_target_index_is_saved(self):
         """Build without documents saves one index"""
 
-        with self.assertLogs(level='WARNING') as cm1:
-            crossmap = Crossmap(config_nodocs)
-        self.assertTrue("Configuration does not specify" in str(cm1.output))
-        self.assertTrue("documents" in str(cm1.output))
-        with self.assertLogs(level='WARNING') as cm2:
-            crossmap.build()
-        self.assertTrue("Skipping build" in str(cm2.output))
-        self.assertTrue("for documents" in str(cm2.output))
+        crossmap = Crossmap(config_nodocs)
+        crossmap.build()
 
         targets_file = crossmap.settings.index_file("targets")
         docs_file = crossmap.settings.index_file("documents")

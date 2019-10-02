@@ -1,5 +1,0 @@
-name: crossmap_empty_targets
-comment: a configuration object with a targets dataset that is empty (not allowed)
-data:
-  targets: dataset-empty.yaml
-  documents: documents.yaml

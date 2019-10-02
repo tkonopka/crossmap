@@ -4,7 +4,7 @@ Distance calculations
 
 import numba
 from math import sqrt
-from .vectors import vec_norm
+from .vectors import vec_norm, sparse_to_dense
 
 @numba.jit
 def norm_euc_dist(a, b):
@@ -30,3 +30,8 @@ def euc_dist(a, b):
         dist2 += (a[i]-b[i])*(a[i]-b[i])
     return sqrt(dist2)
 
+
+def sparse_euc_distance(a, b):
+    """compute distance between two sparse vectors items"""
+
+    return euc_dist(sparse_to_dense(a), sparse_to_dense(b))

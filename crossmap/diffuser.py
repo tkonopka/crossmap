@@ -47,8 +47,8 @@ class CrossmapDiffuser:
     def build(self):
         """populate count tables based on all data files"""
         settings = self.settings
-        self._build_counts(settings.files("targets"), "targets")
-        self._build_counts(settings.files("documents"), "documents")
+        self._build_counts(settings.data_files["targets"], "targets")
+        self._build_counts(settings.data_files["documents"], "documents")
         self.db.count_features()
 
     def diffuse(self, v, strength=None, normalize=True):

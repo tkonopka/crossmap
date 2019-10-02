@@ -10,7 +10,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
-config_nodocs = join(data_dir, "config-single.yaml")
+config_single = join(data_dir, "config-single.yaml")
 config_featuremap = join(data_dir, "config-featuremap.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
 # not features for feature map should be in lowercase!
@@ -79,6 +79,13 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         self.assertGreater(len(ids_docs), 6, "targets have many items")
         self.assertTrue(exists(newindexer.index_files["targets"]))
         self.assertTrue(exists(newindexer.index_files["documents"]))
+
+    def test_indexer_str(self):
+        """str summarizes main properties"""
+
+        self.assertTrue("Indexes:\t0" in str(self.indexer))
+        self.indexer.build()
+        self.assertTrue("Indexes:\t2" in str(self.indexer))
 
 
 class CrossmapIndexerSkippingTests(unittest.TestCase):
@@ -218,7 +225,7 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
     def setUpClass(cls):
         """build an indexer using target documents only"""
 
-        settings = CrossmapSettings(config_nodocs, create_dir=True)
+        settings = CrossmapSettings(config_single, create_dir=True)
         settings.tokens.k = 10
         cls.indexer = CrossmapIndexer(settings, test_features)
         cls.feature_map = cls.indexer.feature_map

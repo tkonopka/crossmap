@@ -12,6 +12,7 @@ from crossmap.vectors import num_nonzero, all_zero
 from crossmap.vectors import vec_norm, normalize_vec, normalize_csr
 from crossmap.vectors import sparse_to_dense
 
+
 class VecNormTests(unittest.TestCase):
     """Vector normalization"""
 
@@ -66,7 +67,6 @@ class VecNormTests(unittest.TestCase):
         self.assertListEqual(list(result1), [0, 1, 0])
         result2 = sparse_to_dense(ncsr(csr_matrix([4,0])))
         self.assertListEqual(list(result2), [1, 0])
-
 
 
 class VecResidualTests(unittest.TestCase):

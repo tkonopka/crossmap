@@ -199,14 +199,17 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             error(missing_msg + "valid name")
 
         # target objects to map toward
-        self.data_files, skipped = query_files(self.data_files, "data file", dir=dir)
+        self.data_files, skipped = query_files(self.data_files,
+                                               "data file", dir=dir)
         result["data"] = len(self.data_files) > 0
         if not result["data"]:
             error(missing_msg + "'data'")
 
-        if self.feature_map_file is not None:
-            self.feature_map_file = join(dir, self.feature_map_file)
-        result["feature_map"] = query_file(self.feature_map_file, "feature_map")
+        fmf = self.feature_map_file
+        if fmf is not None:
+            self.feature_map_file = join(dir, fmf)
+            result["feature_map"] = query_file(self.feature_map_file,
+                                               "feature_map")
 
         result["weighting"] = True
         if len(self.features.weighting) != 2:

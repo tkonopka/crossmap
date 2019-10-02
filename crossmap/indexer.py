@@ -33,13 +33,14 @@ class CrossmapIndexer:
         tokenizer = CrossmapTokenizer(settings)
         self.db = CrossmapDB(self.settings.db_file())
         self.db.build()
-        print("db feature map is "+str(self.db.get_feature_map()))
         self.feature_map = self._init_features(features)
         if len(self.feature_map) == 0:
             error("feature map is empty")
         self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
         self.indexes = dict()
         self.index_files = dict()
+        # cache holding string identifiers for items in the db
+        self.item_ids = dict()
 
     def _init_features(self, features):
         """determine the feature_map compoent from db, file, or from scratch"""
@@ -180,22 +181,27 @@ class CrossmapIndexer:
         """
         return self._neighbors(v, label, n, names=True)
 
+    def _load_item_ids(self, label):
+        """cache string identifiers """
+
+        if label not in self.item_ids:
+            self.item_ids[label] = self.db.all_ids(label)
+
     def suggest(self, v, label, n=5, aux=None):
         """suggest nearest neighbors using a composite algorithm
 
         :param v:
         :param label: string, name of index of integer
         :param n: integer, number of nearest neighbors
-        :param n_aux: dictionary linking index labels to nearest neighbors
+        :param aux: dictionary linking index labels to nearest neighbors
         :return: a list of items ids, a list of composite distances
         """
 
+        self._load_item_ids(label)
         v = csr_matrix(v)
         vlist = sparse_to_dense(v)
         db, _n = self.db, self._neighbors
-
-        if aux is None:
-            aux = dict()
+        aux = aux or dict()
 
         # get direct distances from vector to targets
         nn0, dist0 = _n(v, label, n)
@@ -259,24 +265,26 @@ class CrossmapIndexer:
                     result[j] += (d_v_i + d_i_j)/n_doc
 
         result = sorted(result.items(), key=lambda x: x[1])
-        print(str(result))
-        target_ids = self.db.ids(label, [i for i,_ in result])
-        print(str(target_ids))
-        suggestions = [target_ids[i] for i in range(len(result))]
+        target_ids = self.item_ids[label]
+        suggestions = [target_ids[i] for i, _ in result]
         distances = [float(d) for _, d in result]
         return suggestions, distances
 
     @property
     def valid(self):
         """summarizes if the object was initialized correctly"""
+
+        if len(self.indexes) == 0:
+            return False
         if self.feature_map is None:
             return False
-        if self.target_ids is None:
-            return False
-        return len(self.feature_map) > 0 and len(self.target_ids) > 0
+        return len(self.feature_map) > 0
 
-    def distance(self, a, b):
-        """compute distance between two sparse vectors items"""
-        raise("This should be implemented as a static method")
-        return euc_dist(sparse_to_dense(a), sparse_to_dense(b))
+    def __str__(self):
+        """short description of the indexer structure"""
+
+        result = ["Indexer",
+                  "Feature map: \t" + str(len(self.feature_map)),
+                  "Num. Indexes:\t" + str(len(self.indexes))]
+        return "\n".join(result)
 
