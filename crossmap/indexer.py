@@ -138,7 +138,7 @@ class CrossmapIndexer:
         """
         index_file = self.settings.index_file(label)
         if not exists(index_file):
-            warning("Skipping loading index for " + label)
+            error("Skipping loading index for " + label)
             return
 
         info("Loading index for " + label)
@@ -152,8 +152,8 @@ class CrossmapIndexer:
         """Load indexes from disk files"""
 
         self.clear()
-        self._load_index("targets")
-        self._load_index("documents")
+        for label in self.db.datasets.keys():
+            self._load_index(label)
 
     def _neighbors(self, v, label, n=5, names=False):
         """get a set of neighbors for a document"""

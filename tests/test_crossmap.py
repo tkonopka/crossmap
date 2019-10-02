@@ -91,7 +91,13 @@ class CrossmapBuildStandardTests(unittest.TestCase):
 
     def test_valid_status(self):
         """crossmap should report a valid status because settings are valid"""
+
         self.assertTrue(self.crossmap.valid)
+
+    def test_default_dataset_label(self):
+        """the build process should set a default dataset label"""
+
+        self.assertEqual(self.crossmap.default_label, "targets")
 
     def test_feature_map_is_saved(self):
         """Build records a feature map"""

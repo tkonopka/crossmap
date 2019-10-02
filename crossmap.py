@@ -12,9 +12,9 @@ import logging
 import sys
 from os import environ, system
 from os.path import join, dirname
-from json import dumps
+from json import dumps, loads
 from crossmap.settings import CrossmapSettings
-from crossmap.crossmap import Crossmap
+from crossmap.crossmap import Crossmap, validate_dataset_label
 
 
 parser = argparse.ArgumentParser(description="crossmap")
@@ -30,14 +30,15 @@ parser.add_argument("--data", action="store",
 
 
 # fine-tuning of predictions and output
-parser.add_argument("--n_targets", action="store",
+parser.add_argument("--dataset", action="store",
+                    default=None,
+                    help="name of dataset")
+parser.add_argument("--n", action="store",
                     type=int, default=1,
-                    help="number of nearest targets")
-parser.add_argument("--n_docs", action="store",
-                    type=int, default=1,
-                    help="number of documents used")
-parser.add_argument("--report_docs", action="store_true",
-                    help="include document ids in prediction output")
+                    help="number of targets")
+parser.add_argument("--aux", action="store",
+                    default="{}",
+                    help="JSON of a dict for working with auxiliary datasets")
 parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
 
@@ -60,6 +61,7 @@ if __name__ != "__main__":
 # Script below assumes running from command line
 
 config = parser.parse_args()
+config.aux = loads(config.aux)
 
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -91,12 +93,14 @@ if config.action == "predict" or config.action == "decompose":
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap = Crossmap(settings)
     crossmap.load()
+    config.dataset = validate_dataset_label(crossmap, config.dataset)
+    if config.dataset is None:
+        sys.exit()
     action_fun = crossmap.predict_file
     if config.action == "decompose":
         action_fun = crossmap.decompose_file
-    result = action_fun(config.data,
-                        n_targets=config.n_targets, n_docs=config.n_docs,
-                        options=config)
+    result = action_fun(config.data, config.dataset,
+                        n=config.n, aux=config.aux)
     print_exit(result, config.pretty)
 
 if config.action == "distance" or config.action == "vectors":

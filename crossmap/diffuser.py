@@ -1,4 +1,5 @@
-"""Diffuser for crossmap vectors
+"""
+Diffuser for crossmap vectors
 
 The diffuser is a class that can take a vector and diffuse
 values for certain features into other features.

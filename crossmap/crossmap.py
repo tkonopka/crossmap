@@ -1,5 +1,6 @@
 """Crossmap class"""
 
+from logging import warning, error
 from os import mkdir
 from os.path import exists
 from scipy.sparse import csr_matrix, vstack
@@ -25,7 +26,8 @@ class Crossmap:
     def __init__(self, settings):
         """configure a crossmap object.
 
-        :param settings: a CrossmapSettings object, or a path to a configuration file
+        :param settings: a CrossmapSettings object, or a path to a
+            configuration file
         """
 
         if type(settings) is str:
@@ -42,6 +44,7 @@ class Crossmap:
         # prepare objects
         self.indexer = CrossmapIndexer(settings)
         self.encoder = self.indexer.encoder
+        self.default_label = list(self.settings.data_files.keys())[0]
 
     @property
     def valid(self):
@@ -55,9 +58,10 @@ class Crossmap:
     def build(self):
         """create indexes and auxiliary objects"""
 
-        if self.settings.valid:
-            self.indexer.build()
-            self.indexer.db.index()
+        if not self.settings.valid:
+            return
+        self.indexer.build()
+        self.indexer.db.index()
 
     def load(self):
         """load indexes from prepared files"""
@@ -129,7 +133,7 @@ class Crossmap:
 
         return decomposition_result(ids, coefficients, query_name)
 
-    def predict_file(self, filepath, label,  n, aux=None):
+    def predict_file(self, filepath, label, n, aux=None):
         """predict nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
@@ -142,7 +146,8 @@ class Crossmap:
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.predict(doc, label, n, aux, query_name=id))
+                result.append(self.predict(doc, label, n, aux,
+                                           query_name=id))
         return result
 
     def decompose_file(self, filepath, label, n=3, aux=None):
@@ -151,7 +156,7 @@ class Crossmap:
         :param filepath: string, path to a file with documents
         :param label: string, identifier for target dataset
         :param n: integer, number of target to report for each input
-        :param n_docs: integer, number of documents to use in the calculation
+        :param aux: dict, number of auxiliary documents
         :return: vector with dicts, each as output by decompose()
         """
 
@@ -167,6 +172,7 @@ class Crossmap:
 
         :param doc: dictionary with text
         :param ids: array of string ids, targets or documents
+        :param query_name: string, an identifier to associate with the doc
         :return: list of objects containing id and distance
         """
 
@@ -238,3 +244,23 @@ class Crossmap:
                 result.append(dict(id=id, vector=doc_vec))
         return result
 
+
+def validate_dataset_label(crossmap, label=None, log=True):
+    """check for a valid dataset label
+
+    :param crossmap: object of class Crossmap
+    :param label: string, a dataset identifier, set None to get default
+    :param log: boolean, toggle log messages
+    :return: a validated dataset string, a default label if None is specified,
+        or None if specified label is invalid
+    """
+
+    if label is None:
+        label = str(crossmap.default_label)
+        if log:
+            warning("using default dataset: " + label)
+    if label not in crossmap.indexer.db.datasets:
+        if log:
+            error("dataset label is not valid: " + label)
+        label = None
+    return label
