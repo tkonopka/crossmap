@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
                     choices=["build", "predict", "decompose", "server", "ui",
-                             "distance", "vectors"])
+                             "distances", "vectors"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -37,8 +37,11 @@ parser.add_argument("--n", action="store",
                     type=int, default=1,
                     help="number of targets")
 parser.add_argument("--aux", action="store",
-                    default="{}",
+                    default=None,
                     help="JSON of a dict for working with auxiliary datasets")
+parser.add_argument("--diffuse", action="store",
+                    default=None,
+                    help="JSON of a dict setting diffusion strengths")
 parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
 
@@ -60,8 +63,12 @@ if __name__ != "__main__":
 # ############################################################################
 # Script below assumes running from command line
 
+
 config = parser.parse_args()
-config.aux = loads(config.aux)
+if config.aux is not None:
+    config.aux = loads(config.aux)
+if config.diffuse is not None:
+    config.diffuse = loads(config.diffuse)
 
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -100,16 +107,18 @@ if config.action == "predict" or config.action == "decompose":
     if config.action == "decompose":
         action_fun = crossmap.decompose_file
     result = action_fun(config.data, config.dataset,
-                        n=config.n, aux=config.aux)
+                        n=config.n, aux=config.aux,
+                        diffuse=config.diffuse)
     print_exit(result, config.pretty)
 
-if config.action == "distance" or config.action == "vectors":
+if config.action == "distances" or config.action == "vectors":
     crossmap = Crossmap(settings)
     crossmap.load()
     action_fun = crossmap.distance_file
     if config.action == "vectors":
         action_fun = crossmap.vectors
-    result = action_fun(config.data, ids=config.ids.split(","))
+    result = action_fun(config.data, ids=config.ids.split(","),
+                        diffuse=config.diffuse)
     print_exit(result, config.pretty)
 
 if config.action == "server":

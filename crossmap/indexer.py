@@ -75,7 +75,7 @@ class CrossmapIndexer:
             warning("Skipping build index for " + label + " - already exists")
             self._load_index(label)
             return
-        info("Building index for " + label)
+        info("Building data index for " + label)
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         items, ids, titles, offset = [], [], [], 0

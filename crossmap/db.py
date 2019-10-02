@@ -28,14 +28,14 @@ def csr_to_bytes(x):
     return dumps(result)
 
 
-def bytes_to_csr(x, n_features):
+def bytes_to_csr(x, ncol):
     """convert a bytes object into a csr row matrix
 
     :param x: bytes object
-    :param n_features: integer, number of features (columns) in csr matrix
+    :param ncol: integer, number of columns in csr matrix
     :return:
     """
-    return csr_matrix(loads(x), shape=(1, n_features))
+    return csr_matrix(loads(x), shape=(1, ncol))
 
 
 # categorization of column names by field type
@@ -190,13 +190,16 @@ class CrossmapDB:
             for x in types:
                 index_id = prefix + "_" + x
                 cur.execute("DROP INDEX IF EXISTS " + index_id)
-                cur.execute(ci + index_id + " on " + prefix + " (" + x + ")")
+                cur.execute(ci + index_id + " on " + prefix + " (dataset, " + x + ")")
             conn.commit()
 
-    def index(self):
+    def index(self, table_name):
         """create indexes on existing tables in the database"""
-        info("Indexing database")
-        self._index()
+        info("Indexing " + table_name + " table")
+        if table_name == "data":
+            self._index(table_name, types=["id", "idx"])
+        elif table_name == "counts":
+            self._index(table_name, types=["idx"])
 
     def get_feature_map(self):
         """construct a feature map"""
@@ -208,6 +211,7 @@ class CrossmapDB:
             cur.execute(sql)
             for row in cur:
                 result[row["id"]] = (row["idx"], row["weight"])
+        self.n_features = len(result)
         return result
 
     def set_feature_map(self, feature_map):
@@ -222,19 +226,23 @@ class CrossmapDB:
             cur.executemany(sql, data_array)
         self.n_features = len(feature_map)
 
-    def _set_counts(self, data, tab="targets"):
-        """insert a counts table into db
+    def set_counts(self, label, data):
+        """insert rows into the counts table
 
-        Arguments:
-            data      list with vectors
-            tab       string, one of 'targets' or 'documents'
+        :param label: string, identifier for a dataset
+        :param data: list with rows to insert
+        :return:
         """
 
-        sql = "INSERT INTO counts_" + tab + " (idx, counts) VALUES (?, ?);"
+        if label not in self.datasets:
+            raise Exception("invalid dataset label: " + label)
+        d_index = self.datasets[label]
+
+        sql = "INSERT INTO counts (dataset, idx, counts) VALUES (?, ?, ?);"
         data_array = []
         for i in range(len(data)):
             idata = sqlite3.Binary(csr_to_bytes(data[i]))
-            data_array.append((i, idata))
+            data_array.append((d_index, i, idata))
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
             cur.executemany(sql, data_array)
@@ -269,22 +277,24 @@ class CrossmapDB:
             conn.cursor().executemany(sql, data_array)
             conn.commit()
 
-    def _get_counts(self, idxs, table="targets"):
+    def get_counts(self, label, idxs):
         """retrieve information from counts tables
 
+        :param label: string, dataset identifier
         :param idxs: list of integers
-        :param table: one of 'target' or 'documents'
         :return: dictionary mapping indexes to count objects
         """
 
         n_features = self.n_features
-        sql = "SELECT idx, counts FROM counts_" + table + " WHERE "
+        sql = "SELECT idx, counts FROM counts WHERE dataset=? "
         sql_where = ["idx=?"]*len(idxs)
-        sql += " OR ".join(sql_where)
+        sql += "AND (" + " OR ".join(sql_where) + ")"
         result = dict()
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            c.execute(sql, idxs)
+            vals = [self.datasets[label]]
+            vals.extend(idxs)
+            c.execute(sql, vals)
             for row in c:
                 row_counts = bytes_to_csr(row["counts"], n_features)
                 result[row["idx"]] = row_counts

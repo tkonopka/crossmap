@@ -41,8 +41,8 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         """count tables should have one row per feature"""
 
         n = len(self.feature_map)
-        self.assertEqual(self.db._count_rows("counts_targets"), n)
-        self.assertEqual(self.db._count_rows("counts_documents"), n)
+        # there are two datasets (targets, documents), so 2n rows
+        self.assertEqual(self.db._count_rows("counts"), 2*n)
 
     def test_diffuser_retrieve_counts(self):
         """extract counts from db for one feature"""
@@ -50,7 +50,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         fm = self.feature_map
         alice_idx = fm["alice"][0]
         # db fetch should provide counts for one feature
-        result = self.db._get_counts([alice_idx], table="targets")
+        result = self.db.get_counts("targets", [alice_idx])
         self.assertEqual(len(result), 1)
         # count vector should match feature map length
         data = result[alice_idx].toarray()[0]
@@ -70,7 +70,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         fm = self.feature_map
         a, b = fm["a"][0], fm["b"][0]
         # db fetch should provide counts for one feature
-        result = self.db._get_counts([a, b], table="targets")
+        result = self.db.get_counts("targets", [a, b])
         self.assertEqual(len(result), 2)
         # count vector should match feature map length
         self.assertEqual(len(result[a].toarray()[0]), len(fm))
@@ -82,8 +82,8 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         fm = self.feature_map
         a = fm["a"][0]
         # db fetch should provide counts for one feature
-        result_targets = self.db._get_counts([a], table="targets")
-        result_docs = self.db._get_counts([a], table="documents")
+        result_targets = self.db.get_counts("targets", [a])
+        result_docs = self.db.get_counts("documents", [a])
         self.assertEqual(len(result_targets), 1)
         self.assertEqual(len(result_docs), 1)
         counts_targets = result_targets[a].toarray()[0]
@@ -99,7 +99,8 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
 
         doc = {"data": "alice"}
         doc_data = self.encoder.document(doc)
-        result = self.diffuser.diffuse(doc_data)
+        strength = dict(targets=1, documents=1)
+        result = self.diffuser.diffuse(doc_data, strength)
         result_array = result.toarray()[0]
         # raw data has only one feature
         self.assertEqual(len(doc_data.indices), 1)
@@ -120,10 +121,11 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
 
         doc = {"data": "alice"}
         doc_data = self.encoder.document(doc)
-        result1 = self.diffuser.diffuse(doc_data)
+        strength_weak = dict(targets=1, documents=1)
+        result1 = self.diffuser.diffuse(doc_data, strength_weak)
         array1 = result1.toarray()[0]
-        weights = dict(targets=10, documents=10)
-        result2 = self.diffuser.diffuse(doc_data, weights)
+        strength_strong = dict(targets=10, documents=10)
+        result2 = self.diffuser.diffuse(doc_data, strength_strong)
         array2 = result2.toarray()[0]
         # second result uses more aggressive diffusion,
         # diffused values should be larger
