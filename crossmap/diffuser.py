@@ -47,7 +47,7 @@ class CrossmapDiffuser:
 
         self.db.set_counts(label, result)
 
-    def _build_counts(self, label="", chunk_size=10000):
+    def _build_counts(self, label=""):
         """scan files to generate a counts table"""
 
         info("Building diffusion index for " + label)
@@ -58,6 +58,7 @@ class CrossmapDiffuser:
         result = [csr_matrix([0]*len(fm)) for _ in range(nf)]
 
         # fetch encoded vectors from db in chunks and sum up values
+        chunk_size = 900
         for i in range(0, n_items, chunk_size):
             idxs = list(range(i, min(n_items, i+chunk_size)))
             data = self.db.get_data(label, idxs=idxs)
