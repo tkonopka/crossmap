@@ -27,7 +27,7 @@ class CrossmapDiffuser:
         if len(self.feature_map) == 0:
             error("feature map is empty")
 
-    def _build_counts(self, label=""):
+    def _build_counts(self, label="", progress_interval=1000):
         """construct co-occurance records for one dataset
 
         :param label: string, identifier for dataset in db
@@ -49,6 +49,8 @@ class CrossmapDiffuser:
             total += 1
             for k in v.indices:
                 result[k] += v
+            if total % progress_interval == 0:
+                info("Progress: processed " + str(total) + ", used "+str(used))
         info("(Used " + str(used) + " of " + str(total) + " items)")
         self.db.set_counts(label, result)
 

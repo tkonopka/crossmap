@@ -295,6 +295,8 @@ class Crossmap:
         """prepare an ad-hoc summary of the contents of the configuration"""
 
         def stats(x):
+            if len(x) == 0:
+                return {"min": 0, "mean": 0, "max": 0}
             temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
             return {k: round(v, digits) for k, v in temp.items()}
 

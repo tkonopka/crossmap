@@ -56,7 +56,7 @@ def _count_tokens(tokenizer, files):
         for id, doc in tokenizer.tokenize_path(f):
             num_items += 1
             if num_items % 100000 == 0:
-                info("Number of items: "+str(num_items))
+                info("Progress: "+str(num_items))
             tokens = set()
             for component in ("data", "aux_pos", "aux_neg"):
                 if component in doc:

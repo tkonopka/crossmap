@@ -100,7 +100,7 @@ class CrossmapIndexer:
             titles.append(_title)
             if len(items) >= batch_size:
                 num_items += batch_size
-                info("Number of items: " + str(num_items))
+                info("Progress: " + str(num_items))
                 offset += add_batch(items, ids, titles, offset)
                 items, ids, titles = [], [], []
         # force a batch save at the end of reading data
