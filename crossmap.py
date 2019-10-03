@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
                     choices=["build", "predict", "decompose", "server", "ui",
-                             "distances", "vectors"])
+                             "distances", "vectors", "counts", "features"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -120,6 +120,18 @@ if config.action == "distances" or config.action == "vectors":
     result = action_fun(config.data, ids=config.ids.split(","),
                         diffuse=config.diffuse)
     print_exit(result, config.pretty)
+
+if config.action == "counts":
+    crossmap = Crossmap(settings)
+    crossmap.load()
+    config.dataset = validate_dataset_label(crossmap, config.dataset)
+    result = crossmap.counts(config.dataset, features=config.ids.split(","))
+    print_exit(result, config.pretty)
+
+if config.action == "features":
+    crossmap = Crossmap(settings)
+    crossmap.load()
+    print_exit(crossmap.features(), config.pretty)
 
 if config.action == "server":
     try:

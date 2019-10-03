@@ -25,7 +25,7 @@ def decomposition_result(ids, weights, name):
 class Crossmap:
 
     def __init__(self, settings):
-        """configure a crossmap object.
+        """declare a minimal crossmap object.
 
         :param settings: a CrossmapSettings object, or a path to a
             configuration file
@@ -38,11 +38,9 @@ class Crossmap:
         if not settings.valid:
             return
 
-        # ensure directories exist
         if not exists(self.settings.prefix):
             mkdir(self.settings.prefix)
 
-        # prepare objects
         self.indexer = CrossmapIndexer(settings)
         self.encoder = self.indexer.encoder
         self.diffuser = None
@@ -259,6 +257,38 @@ class Crossmap:
                     v = self.diffuser.diffuse(v, diffuse)
                 v = list(sparse_to_dense(v))
                 result.append(dict(dataset="_file_", id=id, vector=v))
+        return result
+
+    def counts(self, label, features=[], digits=6):
+        """extract count vectors associated with features
+
+        :param features: list of features
+        :return:
+        """
+
+        # convert features into indexes, and an inverse mapping
+        fm, ifm = self.indexer.feature_map, dict()
+        idxs = []
+        for f in features:
+            if f in fm:
+                ifm[fm[f][0]] = f
+                idxs.append(fm[f][0])
+
+        counts = self.indexer.db.get_counts(label, idxs)
+        result = []
+        for k, v in counts.items():
+            vlist = list(sparse_to_dense(v))
+            vmax = max(vlist)
+            vlist = [round(_/vmax, digits) for _ in vlist]
+            result.append(dict(feature=ifm[k], counts=vlist))
+        return result
+
+    def features(self):
+        """extract feature information"""
+
+        result = []
+        for k, v in self.indexer.feature_map.items():
+            result.append(dict(feature=k, index=v[0], weight=v[1]))
         return result
 
 
