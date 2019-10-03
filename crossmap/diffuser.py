@@ -5,7 +5,7 @@ The diffuser is a class that can take a vector and diffuse
 values for certain features into other features.
 """
 
-from logging import info, error
+from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
 from .vectors import normalize_csr, threshold_csr
@@ -27,31 +27,37 @@ class CrossmapDiffuser:
         if len(self.feature_map) == 0:
             error("feature map is empty")
 
-    def _build_counts(self, label="", progress_interval=1000):
+    def _build_counts(self, label=""):
         """construct co-occurance records for one dataset
 
         :param label: string, identifier for dataset in db
         :return:
         """
 
+        # check existing state of counts table
+        num_rows = self.db._count_rows("counts", label)
+        if num_rows > 0:
+            msg = "Skipping build of diffusion index for " + label
+            warning(msg + " - already exists")
+            return
+
         info("Building diffusion index for " + label)
         threshold = self.settings.diffusion.threshold
+        progress = self.settings.logging.progress
         fm = self.feature_map
         nf = len(fm)
         empty = csr_matrix([0.0]*len(fm))
         result = [empty.copy() for _ in range(nf)]
-        used, total = 0, 0
+        total = 0
         for row in self.db.all_data(label):
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            used += len(v.indices) > 0
             total += 1
             for k in v.indices:
                 result[k] += v
-            if total % progress_interval == 0:
-                info("Progress: processed " + str(total) + ", used "+str(used))
-        info("(Used " + str(used) + " of " + str(total) + " items)")
+            if total % progress == 0:
+                info("Progress: processed " + str(total))
         self.db.set_counts(label, result)
 
     def build(self):

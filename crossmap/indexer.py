@@ -67,7 +67,7 @@ class CrossmapIndexer:
         self.indexes = dict()
         self.index_files = dict()
 
-    def _build_index(self, files, label, batch_size=100000):
+    def _build_index(self, files, label):
         """builds an Annoy index using data from documents on disk"""
 
         index_file = self.settings.index_file(label)
@@ -79,6 +79,8 @@ class CrossmapIndexer:
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         items, ids, titles, offset = [], [], [], 0
+
+        batch_size = self.settings.logging.progress
 
         # internal helper to save a batch of data into the index and db
         def add_batch(items, ids, titles, offset):

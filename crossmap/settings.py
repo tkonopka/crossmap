@@ -31,9 +31,9 @@ class CrossmapKmerSettings():
                     self.alphabet = val
 
     def __str__(self):
-        result = "Crossmap Kmer Settings:\n"
-        result += "k=" + str(self.k) + ", "
-        result += "alphabet='" + str(self.alphabet) + "'"
+        result = "Crossmap Kmer Settings:"
+        result += "\nk=" + str(self.k)
+        result += "\nalphabet='" + str(self.alphabet)
         return result
 
 
@@ -87,6 +87,28 @@ class CrossmapDiffusionSettings:
         return result
 
 
+class CrossmapLoggingSettings:
+    """Settings for handling diffusion of feature values"""
+
+    def __init__(self, config=None):
+        self.level = "WARNING"
+        self.progress = pow(10, 5)
+
+        if config is None:
+            return
+        for key, val in config.items():
+            if key == "level":
+                self.level = val
+            elif key == "progress":
+                self.progress = int(val)
+
+    def __str__(self):
+        result = "Crossmap Logging Settings:"
+        result += "\nlevel=" + str(self.level)
+        result += "\nprogress=" + str(self.progress)
+        return result
+
+
 class CrossmapServerSettings:
     """Container for settings for server"""
 
@@ -130,6 +152,8 @@ class CrossmapSettingsDefaults:
         self.tokens = CrossmapKmerSettings()
         # settings for server (e.g. port)
         self.server = CrossmapServerSettings()
+        # for logging and batch splitting
+        self.logging = CrossmapLoggingSettings()
         # summary of state
         self.valid = False
 
@@ -200,6 +224,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
                 self.server = CrossmapServerSettings(v)
             elif k == "diffusion":
                 self.diffusion = CrossmapDiffusionSettings(v)
+            elif k == "logging":
+                self.logging = CrossmapLoggingSettings(v)
             else:
                 self.__dict__[k] = v
         return True
@@ -305,6 +331,7 @@ def query_files(filepaths, filetype, log=warning, dir=None):
         else:
             skipped += 1
     return result, skipped
+
 
 def require_file(filepath, filetype):
     """check if a file or directory exists, emit a message if not"""

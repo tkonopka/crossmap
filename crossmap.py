@@ -53,7 +53,7 @@ parser.add_argument("--ids", action="store",
 
 # fine-tuning of predictions and output
 parser.add_argument("--logging", action="store",
-                    default="WARNING", choices=["WARNING", "INFO", "ERROR"],
+                    default=None, choices=["WARNING", "INFO", "ERROR"],
                     help="logging levels, use WARNING, INFO, or ERROR")
 
 
@@ -75,10 +75,13 @@ action = config.action
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
-logging.getLogger().setLevel(config.logging)
+if config.logging is not None:
+    logging.getLogger().setLevel(config.logging)
 
 
 settings = CrossmapSettings(config.config)
+if config.logging is not None:
+    logging.getLogger().setLevel(config.logging)
 if not settings.valid:
     sys.exit()
 

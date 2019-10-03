@@ -133,3 +133,33 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         self.assertEqual(doc_data.toarray()[0][with_idx], 0.0)
         self.assertGreater(array2[with_idx], array1[with_idx])
 
+
+class CrossmapDiffuserBuildReBuildTests(unittest.TestCase):
+    """Managing co-occurance counts"""
+
+    @classmethod
+    def setUpClass(cls):
+        settings = CrossmapSettings(config_plain, create_dir=True)
+        cls.indexer = CrossmapIndexer(settings)
+        cls.indexer.build()
+        cls.diffuser = CrossmapDiffuser(settings)
+        cls.diffuser.build()
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_rebuild_aborts(self):
+        """attempting to rebuild should signal and abort"""
+
+        diffuser = self.diffuser
+        before = diffuser.db._count_rows("counts")
+        self.assertGreater(before, 0)
+
+        with self.assertLogs(level="WARNING") as cm:
+            self.diffuser.build()
+        self.assertTrue("exists" in str(cm.output))
+
+        after = diffuser.db._count_rows("counts")
+        self.assertEqual(after, before)
+

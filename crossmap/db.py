@@ -68,10 +68,10 @@ def columns_sql(colnames):
     return "(" + ", ".join(result) + ")"
 
 
+crossmap_table_names = {"features", "datasets", "data", "counts"}
+
 class CrossmapDB:
     """Management of a DB for features and data vectors"""
-
-    table_names = {"features", "datasets", "data", "counts"}
 
     def __init__(self, db_file):
         """sets up path to db, operations performed via functions"""
@@ -103,7 +103,7 @@ class CrossmapDB:
         :param table: string, name of table
         """
 
-        if table not in self.table_names:
+        if table not in crossmap_table_names:
             raise Exception("clearing not supported for: " + table)
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
@@ -112,18 +112,26 @@ class CrossmapDB:
         if table == "features":
             self.n_features = 0
 
-    def _count_rows(self, table):
+    def _count_rows(self, table, label=None):
         """generic function to count rows in any table within db
 
         :param table: string, table name
         :return: integer number of rows
         """
 
-        if table not in self.table_names:
+        if table not in crossmap_table_names:
             return 0
+
         with get_conn(self.db_file) as conn:
-            count_sql = "SELECT COUNT(*) FROM " + table
-            result = conn.cursor().execute(count_sql).fetchone()[0]
+            c = conn.cursor()
+            sql = "SELECT COUNT(*) FROM " + table
+            if label is not None:
+                d_index = self.datasets[label]
+                sql += " WHERE dataset=?"
+                c = c.execute(sql, (d_index, ))
+            else:
+                c = c.execute(sql)
+            result = c.fetchone()[0]
         return result
 
     def count_features(self):
