@@ -46,7 +46,7 @@ class CrossmapIndexer:
         """determine the feature_map compoent from db, file, or from scratch"""
 
         if self.db.count_features() == 0:
-            features_file = self.settings.feature_map_file
+            features_file = self.settings.features.map_file
             if features is None and features_file is not None:
                 info("reading features from prepared dictionary")
                 features = read_dict(features_file, id_col="id",

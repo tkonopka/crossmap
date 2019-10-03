@@ -40,10 +40,11 @@ class CrossmapKmerSettings():
 class CrossmapFeatureSettings:
     """Container for settings related to features"""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, data_dir=None):
         self.max_number = 0
         self.weighting = [1, 0]
         self.aux_weight = (0.5, 0.5)
+        self.map_file = None
 
         if config is None:
             return
@@ -54,6 +55,11 @@ class CrossmapFeatureSettings:
                 self.weighting = [float(_) for _ in val]
             elif key == "aux_weight":
                 self.aux_weight = [float(_) for _ in val]
+            elif key == "map":
+                map_file = val
+                if data_dir is not None:
+                    map_file = join(data_dir, val)
+                self.map_file = map_file
 
     def __str__(self):
         result = "Crossmap Feature Settings:\n"
@@ -64,19 +70,20 @@ class CrossmapFeatureSettings:
 
 
 class CrossmapDiffusionSettings:
+    """Settings for handling diffusion of feature values"""
 
     def __init__(self, config=None):
-        self.min = 0.0
+        self.threshold = 0.0
 
         if config is None:
             return
         for key, val in config.items():
-            if key == "min":
-                self.min = float(val)
+            if key == "threshold":
+                self.threshold = float(val)
 
     def __str__(self):
         result = "Crossmap Diffusion Settings:\n"
-        result += "min diffusion factor=" + str(self.min)
+        result += "threshold=" + str(self.threshold)
         return result
 
 
@@ -115,9 +122,10 @@ class CrossmapSettingsDefaults:
         self.file = "crossmap.yaml"
         # paths to disk files
         self.data_files = dict()
-        self.feature_map_file = None
-        # settings for features (e.g. number of features)
+        # settings for features (e.g. max number, or from file)
         self.features = CrossmapFeatureSettings()
+        # setting for diffusion
+        self.diffusion = CrossmapDiffusionSettings()
         # settings for tokens (e.g. kmer length)
         self.tokens = CrossmapKmerSettings()
         # settings for server (e.g. port)
@@ -184,14 +192,14 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         for k, v in result.items():
             if k == "data":
                 self.data_files = v
-            elif k == "feature_map":
-                self.feature_map_file = v
             elif k == "tokens":
                 self.tokens = CrossmapKmerSettings(v)
             elif k == "features":
-                self.features = CrossmapFeatureSettings(v)
+                self.features = CrossmapFeatureSettings(v, self.dir)
             elif k == "server":
                 self.server = CrossmapServerSettings(v)
+            elif k == "diffusion":
+                self.diffusion = CrossmapDiffusionSettings(v)
             else:
                 self.__dict__[k] = v
         return True
@@ -222,11 +230,9 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if not result["data"]:
             error(missing_msg + "'data'")
 
-        fmf = self.feature_map_file
+        fmf = self.features.map_file
         if fmf is not None:
-            self.feature_map_file = join(dir, fmf)
-            result["feature_map"] = query_file(self.feature_map_file,
-                                               "feature_map")
+            result["feature_map"] = query_file(fmf, "feature_map")
 
         result["weighting"] = True
         if len(self.features.weighting) != 2:

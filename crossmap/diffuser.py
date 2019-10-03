@@ -8,9 +8,7 @@ values for certain features into other features.
 from logging import info, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
-from .tokens import CrossmapTokenizer
-from .encoder import CrossmapEncoder
-from .vectors import normalize_csr
+from .vectors import normalize_csr, threshold_csr
 
 
 class CrossmapDiffuser:
@@ -29,44 +27,29 @@ class CrossmapDiffuser:
         if len(self.feature_map) == 0:
             error("feature map is empty")
 
-    def _build_counts_files(self, files, label=""):
-        """scan files to generate a counts table"""
-
-        info("Building diffusion index for " + label)
-        fm = self.feature_map
-        nf = len(fm)
-        tokenizer = CrossmapTokenizer(self.settings)
-        encoder = CrossmapEncoder(fm, tokenizer)
-        result = [csr_matrix([0]*len(fm)) for _ in range(nf)]
-        for _tokens, _id, _title in encoder.documents(files):
-            for i in _tokens.indices:
-                result[i] += _tokens
-
-        stats = [str(round(_, 3)) for _ in evaluate_sparsity(result)]
-        info("Sparsity (min, avg, max): (" + ", ".join(stats) + ")")
-
-        self.db.set_counts(label, result)
-
     def _build_counts(self, label=""):
-        """scan files to generate a counts table"""
+        """construct co-occurance records for one dataset
+
+        :param label: string, identifier for dataset in db
+        :return:
+        """
 
         info("Building diffusion index for " + label)
+        threshold = self.settings.diffusion.threshold
         fm = self.feature_map
         nf = len(fm)
-
-        n_items = self.db.dataset_size(label)
-        result = [csr_matrix([0]*len(fm)) for _ in range(nf)]
-
-        # fetch encoded vectors from db in chunks and sum up values
-        chunk_size = 900
-        for i in range(0, n_items, chunk_size):
-            idxs = list(range(i, min(n_items, i+chunk_size)))
-            data = self.db.get_data(label, idxs=idxs)
-            for row in data:
-                v = row["data"]
-                for k in v.indices:
-                    result[k] += v
-
+        empty = csr_matrix([0.0]*len(fm))
+        result = [empty.copy() for _ in range(nf)]
+        used, total = 0, 0
+        for row in self.db.all_data(label):
+            v = row["data"]
+            if threshold > 0:
+                v = threshold_csr(v, threshold)
+            used += len(v.indices) > 0
+            total += 1
+            for k in v.indices:
+                result[k] += v
+        info("(Used " + str(used) + " of " + str(total) + " items)")
         self.db.set_counts(label, result)
 
     def build(self):

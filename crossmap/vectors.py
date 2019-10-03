@@ -115,3 +115,23 @@ def vec_decomposition(vT, BT):
 def sparse_to_dense(v):
     """convert a one-row sparse matrix into a dense ndarray"""
     return v.toarray()[0]
+
+
+def threshold_csr(v, threshold=0.001):
+    """set elements in v below a threshold to zero
+
+    :param v: csr vector
+    :param min_level: threshold level
+    :return: new csr vector with some elements set to zero
+    """
+
+    data = []
+    indices = []
+    for d, i in zip(v.data, v.indices):
+        if abs(d) > threshold:
+            data.append(d)
+            indices.append(i)
+    return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
+
+
+

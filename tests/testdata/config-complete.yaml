@@ -4,8 +4,11 @@ feature_map: featuremap.tsv
 data:
   targets: dataset.yaml
   documents: documents.yaml
+diffusion:
+  threshold: 0.001
 tokens:
   k: 5
 features:
   max_number: 200
-  aux_weight: [0.4, 0.2]
+  weighting: [0.5, 1.0]
+  map: featuremap.tsv

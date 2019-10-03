@@ -89,10 +89,10 @@ class CrossmapSettingsSimpleTests(unittest.TestCase):
         self.assertEqual(settings.data_files["targets"], dataset_file)
 
     def test_full_paths_featuremap(self):
-        """File path to featuremap is empty"""
+        """simple configuration does not specify a feature map file"""
 
         settings = self.settings
-        self.assertEqual(settings.feature_map_file, None)
+        self.assertEqual(settings.features.map_file, None)
 
     def test_warning_upon_faulty_file_retrieval(self):
         """Retrieving a non-canonical file type gives warning"""
@@ -138,10 +138,21 @@ class CrossmapSettingsCompleteTests(unittest.TestCase):
         self.assertEqual(self.settings.file, "config-complete.yaml")
         self.assertTrue(self.settings.valid)
 
-    def test_featuremap_file(self):
-        """obtain path to feature file"""
 
-        self.assertEqual(self.settings.feature_map_file, features_file)
+class CrossmapSettingsDiffusionTests(unittest.TestCase):
+    """parsing settings for diffusion"""
+
+    def setUp(self):
+        self.settings = CrossmapSettings(config_complete_file)
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_complete")
+
+    def test_threshold(self):
+        """file set nonzero diffiusion threshold"""
+
+        d = self.settings.diffusion
+        self.assertGreater(d.threshold, 0.0)
 
 
 class CrossmapSettingsMiscTests(unittest.TestCase):
@@ -149,7 +160,7 @@ class CrossmapSettingsMiscTests(unittest.TestCase):
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_single")
-        remove_crossmap_cache(data_dir, "crossmap_weighting")
+        remove_crossmap_cache(data_dir, "crossmap_complete")
 
     def test_init_single(self):
         """a configuration file can specify a single dataset"""
@@ -177,22 +188,27 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
     def test_max_features(self):
         """configure number of features in data vectors"""
 
-        result = CrossmapSettings(join(data_dir, "config-complete.yaml"))
+        result = CrossmapSettings(config_complete_file)
         self.assertEqual(result.features.max_number, 200)
 
-    def test_aux_weight(self):
+    def test_weighting(self):
         """configure weight assigned to auxiliary data fields"""
 
-        result = CrossmapSettings(join(data_dir, "config-complete.yaml"))
-        self.assertEqual(result.features.aux_weight[0], 0.4)
-        self.assertEqual(result.features.aux_weight[1], 0.2)
+        result = CrossmapSettings(config_complete_file)
+        self.assertEqual(result.features.weighting[0], 0.5)
+        self.assertEqual(result.features.weighting[1], 1)
 
     def test_str(self):
         """summarize settings in a string"""
 
-        settings = CrossmapSettings(join(data_dir, "config-complete.yaml"))
-        self.assertTrue("0.4" in str(settings.features))
-        self.assertTrue("0.2" in str(settings.features))
+        settings = CrossmapSettings(config_complete_file)
+        self.assertTrue("0.5" in str(settings.features))
+
+    def test_file(self):
+        """declare a file source for features"""
+
+        settings = CrossmapSettings(config_complete_file)
+        self.assertEqual(settings.features.map_file, features_file)
 
 
 class CrossmapKmerSettingsTests(unittest.TestCase):

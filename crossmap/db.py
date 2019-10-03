@@ -1,4 +1,5 @@
-"""Interface to a specialized db (implemented as sqlite)
+"""
+Interface to a specialized db (implemented as sqlite)
 """
 
 import sqlite3
@@ -371,6 +372,26 @@ class CrossmapDB:
                                data=bytes_to_csr(row["data"], n_features))
                 result.append(rowdict)
         return result
+
+    def all_data(self, label):
+        """generator for data rows for a specific dataset
+
+        :param label:
+        :return:
+        """
+
+        if label not in self.datasets:
+            raise Exception("incorrect dataset: "+label)
+
+        n_features = self.n_features
+        sql = "SELECT id, idx, data FROM data WHERE dataset=?"
+        with get_conn(self.db_file) as conn:
+            c = conn.cursor()
+            c.execute(sql, (self.datasets[label], ))
+            for row in c:
+                result = dict(id=row["id"], idx=row["idx"],
+                              data=bytes_to_csr(row["data"], n_features))
+                yield result
 
     def get_titles(self, label, idxs=None, ids=None):
         """retrieve information from db from targets or documents

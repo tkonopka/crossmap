@@ -308,7 +308,9 @@ class Crossmap:
                                  counts_sparsity=counts_sparsity,
                                  data_sparsity=data_sparsity))
 
-        return dict(features=len(self.indexer.feature_map),
+        return dict(name=self.settings.name,
+                    dir=self.settings.dir,
+                    features=len(self.indexer.feature_map),
                     datasets=datasets)
 
 
