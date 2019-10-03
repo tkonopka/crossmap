@@ -67,9 +67,6 @@ class CrossmapDiffuser:
                 for k in v.indices:
                     result[k] += v
 
-        stats = [str(round(_, 3)) for _ in evaluate_sparsity(result)]
-        info("Sparsity (min, avg, max): (" + ", ".join(stats) + ")")
-
         self.db.set_counts(label, result)
 
     def build(self):
@@ -114,6 +111,7 @@ def evaluate_sparsity(data):
     :return: mean, min, max relative load
     """
 
+    raise("This used to be called from build, but use .sparsity() instead")
     sparsity = [None]*len(data)
     for i in range(len(data)):
         idata = data[i]

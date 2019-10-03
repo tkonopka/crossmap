@@ -21,7 +21,8 @@ parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
                     choices=["build", "predict", "decompose", "server", "ui",
-                             "distances", "vectors", "counts", "features"])
+                             "distances", "vectors", "counts",
+                             "features", "summary"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -69,6 +70,7 @@ if config.aux is not None:
     config.aux = loads(config.aux)
 if config.diffuse is not None:
     config.diffuse = loads(config.diffuse)
+action = config.action
 
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -91,12 +93,12 @@ def print_exit(x, pretty=False):
     sys.exit()
 
 
-if config.action == "build":
+if action == "build":
     crossmap = Crossmap(settings)
     crossmap.build()
     sys.exit()
 
-if config.action == "predict" or config.action == "decompose":
+if action in set(["predict", "decompose"]):
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap = Crossmap(settings)
     crossmap.load()
@@ -104,36 +106,39 @@ if config.action == "predict" or config.action == "decompose":
     if config.dataset is None:
         sys.exit()
     action_fun = crossmap.predict_file
-    if config.action == "decompose":
+    if action == "decompose":
         action_fun = crossmap.decompose_file
     result = action_fun(config.data, config.dataset,
                         n=config.n, aux=config.aux,
                         diffuse=config.diffuse)
     print_exit(result, config.pretty)
 
-if config.action == "distances" or config.action == "vectors":
+if action in set(["distances", "vectors"]):
     crossmap = Crossmap(settings)
     crossmap.load()
     action_fun = crossmap.distance_file
-    if config.action == "vectors":
+    if action == "vectors":
         action_fun = crossmap.vectors
     result = action_fun(config.data, ids=config.ids.split(","),
                         diffuse=config.diffuse)
     print_exit(result, config.pretty)
 
-if config.action == "counts":
+if action == "counts":
     crossmap = Crossmap(settings)
     crossmap.load()
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     result = crossmap.counts(config.dataset, features=config.ids.split(","))
     print_exit(result, config.pretty)
 
-if config.action == "features":
+if action in set(["features", "summary"]):
     crossmap = Crossmap(settings)
     crossmap.load()
-    print_exit(crossmap.features(), config.pretty)
+    action_fun = crossmap.summary
+    if config.action == "features":
+        action_fun = crossmap.features
+    print_exit(action_fun(), config.pretty)
 
-if config.action == "server":
+if action == "server":
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -143,7 +148,7 @@ if config.action == "server":
     execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
     sys.exit()
 
-if config.action == "ui":
+if action == "ui":
     environ.setdefault('PORT', str(settings.server.ui_port))
     cmd = "npm start --prefix " + join(dirname(__file__), "crosschat")
     system(cmd)

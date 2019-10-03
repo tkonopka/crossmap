@@ -44,7 +44,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         # there are two datasets (targets, documents), so 2n rows
         self.assertEqual(self.db._count_rows("counts"), 2*n)
 
-    def test_diffuser_retrieve_counts(self):
+    def test_retrieve_counts(self):
         """extract counts from db for one feature"""
 
         fm = self.feature_map
@@ -64,7 +64,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         abcde_idx = fm["abcde"][0]
         self.assertEqual(data[abcde_idx], 0)
 
-    def test_diffuser_retrieve_many_counts(self):
+    def test_retrieve_many_counts(self):
         """extract counts from db for multiple feature"""
 
         fm = self.feature_map
@@ -76,7 +76,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         self.assertEqual(len(result[a].toarray()[0]), len(fm))
         self.assertEqual(len(result[b].toarray()[0]), len(fm))
 
-    def test_diffuser_retrieve_from_documents(self):
+    def test_retrieve_from_documents(self):
         """extract counts from db for multiple feature"""
 
         fm = self.feature_map
@@ -132,3 +132,4 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         with_idx = self.feature_map["with"][0]
         self.assertEqual(doc_data.toarray()[0][with_idx], 0.0)
         self.assertGreater(array2[with_idx], array1[with_idx])
+

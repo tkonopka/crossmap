@@ -117,6 +117,15 @@ class CrossmapBuildStandardTests(unittest.TestCase):
         self.assertTrue(exists(targets_file))
         self.assertTrue(exists(docs_file))
 
+    def test_produces_summary(self):
+        """the build process should set a default dataset label"""
+
+        result = self.crossmap.summary()
+        # summary shoudl report about features and two datasets
+        self.assertTrue("features" in result)
+        self.assertTrue("datasets" in result)
+        self.assertEqual(len(result["datasets"]), 2)
+
 
 class CrossmapBuildNoDocsTests(unittest.TestCase):
     """Building a crossmap object without documents"""

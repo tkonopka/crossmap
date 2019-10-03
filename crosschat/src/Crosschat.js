@@ -135,8 +135,9 @@ class Crosschat extends React.Component {
      */
     sendQuery(query, api) {
         // augment the query with settings
-        query["n_targets"] = 3;
-        query["n_documents"] = 3;
+        query["dataset"] = "targets";
+        query["n"] = 3;
+        query["aux"] = {};
         const chat = this;
         chat.addMessage(query, "user");
         let xhr = new XMLHttpRequest();

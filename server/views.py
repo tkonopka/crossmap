@@ -29,13 +29,14 @@ def parse_request(request):
     """
     data = loads(request.body)
     doc = dict()
-    for k in ["data", "aux_pos", "aux_neg"]:
+    for k in ["dataset", "data", "aux_pos", "aux_neg"]:
         doc[k] = []
         if k in data:
             doc[k] = data[k]
-    n_targets = get_or_default(data, "n_targets", 1)
-    n_docs = get_or_default(data, "n_docs", 2)
-    return doc, n_targets, n_docs
+    doc["n"] = get_or_default(data, "n", 1)
+    doc["aux"] = get_or_default(data, "aux", None)
+    doc["diffusion"] = get_or_default(data, "diffusion", None)
+    return doc
 
 
 def add_access(response):
@@ -53,11 +54,13 @@ def process_request(request, process_function):
     if request.method != "POST":
         return HttpResponse("Use POST protocol. For curl, set --request POST\n")
     # perform core processing
-    doc, n_targets, n_docs = parse_request(request)
-    result = process_function(doc, n_targets, n_docs, "query")
-    # extract target titles
+    doc = parse_request(request)
+    dataset = doc["dataset"]
+    result = process_function(doc, dataset, doc["n"],
+                              aux=doc["aux"], diffusion=doc["diffusion"],
+                              query_name="query")
     targets = result["targets"]
-    target_titles = crossmap.indexer.db.get_titles(ids=targets)
+    target_titles = crossmap.indexer.db.get_titles(dataset, ids=targets)
     result["titles"] = [target_titles[_] for _ in targets]
     return add_access(HttpResponse(dumps(result)))
 
@@ -70,3 +73,4 @@ def predict(request):
 def decompose(request):
     """process an http request to decompose a document into basis"""
     return process_request(request, crossmap.decompose)
+

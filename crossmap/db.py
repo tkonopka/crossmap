@@ -42,7 +42,7 @@ def bytes_to_csr(x, ncol):
 _text_cols = set(["id", "title", "label"])
 _int_cols = set(["idx", "dataset"])
 _real_cols = set(["weight"])
-_blob_cols = set(["data", "counts"])
+_blob_cols = set(["data"])
 
 
 def columns_sql(colnames):
@@ -96,11 +96,10 @@ class CrossmapDB:
                 result[row["label"]] = row["dataset"]
         return result
 
-    def _clear_table(self, table="targets"):
+    def _clear_table(self, table="features"):
         """remove all content from a table
 
         :param table: string, name of table
-        :return: nothing
         """
 
         if table not in self.table_names:
@@ -149,7 +148,7 @@ class CrossmapDB:
         cols_features = columns_sql(("idx", "id", "weight"))
         cols_datasets = columns_sql(("dataset", "label", "title"))
         cols_data = columns_sql(("dataset", "idx", "id", "title", "data"))
-        cols_counts = columns_sql(("dataset", "idx", "counts"))
+        cols_counts = columns_sql(("dataset", "idx", "data"))
 
         info("Creating database")
         with get_conn(self.db_file) as conn:
@@ -254,7 +253,7 @@ class CrossmapDB:
             raise Exception("invalid dataset label: " + label)
         d_index = self.datasets[label]
 
-        sql = "INSERT INTO counts (dataset, idx, counts) VALUES (?, ?, ?);"
+        sql = "INSERT INTO counts (dataset, idx, data) VALUES (?, ?, ?);"
         data_array = []
         for i in range(len(data)):
             idata = sqlite3.Binary(csr_to_bytes(data[i]))
@@ -302,7 +301,7 @@ class CrossmapDB:
         """
 
         n_features = self.n_features
-        sql = "SELECT idx, counts FROM counts WHERE dataset=? "
+        sql = "SELECT idx, data FROM counts WHERE dataset=? "
         sql_where = ["idx=?"]*len(idxs)
         sql += "AND (" + " OR ".join(sql_where) + ")"
         result = dict()
@@ -312,8 +311,25 @@ class CrossmapDB:
             vals.extend(idxs)
             c.execute(sql, vals)
             for row in c:
-                row_counts = bytes_to_csr(row["counts"], n_features)
+                row_counts = bytes_to_csr(row["data"], n_features)
                 result[row["idx"]] = row_counts
+        return result
+
+    def sparsity(self, label, table="counts"):
+        """compute sparsity values for all items in data or counts tables"""
+
+        if table not in set(["data", "counts"]):
+            raise Exception("invalid table")
+
+        result = []
+        n_features = self.n_features
+        sql = "SELECT data FROM " + table + " WHERE dataset=? "
+        with get_conn(self.db_file) as conn:
+            c = conn.cursor()
+            c.execute(sql, (self.datasets[label],))
+            for row in c:
+                v = bytes_to_csr(row["data"], n_features)
+                result.append(len(v.indices) / n_features)
         return result
 
     def get_data(self, label, idxs=None, ids=None):

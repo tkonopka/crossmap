@@ -266,3 +266,4 @@ class CrossmapDBQueriesTests(unittest.TestCase):
             self.db.ids("targets", [0,5])
         with self.assertRaises(KeyError):
             self.db.ids("targets", [6,5])
+

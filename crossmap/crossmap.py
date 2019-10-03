@@ -71,8 +71,8 @@ class Crossmap:
         self.indexer.load()
         self.diffuser = CrossmapDiffuser(self.settings)
 
-    def predict(self, doc, label, n=3, aux=None, diffuse=None,
-                query_name="query", ):
+    def predict(self, doc, label, n=3, aux=None, diffusion=None,
+                query_name="query"):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
@@ -80,7 +80,7 @@ class Crossmap:
         :param n: integer, number of target to report
         :param aux: dict, map linking auxiliary dataset labels and number of
         documents to use from those datasets
-        :param diffuse: dict, map assigning diffusion weights
+        :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
         :return: a dictionary containing an id, and lists to target ids and
             distances
@@ -89,14 +89,14 @@ class Crossmap:
         v = self.indexer.encode_document(doc)
         if v.sum() == 0:
             return prediction_result([], [], query_name)
-        if diffuse is not None:
-            v = self.diffuser.diffuse(v, diffuse)
+        if diffusion is not None:
+            v = self.diffuser.diffuse(v, diffusion)
         suggest = self.indexer.suggest
         targets, distances = suggest(v, label, n, aux)
         result = prediction_result(targets[:n], distances[:n], query_name)
         return result
 
-    def decompose(self, doc, label, n=3, aux=None, diffuse=None,
+    def decompose(self, doc, label, n=3, aux=None, diffusion=None,
                   query_name="query"):
         """decompose of a query document in terms of targets
 
@@ -104,7 +104,7 @@ class Crossmap:
         :param label: string, identifier for dataset
         :param n: integer, number of target to report
         :param aux: dict, map passed to predict
-        :param diffuse: dict, strength of diffusion on primary data
+        :param diffusion: dict, strength of diffusion on primary data
         :param query_name:  character, a name for the document
         :return: dictionary containing an id, and list with target ids and
             decomposition coefficients
@@ -117,8 +117,8 @@ class Crossmap:
         decompose = vec_decomposition
         # representation of the query document
         q = self.indexer.encode_document(doc)
-        if diffuse is not None:
-            q = self.diffuser.diffuse(q, diffuse)
+        if diffusion is not None:
+            q = self.diffuser.diffuse(q, diffusion)
         q_residual, q_dense = q.copy(), q.toarray()
         coefficients = []
         # loop for greedy decomposition
@@ -143,39 +143,39 @@ class Crossmap:
 
         return decomposition_result(ids, coefficients, query_name)
 
-    def predict_file(self, filepath, label, n, aux=None, diffuse=None):
+    def predict_file(self, filepath, label, n, aux=None, diffusion=None):
         """predict nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
         :param label: string, identifier for target dataset
         :param n: integer, number of target to report for each input
         :param aux: dict, map providing number of auxiliary documents
-        :param diffuse: dict, map with diffusion strengths
+        :param diffusion: dict, map with diffusion strengths
         :return: vector with dicts, each as output by predict()
         """
 
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.predict(doc, label, n, aux, diffuse,
+                result.append(self.predict(doc, label, n, aux, diffusion,
                                            query_name=id))
         return result
 
-    def decompose_file(self, filepath, label, n=3, aux=None, diffuse=None):
+    def decompose_file(self, filepath, label, n=3, aux=None, diffusion=None):
         """perform decomposition for documents defined in a file
 
         :param filepath: string, path to a file with documents
         :param label: string, identifier for target dataset
         :param n: integer, number of target to report for each input
         :param aux: dict, number of auxiliary documents
-        :param diffuse: dict, map with diffusion strengths
+        :param diffusion: dict, map with diffusion strengths
         :return: vector with dicts, each as output by decompose()
         """
 
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.decompose(doc, label, n, aux, diffuse,
+                result.append(self.decompose(doc, label, n, aux, diffusion,
                                              query_name=id))
         return result
 
@@ -290,6 +290,26 @@ class Crossmap:
         for k, v in self.indexer.feature_map.items():
             result.append(dict(feature=k, index=v[0], weight=v[1]))
         return result
+
+    def summary(self, digits=4):
+        """prepare an ad-hoc summary of the contents of the configuration"""
+
+        def stats(x):
+            temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
+            return {k: round(v, digits) for k, v in temp.items()}
+
+        db = self.indexer.db
+        datasets = []
+        for label in db.datasets:
+            size = db.dataset_size(label)
+            counts_sparsity = stats(db.sparsity(label, "counts"))
+            data_sparsity = stats(db.sparsity(label, "data"))
+            datasets.append(dict(label=label, size=size,
+                                 counts_sparsity=counts_sparsity,
+                                 data_sparsity=data_sparsity))
+
+        return dict(features=len(self.indexer.feature_map),
+                    datasets=datasets)
 
 
 def validate_dataset_label(crossmap, label=None, log=True):
