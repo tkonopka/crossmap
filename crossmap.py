@@ -40,7 +40,7 @@ parser.add_argument("--n", action="store",
 parser.add_argument("--aux", action="store",
                     default=None,
                     help="JSON of a dict for working with auxiliary datasets")
-parser.add_argument("--diffuse", action="store",
+parser.add_argument("--diffusion", action="store",
                     default=None,
                     help="JSON of a dict setting diffusion strengths")
 parser.add_argument("--pretty", action="store_true",
@@ -68,8 +68,8 @@ if __name__ != "__main__":
 config = parser.parse_args()
 if config.aux is not None:
     config.aux = loads(config.aux)
-if config.diffuse is not None:
-    config.diffuse = loads(config.diffuse)
+if config.diffusion is not None:
+    config.diffusion = loads(config.diffusion)
 action = config.action
 
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
@@ -113,7 +113,7 @@ if action in set(["predict", "decompose"]):
         action_fun = crossmap.decompose_file
     result = action_fun(config.data, config.dataset,
                         n=config.n, aux=config.aux,
-                        diffuse=config.diffuse)
+                        diffusion=config.diffusion)
     print_exit(result, config.pretty)
 
 if action in set(["distances", "vectors"]):
@@ -123,7 +123,7 @@ if action in set(["distances", "vectors"]):
     if action == "vectors":
         action_fun = crossmap.vectors
     result = action_fun(config.data, ids=config.ids.split(","),
-                        diffuse=config.diffuse)
+                        diffusion=config.diffusion)
     print_exit(result, config.pretty)
 
 if action == "counts":

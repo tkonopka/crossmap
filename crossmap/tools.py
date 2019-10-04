@@ -1,5 +1,5 @@
 """
-Multi-purpose tools
+Misc tools
 """
 
 import csv
@@ -8,6 +8,7 @@ import yaml
 import pickle
 from yaml import CBaseLoader
 from contextlib import contextmanager
+from datetime import datetime
 
 
 @contextmanager
@@ -166,4 +167,10 @@ def yaml_document(stream):
             data = [line]
     if len(data) > 0:
         yield parse_doc(data)
+
+
+def time():
+    """make a timestamp string"""
+
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 

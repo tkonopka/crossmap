@@ -1,4 +1,5 @@
-"""constructing a set of features for a Crossmap analysis
+"""
+Constructing feature sets for a Crossmap analysis
 """
 
 import csv
@@ -38,7 +39,7 @@ def write_feature_map(feature_map, settings):
             f.write(k + "\t" + str(v[0]) + "\t" + str(v[1]) + "\n")
 
 
-def _count_tokens(tokenizer, files):
+def _count_tokens(tokenizer, files, progress_interval=10000):
     """count tokens in files on disk
 
     :param tokenizer: object with function .tokenize()
@@ -55,7 +56,7 @@ def _count_tokens(tokenizer, files):
         info("Extracting features: " + label + " (" + basename(f)+")")
         for id, doc in tokenizer.tokenize_path(f):
             num_items += 1
-            if num_items % 100000 == 0:
+            if num_items % progress_interval == 0:
                 info("Progress: "+str(num_items))
             tokens = set()
             for component in ("data", "aux_pos", "aux_neg"):

@@ -158,19 +158,23 @@ class CrossmapSettingsDefaults:
         self.valid = False
 
     def db_file(self):
-        """create path to db file"""
+        """path to db file"""
         return join(self.prefix, self.name + ".sqlite")
 
+    def yaml_file(self, label):
+        """path to manual dataset"""
+        return join(self.prefix, self.name + "-" + label + ".yaml")
+
     def tsv_file(self, label):
-        """create a file path for project tsv data"""
+        """path for project tsv data"""
         return join(self.prefix, self.name + "-" + label + ".tsv")
 
     def pickle_file(self, label):
-        """create a file path for project binary data object"""
+        """path for project binary data object"""
         return join(self.prefix, self.name + "-" + label)
 
     def index_file(self, label):
-        """create a file path for a project index file"""
+        """path for a project indexer file"""
         return join(self.prefix, self.name + "-" + label + "-index")
 
 

@@ -1,4 +1,6 @@
-"""Crossmap class"""
+"""
+Crossmap class
+"""
 
 from logging import warning, error
 from os import mkdir
@@ -71,6 +73,18 @@ class Crossmap:
         self.indexer.load()
         self.diffuser = CrossmapDiffuser(self.settings)
 
+    def add(self, doc, label, id, metadata=None):
+        """add a new item into the db
+
+        :param doc: dict with string data
+        :param label: string, name of dataset to append
+        :param id: string, identifier for new item
+        :param metadata: dict, a free element of additional information
+        :return:
+        """
+
+        raise Exception("not implemented yet")
+
     def predict(self, doc, label, n=3, aux=None, diffusion=None,
                 query_name="query"):
         """identify targets that are close to the input query
@@ -79,7 +93,7 @@ class Crossmap:
         :param label: string, identifier for dataset to look for targets
         :param n: integer, number of target to report
         :param aux: dict, map linking auxiliary dataset labels and number of
-        documents to use from those datasets
+            documents to use from those datasets
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
         :return: a dictionary containing an id, and lists to target ids and
@@ -179,20 +193,20 @@ class Crossmap:
                                              query_name=id))
         return result
 
-    def distance(self, doc, ids=[], diffuse=None, query_name="query"):
+    def distance(self, doc, ids=[], diffusion=None, query_name="query"):
         """compute distances from one document to specific items in db
 
         :param doc: dictionary with text
         :param ids: array of string ids, targets or documents
-        :param diffuse: dict, map of diffusion strengths
+        :param diffusion: dict, map of diffusion strengths
         :param query_name: string, an identifier to associate with the doc
         :return: list of objects containing id and distance
         """
 
         result = []
         v = self.indexer.encode_document(doc)
-        if diffuse is not None:
-            v = self.diffuser.diffuse(v, diffuse)
+        if diffusion is not None:
+            v = self.diffuser.diffuse(v, diffusion)
         distance = sparse_euc_distance
         db = self.indexer.db
         for x in ids:

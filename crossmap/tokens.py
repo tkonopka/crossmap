@@ -1,4 +1,5 @@
-"""Tokenizer specifically for crossmap datasets.
+"""
+Tokenizer for crossmap datasets
 """
 
 
