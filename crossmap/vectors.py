@@ -38,26 +38,46 @@ def num_nonzero(a):
 
 @numba.jit
 def normalize_vec(a):
-    """normalize a dense vector"""
+    """normalize a dense vector
+
+    Note this performs a normalization in-place, i.e.
+    the original vector will change
+
+    :param a: dense vector, as an array or list
+    :return: vector with normalized entries
+    """
     n = vec_norm(a)
     if n == 0:
         return a
+    inv_norm = 1/n
     for i in range(len(a)):
-        a[i] = a[i]/n
+        a[i] *= inv_norm
     return a
 
 
 def normalize_csr(a):
-    """normalize a csr vector"""
-    n2 = (a.dot(a.transpose())).data[0]
+    """normalize a csr vector
+
+    Note this performs a normalization in-place,
+    i.e. the original vector will change.
+
+    :param a: csr_matrix, assumed a single row vector
+    :return: csr_matrix of same size as a, with normalized entries
+    """
+
+    n2 = sum([x*x for x in a.data])
     if n2 == 0:
         return a
-    return a.dot(1/sqrt(n2))
-
+    inv_norm = 1/sqrt(n2)
+    for i in range(len(a.data)):
+        a.data[i] *= inv_norm
+    return a
 
 @numba.jit
 def add_three(a, b, c, wb, wc):
-    """add three vectors
+    """add three vectors with weights
+
+    Note this modifies the input vector a.
 
     :param a: array
     :param b: array
@@ -96,18 +116,18 @@ def csr_residual(v, mat, weights=None):
     return csr_matrix(v-components.sum(0))
 
 
-def vec_decomposition(vT, BT):
+def vec_decomposition(v_t, b_t):
     """solves a linear set of equations.
 
     The underlying model is v = Bx, or v - Bx = 0. This solves for x.
 
-    :param vT: a row vector, the transpose of v
-    :param BT: a matrix with basis vector as rows, the transpose of B
+    :param v_t: a row vector, the transpose of v
+    :param b_t: a matrix with basis vector as rows, the transpose of B
     :return: a vector with coefficients
     """
 
-    a = matmul(BT, BT.transpose())
-    b = matmul(BT, vT.transpose())
+    a = matmul(b_t, b_t.transpose())
+    b = matmul(b_t, v_t.transpose())
     x, residuals, _, _ = lstsq(a, b, rcond=None)
     return x
 
@@ -121,7 +141,7 @@ def threshold_csr(v, threshold=0.001):
     """set elements in v below a threshold to zero
 
     :param v: csr vector
-    :param min_level: threshold level
+    :param threshold: threshold level
     :return: new csr vector with some elements set to zero
     """
 
@@ -132,6 +152,4 @@ def threshold_csr(v, threshold=0.001):
             data.append(d)
             indices.append(i)
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
-
-
 

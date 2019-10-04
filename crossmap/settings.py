@@ -16,7 +16,7 @@ default_tokenizer = Kmerizer()
 # Classes for settings, organized into groups by topic
 
 
-class CrossmapKmerSettings():
+class CrossmapTokenSettings():
     """Container for settings for kmer-based tokenizer"""
 
     def __init__(self, config=None):
@@ -43,7 +43,7 @@ class CrossmapFeatureSettings:
     def __init__(self, config=None, data_dir=None):
         self.max_number = 0
         self.weighting = [1, 0]
-        self.aux_weight = (0.5, 0.5)
+        self.aux = (0.5, 0.5)
         self.map_file = None
 
         if config is None:
@@ -53,8 +53,8 @@ class CrossmapFeatureSettings:
                 self.max_number = int(val)
             elif key == "weighting":
                 self.weighting = [float(_) for _ in val]
-            elif key == "aux_weight":
-                self.aux_weight = [float(_) for _ in val]
+            elif key == "aux":
+                self.aux = [float(_) for _ in val]
             elif key == "map":
                 map_file = val
                 if data_dir is not None:
@@ -65,7 +65,7 @@ class CrossmapFeatureSettings:
         result = "Crossmap Feature Settings:\n"
         result += "max_number=" + str(self.max_number) + ", "
         result += "weighting='" + str(self.weighting) + "', "
-        result += "aux_weight=" + str(self.aux_weight)
+        result += "aux_weight=" + str(self.aux)
         return result
 
 
@@ -149,7 +149,7 @@ class CrossmapSettingsDefaults:
         # setting for diffusion
         self.diffusion = CrossmapDiffusionSettings()
         # settings for tokens (e.g. kmer length)
-        self.tokens = CrossmapKmerSettings()
+        self.tokens = CrossmapTokenSettings()
         # settings for server (e.g. port)
         self.server = CrossmapServerSettings()
         # for logging and batch splitting
@@ -221,7 +221,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             if k == "data":
                 self.data_files = v
             elif k == "tokens":
-                self.tokens = CrossmapKmerSettings(v)
+                self.tokens = CrossmapTokenSettings(v)
             elif k == "features":
                 self.features = CrossmapFeatureSettings(v, self.dir)
             elif k == "server":
@@ -269,29 +269,6 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             self.features.weighting = [1, 0]
             warning(incorrect_msg + 'weighting')
 
-        return result
-
-    def files_deprecated(self, file_types):
-        """Get paths to project files.
-
-        Argument:
-            file_types   an iterable with value "targets", "documents"
-
-        Returns:
-            simple list with file paths
-        """
-
-        if type(file_types) is str:
-            file_types = [file_types]
-
-        result = []
-        for file_type in file_types:
-            if file_type not in set(["targets", "documents", "featuremap"]):
-                ft = str(file_type)
-                warning("attempting to retrieve unknown file type: " + ft)
-                continue
-            for _ in self.__dict__[file_type]:
-                result.append(join(self.dir, _))
         return result
 
     def __str__(self):

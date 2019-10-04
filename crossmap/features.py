@@ -67,25 +67,6 @@ def _count_tokens(tokenizer, files, progress_interval=10000):
     return counts, num_items
 
 
-def _normalize_constant(count_map):
-    """normalize a feature map giving each feature a unit weight
-
-    :param count_map: dict mapping features to (index, count)
-    :return: a dict mapping features to (index, 1)
-    """
-    return {k: (v[0], 1) for k, v in count_map.items()}
-
-
-def _normalize_ic(count_map, N):
-    """normalize a feature map using information content, -log(p)
-
-    :param count_map: dict mapping features to (index, count)
-    :param N: integer, total number of documents
-    :return: dict mapping features to (index, weight)
-    """
-    return {k: (v[0], -log2(v[1]/(N+1))) for k, v in count_map.items()}
-
-
 def _feature_weights(count_map, N, model_weights):
     """convert integer counts into weights (real numbers)
 
