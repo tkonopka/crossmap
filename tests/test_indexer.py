@@ -71,7 +71,6 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
                                          self.indexer.feature_map)
             newindexer.build()
         self.assertTrue("Skip" in str(cm.output))
-        self.assertTrue("exists" in str(cm.output))
         # after build, the indexer should be ready to use
         ids_targets = newindexer.db.all_ids("targets")
         ids_docs = newindexer.db.all_ids("documents")
@@ -103,7 +102,7 @@ class CrossmapIndexerSkippingTests(unittest.TestCase):
         indexer = CrossmapIndexer(settings, self.limited_features)
         with self.assertLogs(level="WARNING") as cm:
             indexer.build()
-        self.assertTrue("null" in str(cm.output))
+        self.assertTrue("item id" in str(cm.output))
 
 
 class CrossmapIndexerNeighborTests(unittest.TestCase):

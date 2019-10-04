@@ -3,6 +3,7 @@
 
 import logging
 import nmslib
+from os import remove
 from os.path import exists
 from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
@@ -67,56 +68,101 @@ class CrossmapIndexer:
         self.indexes = dict()
         self.index_files = dict()
 
-    def _build_index(self, files, label):
-        """builds an Annoy index using data from documents on disk"""
+    def update(self, dataset, doc, id):
+        """augment an existing dataset with a new item
 
-        index_file = self.settings.index_file(label)
+        :param dataset: string, dataset identifier
+        :param doc: dict with item data, data_aux, etc.
+        :param id: string, identifier for the new item
+        :return: integer index for the new data item
+        """
+
+        if self.db.has_id(dataset, id):
+            raise Exception("item id already exists: " + str(id))
+
+        titles = None
+        if "title" in doc:
+            titles = [doc["title"]]
+        v = self.encoder.document(doc)
+        size = self.db.dataset_size(dataset)
+        self.db.add_data(dataset, [v], [id], titles, indexes=[size])
+
+        # remove current index and index file, regenerate
+        index_file = self.settings.index_file(dataset)
         if exists(index_file):
-            warning("Skipping build index for " + label + " - already exists")
-            self._load_index(label)
-            return
-        info("Building data index for " + label)
-        result = nmslib.init(method="hnsw", space="l2_sparse",
-                             data_type=nmslib.DataType.SPARSE_VECTOR)
-        items, ids, titles, offset = [], [], [], 0
+            remove(index_file)
+        self._build_index(dataset)
 
+    def _build_data(self, files, dataset):
+        """transfer data from files into a db table
+
+        :param files: list with file paths
+        :param dataset: string, label for dataset
+        :return:
+        """
+
+        size = self.db.dataset_size(dataset)
+        if size > 0:
+            warning("Skipping data transfer: " + dataset)
+            return
+
+        info("Transfering data: " + dataset)
         batch_size = self.settings.logging.progress
 
         # internal helper to save a batch of data into the index and db
         def add_batch(items, ids, titles, offset):
             if len(items) == 0:
                 return 0
-            local_indexes = [offset+_ for _ in list(range(len(items)))]
-            self.db.add_data(label, items, ids, titles=titles,
-                             indexes=local_indexes)
-            result.addDataPointBatch(vstack(items), local_indexes)
+            self.db.add_data(dataset, items, ids, titles=titles,
+                             indexes=[offset+_ for _ in range(len(items))])
             return len(items)
 
-        num_items = 0
+        items, ids, titles, offset = [], [], [], 0
         for _tokens, _id, _title in self.encoder.documents(files):
             if all_zero(_tokens.toarray()[0]):
-                warning("Skipping item - null vector for id " + str(_id))
+                warning("Skipping item id: " + str(_id))
                 continue
             items.append(_tokens)
             ids.append(_id)
             titles.append(_title)
             if len(items) >= batch_size:
-                num_items += batch_size
-                info("Progress: " + str(num_items))
                 offset += add_batch(items, ids, titles, offset)
+                info("Progress: " + str(offset))
                 items, ids, titles = [], [], []
         # force a batch save at the end of reading data
         offset += add_batch(items, ids, titles, offset)
 
-        if offset == 0:
-            logfun = warning if label == "documents" else error
-            logfun("No content for " + label)
+        summary_fun = warning if offset == 0 else info
+        summary_fun("Total number of items: " + str(offset))
+
+    def _build_index(self, dataset):
+        """builds an Annoy index using data from documents on disk"""
+
+        index_file = self.settings.index_file(dataset)
+        if exists(index_file):
+            warning("Skipping index build: " + dataset)
+            self._load_index(dataset)
             return
-        info("Total number of items: "+str(offset))
+
+        info("Building data index: " + dataset)
+        batch_size = self.settings.logging.progress
+        result = nmslib.init(method="hnsw", space="l2_sparse",
+                             data_type=nmslib.DataType.SPARSE_VECTOR)
+        items, idxs, num_items = [], [], 0
+        for row in self.db.all_data(dataset):
+            items.append(row["data"])
+            idxs.append(row["idx"])
+            if len(items) >= batch_size:
+                num_items += batch_size
+                info("Progress: " + str(num_items))
+                result.addDataPointBatch(vstack(items), idxs)
+                items, idxs = [], []
+        if len(items) > 0:
+            result.addDataPointBatch(vstack(items), idxs)
 
         result.createIndex(print_progress=False)
-        self.indexes[label] = result
-        self.index_files[label] = index_file
+        self.indexes[dataset] = result
+        self.index_files[dataset] = index_file
         result.saveIndex(index_file, save_data=True)
 
     def build(self):
@@ -125,11 +171,12 @@ class CrossmapIndexer:
         # build an index just for the targets, then just for documents
         settings = self.settings
         self.clear()
-        for label in self.settings.data_files.keys():
-            if label not in self.db.datasets:
-                self.db.register_dataset(label)
-        for label, filepath in settings.data_files.items():
-            self._build_index(filepath, label)
+        for dataset in self.settings.data_files.keys():
+            if dataset not in self.db.datasets:
+                self.db.register_dataset(dataset)
+        for dataset, filepath in settings.data_files.items():
+            self._build_data(filepath, dataset)
+            self._build_index(dataset)
         self.db.count_features()
 
     def _load_index(self, label):
@@ -184,7 +231,7 @@ class CrossmapIndexer:
         return self._neighbors(v, label, n, names=True)
 
     def _load_item_ids(self, label):
-        """cache string identifiers """
+        """cache string identifiers"""
 
         if label not in self.item_ids:
             self.item_ids[label] = self.db.all_ids(label)
@@ -208,7 +255,6 @@ class CrossmapIndexer:
         # get direct distances from vector to targets
         nn0, dist0 = _n(v, label, n)
         target_dist = {i: d for i, d in zip(nn0, dist0)}
-        #print("target_dist "+str(target_dist))
         target_data = dict()
         hits_targets = db.get_data(label, idxs=nn0)
         for _, val in enumerate(hits_targets):
@@ -220,16 +266,11 @@ class CrossmapIndexer:
         # data1 - dict of dicts holding dense vectors
         nn1, dist1, doc1, data1 = dict(), dict(), dict(), dict()
         for aux_label, aux_n in aux.items():
-            #print("querying aux label: "+aux_label)
             nn1[aux_label], dist1[aux_label] = _n(v, aux_label, aux_n)
             doc1[aux_label] = db.get_data(aux_label, idxs=nn1[aux_label])
             data1[aux_label] = dict()
             for _, val in enumerate(doc1[aux_label]):
                 data1[aux_label][val["idx"]] = sparse_to_dense(val["data"])
-        #print("nn1 " + str(nn1))
-        #print("dist1 " + str(dist1))
-        #print("doc1 " + str(doc1))
-        #print("data1 " + str(data1))
 
         # record distances from auxiliary documents to targets
         # (some docs may introduce new targets to consider)
@@ -249,12 +290,9 @@ class CrossmapIndexer:
                     target_data[target] = sparse_to_dense(i_target_data["data"])
                     target_dist[target] = euc_dist(target_data[target], vlist)
 
-        #print("target_dist "+str(target_dist))
-        #print("doc target dist "+str(doc_target_dist))
         # compute weighted distances from vector to targets
         result = target_dist.copy()
         n_doc = sum([_ for _ in aux.values()])
-        #print("n_doc "+str(n_doc))
         for aux_label in nn1.keys():
             for i, d_v_i in zip(nn1[aux_label], dist1[aux_label]):
                 i_data = data1[aux_label][i]

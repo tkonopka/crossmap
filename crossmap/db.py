@@ -3,6 +3,7 @@ Interface to a specialized db (implemented as sqlite)
 """
 
 import sqlite3
+from functools import wraps
 from pickle import loads, dumps
 from logging import info, warning, error
 from os.path import exists
@@ -34,7 +35,7 @@ def bytes_to_csr(x, ncol):
 
     :param x: bytes object
     :param ncol: integer, number of columns in csr matrix
-    :return:
+    :return: csr_matrix
     """
     return csr_matrix(loads(x), shape=(1, ncol))
 
@@ -70,6 +71,18 @@ def columns_sql(colnames):
 
 crossmap_table_names = {"features", "datasets", "data", "counts"}
 
+
+def valid_dataset(f):
+    """decorator to check if a dataset is declared in the db."""
+
+    @wraps(f)
+    def wrapped(self, dataset, *args, **kw):
+        if dataset not in self.datasets:
+            raise Exception("Invalid dataset: "+str(dataset))
+        return f(self, dataset, *args, **kw)
+    return wrapped
+
+
 class CrossmapDB:
     """Management of a DB for features and data vectors"""
 
@@ -78,10 +91,9 @@ class CrossmapDB:
 
         self.db_file = db_file
         self.n_features = None
-        self.datasets = dict()
-        self.datasets = self._load_datasets()
+        self.datasets = self._datasets()
 
-    def _load_datasets(self):
+    def _datasets(self):
         """read dataset labels from db
 
         :return: dict with mapping from label to integer identifier
@@ -97,36 +109,42 @@ class CrossmapDB:
                 result[row["label"]] = row["dataset"]
         return result
 
-    def _clear_table(self, table="features"):
+    def _clear_table(self, table="features", dataset=None):
         """remove all content from a table
 
         :param table: string, name of table
+        :param dataset: string, dataset identifier
         """
 
         if table not in crossmap_table_names:
             raise Exception("clearing not supported for: " + table)
         with get_conn(self.db_file) as conn:
-            cur = conn.cursor()
-            cur.execute("DELETE FROM "+table)
+            c = conn.cursor()
+            sql = "DELETE FROM " + table
+            if dataset is not None:
+                sql += " WHERE dataset=?"
+                c.execute(sql, (self.datasets[dataset],))
+            else:
+                c.execute(sql)
             conn.commit()
         if table == "features":
             self.n_features = 0
 
-    def _count_rows(self, table, label=None):
+    def _count_rows(self, table, dataset=None):
         """generic function to count rows in any table within db
 
         :param table: string, table name
+        :param dataset: string, dataset identifier
         :return: integer number of rows
         """
 
         if table not in crossmap_table_names:
             return 0
-
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
             sql = "SELECT COUNT(*) FROM " + table
-            if label is not None:
-                d_index = self.datasets[label]
+            if dataset is not None:
+                d_index = self.datasets[dataset]
                 sql += " WHERE dataset=?"
                 c = c.execute(sql, (d_index, ))
             else:
@@ -168,16 +186,32 @@ class CrossmapDB:
             cur.execute("CREATE TABLE counts" + cols_counts)
             conn.commit()
 
+    def validate_dataset_label(self, label):
+        """evaluates whether a label is allowed for a dataset
+
+        A good dataset label must be composed of alphanumeric characters
+        or underscores.
+
+        :param label: string, candidate dataset identifier
+        :return: 1 if label is OK for a new dataset, 0 if label already exists,
+            -1 if label is not alphanumeric
+        """
+
+        for x in label:
+            if not (x == "_" or x.isalnum()):
+                return -1
+        self.datasets = self._datasets()
+        return int(label not in self.datasets)
+
     def register_dataset(self, label, title=""):
-        """register a dataset label
+        """register a new dataset label
 
         :param label: string, a new data set label
         :param title: string, an additional descriptor for the dataset
         :return: nothing, changes are made to the db
         """
 
-        # check if dataset label already exists
-        self.datasets = self._load_datasets()
+        self.datasets = self._datasets()
         if label in self.datasets:
             error("dataset label already exists")
             return
@@ -189,16 +223,15 @@ class CrossmapDB:
             self.datasets[label] = len(self.datasets)
             conn.commit()
 
-    def dataset_size(self, label):
+    @valid_dataset
+    def dataset_size(self, dataset):
         """get current number of rows in data table for a dataset
 
-        :param label: string, identifier for a dataset
+        :param dataset: string, identifier for a dataset
         :return: integer, number of data rows associated to a dataset
         """
 
-        if label not in self.datasets:
-            return 0
-        d_index = self.datasets[label]
+        d_index = self.datasets[dataset]
         with get_conn(self.db_file) as conn:
             sql = "SELECT COUNT(*) FROM data WHERE dataset=?"
             c = conn.cursor()
@@ -241,7 +274,7 @@ class CrossmapDB:
     def set_feature_map(self, feature_map):
         """add content into the feature map table"""
 
-        sql = "INSERT INTO features (id, idx, weight) VALUES (?, ?, ?);"
+        sql = "INSERT INTO features (id, idx, weight) VALUES (?, ?, ?)"
         data_array = []
         for id, v in feature_map.items():
             data_array.append((id, v[0], v[1]))
@@ -250,19 +283,16 @@ class CrossmapDB:
             cur.executemany(sql, data_array)
         self.n_features = len(feature_map)
 
-    def set_counts(self, label, data):
+    @valid_dataset
+    def set_counts(self, dataset, data):
         """insert rows into the counts table
 
-        :param label: string, identifier for a dataset
+        :param dataset: string, identifier for a dataset
         :param data: list with rows to insert
-        :return:
         """
 
-        if label not in self.datasets:
-            raise Exception("invalid dataset label: " + label)
-        d_index = self.datasets[label]
-
-        sql = "INSERT INTO counts (dataset, idx, data) VALUES (?, ?, ?);"
+        d_index = self.datasets[dataset]
+        sql = "INSERT INTO counts (dataset, idx, data) VALUES (?, ?, ?)"
         data_array = []
         for i in range(len(data)):
             idata = sqlite3.Binary(csr_to_bytes(data[i]))
@@ -272,6 +302,27 @@ class CrossmapDB:
             cur.executemany(sql, data_array)
             conn.commit()
 
+    @valid_dataset
+    def update_counts(self, label, data):
+        """change existing rows of counts
+
+        :param label: string, identifier for a dataset
+        :param data: dict mapping indexes to csr_matrices
+        :return:
+        """
+
+        d_index = self.datasets[label]
+        sql = "UPDATE counts SET data=? where dataset=? AND idx=?"
+        data_array = []
+        for i, v in data.items():
+            idata = sqlite3.Binary(csr_to_bytes(v))
+            data_array.append((d_index, i, idata))
+        with get_conn(self.db_file) as conn:
+            cur = conn.cursor()
+            cur.executemany(sql, data_array)
+            conn.commit()
+
+    @valid_dataset
     def add_data(self, label, data, ids, titles=None, indexes=None):
         """insert rows into the 'data' table
 
@@ -284,15 +335,14 @@ class CrossmapDB:
         """
 
         if indexes is None:
-            indexes = list(range(len(ids)))
+            current_size = self.dataset_size(label)
+            indexes = [current_size + _ for _ in range(len(ids))]
         if titles is None:
             titles = [""]*len(ids)
-        if label not in self.datasets:
-            raise Exception("invalid dataset label: " + label)
         d_index = self.datasets[label]
 
         sql = "INSERT INTO data" +\
-              " (dataset, id, idx, title, data) VALUES (?, ?, ?, ?, ?);"
+              " (dataset, id, idx, title, data) VALUES (?, ?, ?, ?, ?)"
         data_array = []
         for i in range(len(ids)):
             idata = sqlite3.Binary(csr_to_bytes(data[i]))
@@ -301,6 +351,7 @@ class CrossmapDB:
             conn.cursor().executemany(sql, data_array)
             conn.commit()
 
+    @valid_dataset
     def get_counts(self, label, idxs):
         """retrieve information from counts tables
 
@@ -324,8 +375,14 @@ class CrossmapDB:
                 result[row["idx"]] = row_counts
         return result
 
-    def sparsity(self, label, table="counts"):
-        """compute sparsity values for all items in data or counts tables"""
+    @valid_dataset
+    def sparsity(self, dataset, table="counts"):
+        """compute sparsity values for all items in data or counts tables
+
+        :param dataset: string, identifier for a dataset
+        :param table: string, one 'counts' or 'data'
+        :return: list of sparsity values for all relevant rows in the table
+        """
 
         if table not in set(["data", "counts"]):
             raise Exception("invalid table")
@@ -335,12 +392,13 @@ class CrossmapDB:
         sql = "SELECT data FROM " + table + " WHERE dataset=? "
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            c.execute(sql, (self.datasets[label],))
+            c.execute(sql, (self.datasets[dataset],))
             for row in c:
                 v = bytes_to_csr(row["data"], n_features)
                 result.append(len(v.indices) / n_features)
         return result
 
+    @valid_dataset
     def get_data(self, label, idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
@@ -351,9 +409,6 @@ class CrossmapDB:
         :param idxs: list of integer indexes to query in column "idx"
         :return: list with content of database table
         """
-
-        if label not in self.datasets:
-            raise Exception("incorrect dataset: "+label)
 
         # determine whether to query by test id or numeric indexes
         queries, column = idxs, "idx"
@@ -381,26 +436,25 @@ class CrossmapDB:
                 result.append(rowdict)
         return result
 
-    def all_data(self, label):
+    @valid_dataset
+    def all_data(self, dataset):
         """generator for data rows for a specific dataset
 
-        :param label:
-        :return:
+        :param dataset: string, dataset identifier
+        :return: dict with data entries
         """
 
-        if label not in self.datasets:
-            raise Exception("incorrect dataset: "+label)
-
         n_features = self.n_features
-        sql = "SELECT id, idx, data FROM data WHERE dataset=?"
+        sql = "SELECT id, idx, data FROM data WHERE dataset=? ORDER BY idx"
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            c.execute(sql, (self.datasets[label], ))
+            c.execute(sql, (self.datasets[dataset],))
             for row in c:
                 result = dict(id=row["id"], idx=row["idx"],
                               data=bytes_to_csr(row["data"], n_features))
                 yield result
 
+    @valid_dataset
     def get_titles(self, label, idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
@@ -409,9 +463,6 @@ class CrossmapDB:
         :param idxs: list of integer indexes to query in column "idx"
         :return: dictionary mapping ids to titles
         """
-
-        if label not in self.datasets:
-            raise Exception("invalid dataset label: " + label)
 
         queries, column = idxs, "idx"
         if ids is not None:
@@ -431,6 +482,7 @@ class CrossmapDB:
                 result[row[column]] = row["title"]
         return result
 
+    @valid_dataset
     def ids(self, label, idxs):
         """convert integer indexes to string ids
 
@@ -439,9 +491,6 @@ class CrossmapDB:
             small vectors of indexes.
         :return: list with ids corresponding to those indexes
         """
-
-        if label not in self.datasets:
-            raise Exception("invalid dataset label: " + label)
 
         if len(idxs) == 0:
             return []
@@ -458,14 +507,30 @@ class CrossmapDB:
             result[i] = map[v]
         return result
 
-    def all_ids(self, label):
+    @valid_dataset
+    def has_id(self, dataset, id):
+        """check if database has an item with specified string identifier
+
+        :param dataset: string, dataset identifier
+        :param id: string identifier to query
+        :return: boolean
+        """
+
+        sql = "SELECT id, idx FROM data WHERE dataset=? AND id=?"
+        with get_conn(self.db_file) as conn:
+            c = conn.cursor().execute(sql, (self.datasets[dataset], id))
+            result = {row["idx"]: row["id"] for row in c}
+        return len(result) > 0
+
+    @valid_dataset
+    def all_ids(self, dataset):
         """get all ids associated with a dataset
 
-        :param label: string, indicating to query targets or documents
+        :param dataset: string, indicating to query targets or documents
         :return: list with ids corresponding to those indexes
         """
 
-        d_index = self.datasets[label]
+        d_index = self.datasets[dataset]
         count_sql = "SELECT COUNT(*) FROM data WHERE dataset=?"
         select_sql = "SELECT id, idx FROM data WHERE dataset=?"
         with get_conn(self.db_file) as conn:
@@ -478,3 +543,4 @@ class CrossmapDB:
             for row in c:
                 result[row["idx"]] = row["id"]
         return result
+

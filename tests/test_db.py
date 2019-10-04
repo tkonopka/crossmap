@@ -174,10 +174,22 @@ class CrossmapDBAddGetTests(unittest.TestCase):
 
         documents_size = self.db.dataset_size("documents")
         targets_size = self.db.dataset_size("targets")
-        abc_size = self.db.dataset_size("abc")
         self.assertEqual(documents_size, 2)
         self.assertEqual(targets_size, 1)
-        self.assertEqual(abc_size, 0)
+
+    def test_count_rows_checks_dataset(self):
+        """count_rows checks dataset label is valid"""
+
+        with self.assertRaises(Exception):
+            self.db.dataset_size("abc")
+
+    def test_query_contains_identifiers(self):
+        """can query yes/no if a dataset contains identifiers"""
+
+        self.assertTrue(self.db.has_id("documents", "a"))
+        self.assertTrue(self.db.has_id("documents", "b"))
+        self.assertFalse(self.db.has_id("documents", "z"))
+        self.assertFalse(self.db.has_id("targets", "a"))
 
     def test_get_data_a(self):
         """can retrieve data vectors"""

@@ -18,18 +18,15 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
     """remove any crossmap cache files for a crossmap project"""
 
     crossmap_data_dir = join(dir, name) if use_subdir else dir
-
-    prefix = join(crossmap_data_dir, name+"-")
-    remove_file([prefix[:-1] + ".sqlite",
-                 prefix + "temp.tsv",
-                 prefix + "feature-map.tsv",
-                 prefix + "targets-index",
-                 prefix + "documents-index",
-                 prefix + "targets-index.dat",
-                 prefix + "documents-index.dat",
-                 prefix + "targets-data",
-                 prefix + "documents-data",
-                 prefix + "manual.yaml"])
+    prefix = join(crossmap_data_dir, name)
+    filenames = ["temp.tsv", "feature-map.tsv",
+                 "targets-index", "targets-index.dat",
+                 "documents-index", "documents-index.dat",
+                 "manual-index", "manual-index.dat",
+                 "targets-data", "documents-data", "manual.yaml"]
+    filenames = [prefix + "-" + _ for _ in filenames]
+    filenames.append(prefix + ".sqlite")
+    remove_file(filenames)
     if exists(crossmap_data_dir):
         try:
             rmdir(crossmap_data_dir)
@@ -42,3 +39,4 @@ def remove_cachefile(dir, filename):
 
     filepath = join(dir, filename)
     remove_file([filepath])
+

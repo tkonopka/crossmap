@@ -14,18 +14,40 @@ from .vectors import normalize_csr, threshold_csr
 class CrossmapDiffuser:
     """Vector diffusion for crossmap"""
 
-    def __init__(self, settings):
+    def __init__(self, settings, db=None):
         """initialize an instance with a connection to a database
 
         :param settings:  CrossmapSettings object
+        :param db: CrossmapDB object, a new db connection will be made if None
         """
 
         self.settings = settings
-        self.db = CrossmapDB(settings.db_file())
-        self.db.build()
+        if db is None:
+            self.db = CrossmapDB(settings.db_file())
+            self.db.build()
+        else:
+            self.db = db
         self.feature_map = self.db.get_feature_map()
         if len(self.feature_map) == 0:
             error("feature map is empty")
+
+    def _set_empty_counts(self, dataset):
+        """set up empty co-occurance records for a dataset
+
+        :param dataset: string, identifier for dataset in db
+        """
+
+        num_rows = self.db._count_rows("counts", dataset)
+        if num_rows > 0:
+            warning("Resetting diffusion index: " + dataset)
+
+        info("Setting empty diffusion index: " + dataset)
+        self.db._clear_table("counts", dataset)
+
+        nf = len(self.feature_map)
+        empty = csr_matrix([0.0]*nf)
+        result = [empty.copy() for _ in range(nf)]
+        self.db.set_counts(dataset, result)
 
     def _build_counts(self, label=""):
         """construct co-occurance records for one dataset
@@ -70,6 +92,33 @@ class CrossmapDiffuser:
         for label, filepath in settings.data_files.items():
             self._build_counts(label)
 
+    def update(self, dataset, idxs=[]):
+        """augment an existing dataset
+
+        :param dataset: string, dataset identifier
+        :param idx: list of integer indexes
+        :return:
+        """
+
+        # if this is a first update, need to seed the counts table
+        num_rows = self.db._count_rows("counts", dataset)
+        if num_rows == 0:
+            self._set_empty_counts(dataset)
+
+        threshold = self.settings.diffusion.threshold
+        for row in self.db.get_data(dataset, idxs=idxs):
+            v = row["data"]
+            if threshold > 0:
+                v = threshold_csr(v, threshold)
+            v_indices = [int(_) for _ in v.indices]
+            if len(v.indices) == 0:
+                continue
+            indices_counts = self.db.get_counts(dataset, v_indices)
+            updated_counts = dict()
+            for k, counts in indices_counts.items():
+                updated_counts[k] = counts + v
+            self.db.update_counts(dataset, updated_counts)
+
     def diffuse(self, v, strength, normalize=True):
         """create a new vector by diffusing values
 
@@ -94,18 +143,4 @@ class CrossmapDiffuser:
             result = normalize_csr(result)
         return result
 
-
-def evaluate_sparsity(data):
-    """evaluate some metrics of sparsity in an array
-
-    :param data: array of csr_matrix objects
-    :return: mean, min, max relative load
-    """
-
-    raise("This used to be called from build, but use .sparsity() instead")
-    sparsity = [None]*len(data)
-    for i in range(len(data)):
-        idata = data[i]
-        sparsity[i] = len(idata.indices)/idata.shape[1]
-    return min(sparsity), sum(sparsity)/len(sparsity), max(sparsity)
 

@@ -2,6 +2,7 @@
 Crossmap class
 """
 
+from yaml import dump
 from logging import warning, error
 from os import mkdir
 from os.path import exists
@@ -11,7 +12,7 @@ from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual, vec_decomposition, sparse_to_dense
-from .tools import open_file, yaml_document
+from .tools import open_file, yaml_document, time
 
 
 def prediction_result(ids, distances, name):
@@ -37,6 +38,7 @@ class Crossmap:
             settings = CrossmapSettings(settings)
         self.settings = settings
         self.indexer = None
+        self.db = None
         if not settings.valid:
             return
 
@@ -44,6 +46,7 @@ class Crossmap:
             mkdir(self.settings.prefix)
 
         self.indexer = CrossmapIndexer(settings)
+        self.db = self.indexer.db
         self.encoder = self.indexer.encoder
         self.diffuser = None
         self.default_label = list(self.settings.data_files.keys())[0]
@@ -64,7 +67,7 @@ class Crossmap:
             return
         self.indexer.build()
         self.indexer.db.index("data")
-        self.diffuser = CrossmapDiffuser(self.settings)
+        self.diffuser = CrossmapDiffuser(self.settings, db=self.indexer.db)
         self.diffuser.build()
         self.diffuser.db.index("counts")
 
@@ -73,17 +76,37 @@ class Crossmap:
         self.indexer.load()
         self.diffuser = CrossmapDiffuser(self.settings)
 
-    def add(self, doc, label, id, metadata=None):
+    def add(self, dataset, doc, id, metadata=None):
         """add a new item into the db
 
+        :param dataset: string, name of dataset to append
         :param doc: dict with string data
-        :param label: string, name of dataset to append
         :param id: string, identifier for new item
         :param metadata: dict, a free element of additional information
-        :return:
+        :return: an integer signaling
         """
 
-        raise Exception("not implemented yet")
+        if dataset in self.settings.data_files:
+            raise Exception("cannot add to file-based datasets")
+        label_status = self.db.validate_dataset_label(dataset)
+        if label_status < 0:
+            raise Exception("invalid dataset label: " + str(dataset))
+        if label_status:
+            self.db.register_dataset(dataset)
+
+        # update the db structures (indexing and diffusion)
+        idx = self.indexer.update(dataset, doc, id)
+        self.diffuser.update(dataset, [idx])
+
+        # record the item in a disk file
+        if metadata is None:
+            metadata = dict()
+        metadata["timestamp"] = time()
+        doc["metadata"] = metadata
+        with open(self.settings.yaml_file(dataset), "at") as f:
+            f.write(dump({id: doc}))
+
+        return idx
 
     def predict(self, doc, label, n=3, aux=None, diffusion=None,
                 query_name="query"):

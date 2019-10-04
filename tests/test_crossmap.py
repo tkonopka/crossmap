@@ -71,8 +71,8 @@ class CrossmapBuildEmptyTests(unittest.TestCase):
         with self.assertLogs(level="WARNING") as cm:
             crossmap = Crossmap(join(data_dir, "config-empty-documents.yaml"))
             crossmap.build()
-        self.assertTrue("No content" in str(cm.output))
-        self.assertTrue("documents" in str(cm.output))
+        self.assertTrue("0" in str(cm.output))
+        self.assertTrue("Total number of items" in str(cm.output))
         self.assertTrue(crossmap.valid)
 
 
