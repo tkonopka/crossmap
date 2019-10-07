@@ -4,11 +4,11 @@ Interface to a specialized db (implemented as sqlite)
 
 import sqlite3
 from functools import wraps
-from pickle import loads, dumps
 from logging import info, warning, error
 from os.path import exists
 from os import remove
-from scipy.sparse import csr_matrix
+from .csr import csr_to_bytes, bytes_to_csr
+from .cache import CrossmapCache
 
 
 def get_conn(dbfile, timeout=5000):
@@ -18,33 +18,11 @@ def get_conn(dbfile, timeout=5000):
     return conn
 
 
-def csr_to_bytes(x):
-    """Convert a csr row vector into a bytes-like object
-
-    :param x: csr matrix
-    :return: bytes-like object
-    """
-    result = (tuple([float(_) for _ in x.data]),
-              tuple([int(_) for _ in x.indices]),
-              tuple([int(_) for _ in x.indptr]))
-    return dumps(result)
-
-
-def bytes_to_csr(x, ncol):
-    """convert a bytes object into a csr row matrix
-
-    :param x: bytes object
-    :param ncol: integer, number of columns in csr matrix
-    :return: csr_matrix
-    """
-    return csr_matrix(loads(x), shape=(1, ncol))
-
-
 # categorization of column names by field type
-_text_cols = set(["id", "title", "label"])
-_int_cols = set(["idx", "dataset"])
-_real_cols = set(["weight"])
-_blob_cols = set(["data"])
+_text_cols = {"id", "title", "label"}
+_int_cols = {"idx", "dataset"}
+_real_cols = {"weight"}
+_blob_cols = {"data"}
 
 
 def columns_sql(colnames):
@@ -92,6 +70,7 @@ class CrossmapDB:
         self.db_file = db_file
         self.n_features = None
         self.datasets = self._datasets()
+        self.cache = CrossmapCache()
 
     def _datasets(self):
         """read dataset labels from db
@@ -252,6 +231,7 @@ class CrossmapDB:
 
     def index(self, table_name):
         """create indexes on existing tables in the database"""
+
         info("Indexing " + table_name + " table")
         if table_name == "data":
             self._index(table_name, types=["id", "idx"])
@@ -291,6 +271,7 @@ class CrossmapDB:
         :param data: list with rows to insert
         """
 
+        self.cache.clear()
         d_index = self.datasets[dataset]
         sql = "INSERT INTO counts (dataset, idx, data) VALUES (?, ?, ?)"
         data_array = []
@@ -311,6 +292,7 @@ class CrossmapDB:
         :return:
         """
 
+        self.cache.clear()
         d_index = self.datasets[label]
         sql = "UPDATE counts SET data=? where dataset=? AND idx=?"
         data_array = []
@@ -323,23 +305,22 @@ class CrossmapDB:
             conn.commit()
 
     @valid_dataset
-    def add_data(self, label, data, ids, titles=None, indexes=None):
+    def add_data(self, dataset, data, ids, titles=None, indexes=None):
         """insert rows into the 'data' table
 
-        :param label: string, dataset identifier
+        :param dataset: string, dataset identifier
         :param data: list with vectors
         :param ids: list with string-like identifiers
         :param titles: list with string-like descriptions
         :param indexes: list with integer identifiers
-        :return:
         """
 
         if indexes is None:
-            current_size = self.dataset_size(label)
+            current_size = self.dataset_size(dataset)
             indexes = [current_size + _ for _ in range(len(ids))]
         if titles is None:
             titles = [""]*len(ids)
-        d_index = self.datasets[label]
+        d_index = self.datasets[dataset]
 
         sql = "INSERT INTO data" +\
               " (dataset, id, idx, title, data) VALUES (?, ?, ?, ?, ?)"
@@ -351,28 +332,45 @@ class CrossmapDB:
             conn.cursor().executemany(sql, data_array)
             conn.commit()
 
-    @valid_dataset
-    def get_counts(self, label, idxs):
-        """retrieve information from counts tables
+    def _get_cached_counts(self, dataset_index, idxs):
+        """get results for get_counts() from cache instead of a db"""
 
-        :param label: string, dataset identifier
+        result = dict()
+        for idx in idxs:
+            key = (dataset_index, idx)
+            if key in self.counts_cache:
+                result[idx] = self.counts_cache[key]
+        return result
+
+    @valid_dataset
+    def get_counts(self, dataset, idxs):
+        """retrieve information from counts tables.
+
+        Uses cache when available. Fetches remainining items from db.
+
+        :param dataset: string, dataset identifier
         :param idxs: list of integers
         :return: dictionary mapping indexes to count objects
         """
 
         n_features = self.n_features
+        d_index = self.datasets[dataset]
+        result, missing = self.cache.get(d_index, idxs)
+        if len(missing) == 0:
+            return result
+
         sql = "SELECT idx, data FROM counts WHERE dataset=? "
-        sql_where = ["idx=?"]*len(idxs)
+        sql_where = ["idx=?"]*len(missing)
         sql += "AND (" + " OR ".join(sql_where) + ")"
-        result = dict()
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            vals = [self.datasets[label]]
-            vals.extend(idxs)
+            vals = [d_index]
+            vals.extend(missing)
             c.execute(sql, vals)
             for row in c:
                 row_counts = bytes_to_csr(row["data"], n_features)
                 result[row["idx"]] = row_counts
+                self.cache.set(d_index, row["idx"], row_counts)
         return result
 
     @valid_dataset
@@ -386,10 +384,9 @@ class CrossmapDB:
 
         if table not in set(["data", "counts"]):
             raise Exception("invalid table")
-
         result = []
         n_features = self.n_features
-        sql = "SELECT data FROM " + table + " WHERE dataset=? "
+        sql = "SELECT data FROM " + table + " WHERE dataset=?"
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
             c.execute(sql, (self.datasets[dataset],))
@@ -399,12 +396,12 @@ class CrossmapDB:
         return result
 
     @valid_dataset
-    def get_data(self, label, idxs=None, ids=None):
-        """retrieve information from db from targets or documents
+    def get_data(self, dataset, idxs=None, ids=None):
+        """retrieve objects from db
 
         Note: one of ids or idx must be specified other than None
 
-        :param label: string, an identifier for a table
+        :param dataset: string, string identifier for a dataset
         :param ids: list of string ids to query in column "id"
         :param idxs: list of integer indexes to query in column "idx"
         :return: list with content of database table
@@ -427,7 +424,7 @@ class CrossmapDB:
         result = []
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            vals = [self.datasets[label]]
+            vals = [self.datasets[dataset]]
             vals.extend(queries)
             c.execute(sql, vals)
             for row in c:
@@ -455,10 +452,10 @@ class CrossmapDB:
                 yield result
 
     @valid_dataset
-    def get_titles(self, label, idxs=None, ids=None):
+    def get_titles(self, dataset, idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
-        :param label: string identifier for a dataset
+        :param dataset: string identifier for a dataset
         :param ids: list of string ids to query in column "id"
         :param idxs: list of integer indexes to query in column "idx"
         :return: dictionary mapping ids to titles
@@ -475,7 +472,7 @@ class CrossmapDB:
         result = dict()
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            vals = [self.datasets[label]]
+            vals = [self.datasets[dataset]]
             vals.extend(queries)
             c.execute(sql, vals)
             for row in c:
@@ -483,10 +480,10 @@ class CrossmapDB:
         return result
 
     @valid_dataset
-    def ids(self, label, idxs):
+    def ids(self, dataset, idxs):
         """convert integer indexes to string ids
 
-        :param label: string, identifier for a table
+        :param dataset: string, identifier for a table
         :param idxs: iterable with numeric indexes. This function only supports
             small vectors of indexes.
         :return: list with ids corresponding to those indexes
@@ -498,7 +495,7 @@ class CrossmapDB:
         sql += "(" + " OR ".join(["idx=?"]*len(idxs)) + " )"
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            vals = [self.datasets[label]]
+            vals = [self.datasets[dataset]]
             vals.extend(idxs)
             c.execute(sql, vals)
             map = {row["idx"]: row["id"] for row in c}
@@ -535,9 +532,7 @@ class CrossmapDB:
         select_sql = "SELECT id, idx FROM data WHERE dataset=?"
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            # first count rows that belong to this dataset
             n_rows = c.execute(count_sql, (d_index,)).fetchone()[0]
-            # second query retrieve ids and idx
             result = [None]*n_rows
             c.execute(select_sql, (d_index,))
             for row in c:

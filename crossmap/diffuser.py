@@ -134,13 +134,12 @@ class CrossmapDiffuser:
         for corpus, value in strength.items():
             diffusion_data = self.db.get_counts(corpus, v_indexes)
             for di, ddata in diffusion_data.items():
-                if ddata.sum() == 0:
+                if sum(ddata.data) == 0:
                     continue
                 ddata[0, di] = 1
-                vnorm = abs(ddata.sum())
-                result += ddata.dot(v_data[di]*value/vnorm)
+                vsum = sum(ddata.data)
+                result += ddata.dot(v_data[di]*value/vsum)
         if normalize:
             result = normalize_csr(result)
         return result
-
 

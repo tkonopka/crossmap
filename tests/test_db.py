@@ -60,7 +60,7 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         """cannot extract data associated with a nonexistent label"""
 
         with self.assertRaises(Exception):
-            db.get_data(idxs=[0], label="abc")
+            db.get_data(idxs=[0], dataset="abc")
 
 
 class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
