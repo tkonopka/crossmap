@@ -1,9 +1,9 @@
 import React from 'react';
-import './crosschat.css';
+import ChatController from "./ChatController";
 
 
 /** a chat message with a response provided by the server **/
-class CrosschatServerMessage extends React.Component {
+class ChatServerMessage extends React.Component {
     render() {
         let titles = this.props.data["titles"];
         if (this.props.data["distances"] !== undefined) {
@@ -49,9 +49,9 @@ class CrosschatServerMessage extends React.Component {
 }
 
 /** a chat message with information provided by a user **/
-class CrosschatUserMessage extends React.Component {
+class ChatUserMessage extends React.Component {
     render() {
-        let data = this.props.data
+        let data = this.props.data;
         let rows = ["data", "aux_pos", "aux_neg"].map((x) => {
             if (data[x]!== "") {
                 return(<tr key={x}><td className="chat-td-label">{x}</td><td>{data[x]}</td></tr>)
@@ -67,13 +67,13 @@ class CrosschatUserMessage extends React.Component {
 }
 
 
-class CrosschatHistory extends React.Component {
+class ChatHistory extends React.Component {
     render() {
         let messages = this.props.messages.map(function (x, i) {
             if (x[0] === "user") {
-                return (<CrosschatUserMessage key={i} data={x[1]}/>)
+                return (<ChatUserMessage key={i} data={x[1]}/>)
             } else {
-                return (<CrosschatServerMessage key={i} data={x[1]}/>)
+                return (<ChatServerMessage key={i} data={x[1]}/>)
             }
         });
         return (<ul className='chat-list' >{messages}</ul>);
@@ -85,6 +85,7 @@ class CrosschatHistory extends React.Component {
  * widget with input boxes that allows user to type data and send
  * instruction to the server
  */
+/*
 class CrosschatQueryBox extends React.Component {
     constructor(props) {
         super(props);
@@ -92,7 +93,7 @@ class CrosschatQueryBox extends React.Component {
         this.state = {data: "", aux_pos: "", aux_neg: ""}
     }
 
-    /** transfer content of textbox into object state **/
+    /!** transfer content of textbox into object state **!/
     setText(e, key) {
         let obj = {};
         obj[key] = e.target.value;
@@ -107,10 +108,14 @@ class CrosschatQueryBox extends React.Component {
                 <textarea type='text' placeholder="Aux neg" onInput={(e) => this.setText(e, "aux_neg")}/>
                 <button className="button" onClick={() => this.props.predictQuery(this.state)}>Predict</button>
                 <button className="button" onClick={() => this.props.decomposeQuery(this.state)}>Decompose</button>
+                <Button variant="contained">
+                    Default
+                </Button>
             </div>
         )
     }
 }
+*/
 
 class Crosschat extends React.Component {
     constructor(props) {
@@ -156,8 +161,8 @@ class Crosschat extends React.Component {
     render() {
         return(
             <div className="crosschat">
-                <CrosschatHistory messages={this.state.history} />
-                <CrosschatQueryBox predictQuery={this.predictQuery} decomposeQuery={this.decomposeQuery}/>
+                <ChatHistory messages={this.state.history} />
+                <ChatController />
             </div>
         )
     }

@@ -2,13 +2,39 @@
 
 body {
   background-color: #f9e9d1;
-  padding: 1.5em;
   font-size: 1.3em;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .crosschat {
   background-color: #f9e9d1;
   text-align: left;
-  width: 80%;
+  width: 100%;
+}
+
+#crosschat-controller {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  border-top: solid 2px #222222;
+  padding-top: 0.5em;
+}
+#controller-action {
+  width: 100%;
+}
+
+#select-dataset {
+  min-width: 120px;
+}
+
+/** Controller **/
+img.controller-icon {
+  height: 20px;
+}
+
+
+.col-send {
+  text-align: center;
 }
 
 /** History panel **/
@@ -85,3 +111,6 @@ button.button:active {
   opacity: 1;
 }
 
+img.icon {
+  height: 18px;
+}
