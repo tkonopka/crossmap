@@ -128,7 +128,8 @@ class CrossmapCacheSettings:
     """Settings for cache sizes"""
 
     def __init__(self, config=None):
-        self.counts = 32768
+        self.counts = 16384
+        self.data = 16384
         self.ids = 8192
         self.titles = 4096
 
@@ -141,11 +142,14 @@ class CrossmapCacheSettings:
                 self.ids = int(val)
             elif key == "titles":
                 self.titles = int(val)
+            elif key == "data":
+                self.data = int(val)
 
     def __str__(self):
-        result = "Crossmap Cache Settings:"
-        result += "\ncounts=" + str(self.counts)
-        result += "\ntitles=" + str(self.titles)
-        result += "\nids=" + str(self.ids)
-        return result
+        result = ["Crossmap Cache Settings:",
+                  "counts=" + str(self.counts),
+                  "titles=" + str(self.titles),
+                  "ids=" + str(self.ids),
+                  "data=" + str(self.data)]
+        return "\n".join(result)
 

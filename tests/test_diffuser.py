@@ -32,17 +32,13 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
     def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    def test_diffuser_db_structure(self):
-        """features in db and feature map should match"""
-        db_features = self.db._count_rows("features")
-        self.assertEqual(len(self.feature_map), db_features)
-
     def test_diffuser_build_adds_count_rows(self):
         """count tables should have one row per feature"""
 
         n = len(self.feature_map)
-        # there are two datasets (targets, documents), so 2n rows
-        self.assertEqual(self.db._count_rows("counts"), 2*n)
+        # there are two datasets (targets, documents), each with n rows
+        self.assertEqual(self.db.count_rows("targets", "counts"), n)
+        self.assertEqual(self.db.count_rows("documents", "counts"), n)
 
     def test_retrieve_counts(self):
         """extract counts from db for one feature"""
@@ -153,13 +149,13 @@ class CrossmapDiffuserBuildReBuildTests(unittest.TestCase):
         """attempting to rebuild should signal and abort"""
 
         diffuser = self.diffuser
-        before = diffuser.db._count_rows("counts")
+        before = diffuser.db.count_rows("targets", "counts")
         self.assertGreater(before, 0)
 
         with self.assertLogs(level="WARNING") as cm:
             self.diffuser.build()
         self.assertTrue("exists" in str(cm.output))
 
-        after = diffuser.db._count_rows("counts")
+        after = diffuser.db.count_rows("targets", "counts")
         self.assertEqual(after, before)
 

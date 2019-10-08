@@ -32,12 +32,12 @@ class CrossmapAddTests(unittest.TestCase):
         """cannot add new data to file-derived datasets"""
 
         doc = dict(data="Alice and Bob", aux_pos="Alpha and Bravo")
-        size_before = self.crossmap.indexer.db._count_rows("data", "targets")
+        size_before = self.crossmap.indexer.db.count_rows("targets", "data")
         # attempt to add to dataset
         with self.assertRaises(Exception):
             self.crossmap.add(doc, "targets", id="T0")
         # attempt should do nothing, i.e. outcome None, db unchanged
-        size_after = self.crossmap.indexer.db._count_rows("data", "targets")
+        size_after = self.crossmap.indexer.db.count_rows("targets", "data")
         self.assertEqual(size_before, size_after)
 
     def test_add_disk_file(self):
@@ -62,7 +62,7 @@ class CrossmapAddTests(unittest.TestCase):
         # the new record should exist in the database
         db = self.crossmap.indexer.db
         self.assertTrue("manual" in db.datasets)
-        self.assertGreater(db._count_rows("data", "manual"), 0)
+        self.assertGreater(db.count_rows("manual", "data"), 0)
         # db should contain a data record with features from the doc
         doc_data = db.get_data("manual", ids=["T0"])[0]
         fm = self.crossmap.indexer.feature_map
@@ -76,14 +76,14 @@ class CrossmapAddTests(unittest.TestCase):
         doc1 = dict(data="new data item")
         # adding this document should be accepted
         self.crossmap.add("manual", doc1, id="T1")
-        size_before = self.db._count_rows("data", "manual")
+        size_before = self.db.count_rows("manual", "data")
         with open(self.manual_file, "rt") as f:
             lines_before = len(f.readlines())
         # a second attempt to add a doc with same id should not work
         doc2 = {"data": "Another data item"}
         with self.assertRaises(Exception) as cm:
             self.crossmap.add("manual", doc2, id="T1")
-        size_after = self.db._count_rows("data", "manual")
+        size_after = self.db.count_rows("manual", "data")
         with open(self.manual_file, "rt") as f:
             lines_after = len(f.readlines())
         # the db as well as the file-on-disk should be unchanged

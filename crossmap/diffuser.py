@@ -37,13 +37,11 @@ class CrossmapDiffuser:
         :param dataset: string, identifier for dataset in db
         """
 
-        num_rows = self.db._count_rows("counts", dataset)
+        num_rows = self.db.count_rows(dataset, "counts")
         if num_rows > 0:
             warning("Resetting diffusion index: " + dataset)
 
         info("Setting empty diffusion index: " + dataset)
-        self.db._clear_table("counts", dataset)
-
         nf = len(self.feature_map)
         empty = csr_matrix([0.0]*nf)
         result = [empty.copy() for _ in range(nf)]
@@ -57,7 +55,7 @@ class CrossmapDiffuser:
         """
 
         # check existing state of counts table
-        num_rows = self.db._count_rows("counts", label)
+        num_rows = self.db.count_rows(label, "counts")
         if num_rows > 0:
             msg = "Skipping build of diffusion index for " + label
             warning(msg + " - already exists")
@@ -101,7 +99,7 @@ class CrossmapDiffuser:
         """
 
         # if this is a first update, need to seed the counts table
-        num_rows = self.db._count_rows("counts", dataset)
+        num_rows = self.db.count_rows(dataset, "counts")
         if num_rows == 0:
             self._set_empty_counts(dataset)
 

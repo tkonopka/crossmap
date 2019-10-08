@@ -1,5 +1,5 @@
 """
-Tests for parsing subsettings (features, server, tokens, etc.)
+Tests for parsing sub-settings (features, server, tokens, etc.)
 
 (Some of these are only stubs; they can be expanded when the
 classes start performing stronger validation)
@@ -23,7 +23,7 @@ class CrossmapSettingsDiffusionTests(unittest.TestCase):
         self.custom = CrossmapDiffusionSettings({"threshold": 0.5})
 
     def test_threshold(self):
-        """file set nonzero diffiusion threshold"""
+        """file set nonzero diffusion threshold"""
 
         self.assertEqual(self.default.threshold, 0)
         self.assertGreater(self.custom.threshold, 0.0)
@@ -146,18 +146,20 @@ class CrossmapLoggingSettingsTests(unittest.TestCase):
         self.assertEqual(self.custom.progress, 100)
 
 
-class CrossmapCacheDiffusionTests(unittest.TestCase):
-    """parsing settings for diffusion"""
+class CrossmapCacheTests(unittest.TestCase):
+    """parsing settings for caching items from the database"""
 
     def setUp(self):
         self.default = CrossmapCacheSettings()
-        custom = {"counts": 256, "ids": 128, "titles": 128}
+        custom = {"counts": 256, "ids": 128,
+                  "titles": 128, "data": 1024}
         self.custom = CrossmapCacheSettings(custom)
 
-    def test_counts(self):
+    def test_sizes(self):
         """parsing cache sizes"""
 
         self.assertEqual(self.custom.counts, 256)
         self.assertEqual(self.custom.ids, 128)
         self.assertEqual(self.custom.titles, 128)
+        self.assertEqual(self.custom.data, 1024)
 

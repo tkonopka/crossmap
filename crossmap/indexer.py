@@ -46,7 +46,8 @@ class CrossmapIndexer:
     def _init_features(self, features):
         """determine the feature_map compoent from db, file, or from scratch"""
 
-        if self.db.count_features() == 0:
+        db_featuremap = self.db.get_feature_map()
+        if len(db_featuremap) == 0:
             features_file = self.settings.features.map_file
             if features is None and features_file is not None:
                 info("reading features from prepared dictionary")
@@ -60,7 +61,7 @@ class CrossmapIndexer:
         else:
             if features is not None:
                 warning("features in constructor will be ignored")
-            result= self.db.get_feature_map()
+            result = db_featuremap
 
         return result
 
@@ -177,7 +178,7 @@ class CrossmapIndexer:
         for dataset, filepath in settings.data_files.items():
             self._build_data(filepath, dataset)
             self._build_index(dataset)
-        self.db.count_features()
+        self.db.get_feature_map()
 
     def _load_index(self, label):
         """retrieve a nmslib index from disk into memory
@@ -204,17 +205,18 @@ class CrossmapIndexer:
         for label in self.db.datasets.keys():
             self._load_index(label)
 
-    def _neighbors(self, v, label, n=5, names=False):
+    def _neighbors(self, v, dataset, n=5, names=False):
         """get a set of neighbors for a document"""
 
-        if label not in self.indexes:
+        if dataset not in self.indexes:
             return [], []
-        get_nns = self.indexes[label].knnQueryBatch
+        get_nns = self.indexes[dataset].knnQueryBatch
         temp = get_nns(csr_matrix(v), n)
         nns, distances = temp[0][0], temp[0][1]
         nns = [int(_) for _ in nns]
         if names:
-            nns = self.db.ids(label, nns)
+            nns_map = self.db.ids(dataset, nns)
+            nns = [nns_map[_] for _ in nns]
         return nns, distances
 
     def encode_document(self, doc):

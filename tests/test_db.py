@@ -41,14 +41,14 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         """all tables should initialy be empty database"""
 
         # all tables should be empty
-        self.assertEqual(self.db._count_rows("features"), 0)
-        self.assertEqual(self.db._count_rows("data"), 0)
-        self.assertEqual(self.db._count_rows("other_table"), 0)
+        self.assertEqual(self.db.count_rows("targets", "data"), 0)
+        self.assertEqual(self.db.count_rows("targets", "counts"), 0)
 
+    @unittest.skip
     def test_db_registered_datasets(self):
         """init script registers two datasets"""
 
-        self.assertEqual(self.db._count_rows("datasets"), 2)
+        self.assertEqual(len(self.db.get_datasets()), 2)
 
     def test_db_get_data(self):
         """extraction of data from empty db gives empty"""
@@ -61,6 +61,23 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
 
         with self.assertRaises(Exception):
             db.get_data(idxs=[0], dataset="abc")
+
+    def test_validate_labels_OK(self):
+        """db can evaluate signal that dataset labels are valid"""
+
+        self.assertEqual(self.db.validate_dataset_label("abc"), 1)
+        self.assertEqual(self.db.validate_dataset_label("a0_8"), 1)
+        self.assertEqual(self.db.validate_dataset_label("123"), 1)
+
+    def test_validate_labels_not_OK(self):
+        """db can evaluate signal that dataset labels cannot be registered"""
+
+        # two labels already exist
+        self.assertEqual(self.db.validate_dataset_label("targets"), 0)
+        self.assertEqual(self.db.validate_dataset_label("documents"), 0)
+        # certain labels are just not allowed
+        self.assertEqual(self.db.validate_dataset_label(4), -1)
+        self.assertEqual(self.db.validate_dataset_label("a.b"), -1)
 
 
 class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
@@ -103,40 +120,6 @@ class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
             self.assertListEqual(list(v), list(test_feature_map[k]))
 
 
-class CrossmapDBMaintenanceTests(unittest.TestCase):
-    """Maintenance of db tables"""
-
-    def setUp(self):
-        self.settings = CrossmapSettings(config_plain, create_dir=True)
-        self.db_file = self.settings.db_file()
-
-    def tearDown(self):
-        remove_crossmap_cache(data_dir, "crossmap_simple")
-
-    def test_db_clear_features(self):
-        """can remove contents from a db table"""
-
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO"):
-            db.build()
-        db.set_feature_map(test_feature_map)
-        n_features = len(test_feature_map)
-        self.assertEqual(db.n_features, n_features)
-        self.assertEqual(db._count_rows("features"), n_features)
-        db._clear_table("features")
-        self.assertEqual(db.n_features, 0)
-        self.assertEqual(db._count_rows("features"), 0)
-
-    def test_db_clear_safety(self):
-        """clear table implements some safety mechanism"""
-
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO"):
-            db.build()
-        with self.assertRaises(Exception):
-            db._clear_table("abc")
-
-
 class CrossmapDBAddGetTests(unittest.TestCase):
     """Add/Get data from a db"""
 
@@ -170,12 +153,26 @@ class CrossmapDBAddGetTests(unittest.TestCase):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def test_count_data_rows(self):
-        """build and count rows in data table for each dataset"""
+        """count rows in data table for each dataset"""
 
         documents_size = self.db.dataset_size("documents")
         targets_size = self.db.dataset_size("targets")
         self.assertEqual(documents_size, 2)
         self.assertEqual(targets_size, 1)
+
+    def test_dataset_integer_identifiers(self):
+        """count rows for each dataset, using integers as identifiers"""
+
+        documents_id = self.db.datasets["documents"]
+        documents_size = self.db.dataset_size(documents_id)
+        self.assertEqual(documents_size, 2)
+
+    def test_dataset_unusual_identifiers(self):
+        """cannot use strange identifiers to refer to datasets"""
+
+        # a float is an unacceptable identifer
+        with self.assertRaises(Exception):
+            self.db.dataset_size(1.2)
 
     def test_count_rows_checks_dataset(self):
         """count_rows checks dataset label is valid"""
@@ -260,22 +257,18 @@ class CrossmapDBQueriesTests(unittest.TestCase):
     def test_ids_from_named_table(self):
         """standard retrieval, user specifying table by string name"""
         # raise errors when query strange table
-        self.assertListEqual(self.db.ids("targets", [0,1]),
-                             ["a_target", "b_target"])
-        self.assertListEqual(self.db.ids("documents", [0,1]),
-                             ["a_doc", "b_doc"])
+        self.assertDictEqual(self.db.ids("targets", [0,1]),
+                             {0: "a_target", 1: "b_target"})
+        self.assertDictEqual(self.db.ids("documents", [0,1]),
+                             {0: "a_doc", 1: "b_doc"})
 
     def test_ids_empty_queries(self):
         """retrieval, input is emptyy"""
-        self.assertListEqual(self.db.ids("targets", []), [])
+
+        self.assertDictEqual(self.db.ids("targets", []), dict())
 
     def test_ids_singles(self):
-        self.assertListEqual(self.db.ids("targets", [0]), ["a_target"])
+        """retrieval of a single id gives a dict with one element"""
 
-    def test_ids_error_out_of_bounds(self):
-        """when provided indexes are out-of-range, ids will give error"""
-        with self.assertRaises(KeyError):
-            self.db.ids("targets", [0,5])
-        with self.assertRaises(KeyError):
-            self.db.ids("targets", [6,5])
+        self.assertDictEqual(self.db.ids("targets", [0]), {0: "a_target"})
 

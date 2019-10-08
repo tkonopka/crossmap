@@ -22,3 +22,4 @@ cache:
   counts: 32768
   ids: 32768
   titles: 8192
+  data: 8192
