@@ -3,6 +3,7 @@
 .project
 .pydevproject
 .coverage
+.iml
 htmlcov
 profiling
 
