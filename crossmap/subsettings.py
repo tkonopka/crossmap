@@ -3,7 +3,9 @@ Small classes for capturing small sets of settings for specialized contexts
 """
 
 from os.path import join
+from yaml import dump
 from .tokens import Kmerizer
+
 
 # a tokenizer with default parameters
 default_tokenizer = Kmerizer()
@@ -24,10 +26,8 @@ class CrossmapTokenSettings():
                     self.alphabet = val
 
     def __str__(self):
-        result = "Crossmap Kmer Settings:"
-        result += "\nk=" + str(self.k)
-        result += "\nalphabet='" + str(self.alphabet)
-        return result
+        result = dict(tokens = {"k": self.k, "alphabet": self.alphabet})
+        return dump(result)
 
 
 class CrossmapFeatureSettings:
@@ -55,11 +55,10 @@ class CrossmapFeatureSettings:
                 self.map_file = map_file
 
     def __str__(self):
-        result = "Crossmap Feature Settings:\n"
-        result += "max_number=" + str(self.max_number) + ", "
-        result += "weighting='" + str(self.weighting) + "', "
-        result += "aux_weight=" + str(self.aux)
-        return result
+        result = dict(features= {"max_number": self.max_number,
+                                 "weighting": self.weighting,
+                                 "aux": self.aux})
+        return dump(result)
 
 
 class CrossmapDiffusionSettings:
@@ -75,9 +74,8 @@ class CrossmapDiffusionSettings:
                 self.threshold = float(val)
 
     def __str__(self):
-        result = "Crossmap Diffusion Settings:\n"
-        result += "threshold=" + str(self.threshold)
-        return result
+        result = dict(diffusion={"threshold": self.threshold})
+        return dump(result)
 
 
 class CrossmapLoggingSettings:
@@ -91,15 +89,14 @@ class CrossmapLoggingSettings:
             return
         for key, val in config.items():
             if key == "level":
-                self.level = val
+                self.level = str(val)
             elif key == "progress":
                 self.progress = int(val)
 
     def __str__(self):
-        result = "Crossmap Logging Settings:"
-        result += "\nlevel=" + str(self.level)
-        result += "\nprogress=" + str(self.progress)
-        return result
+        result = dict(logging={"level": self.level,
+                               "progress": self.progress})
+        return dump(result)
 
 
 class CrossmapServerSettings:
@@ -118,10 +115,9 @@ class CrossmapServerSettings:
                 self.ui_port = int(val)
 
     def __str__(self):
-        result = "Crossmap Server Settings:"
-        result += "\napi_port=" + str(self.api_port)
-        result += "\nui_port=" + str(self.ui_port)
-        return result
+        result = dict(server={"api_port": self.api_port,
+                             "ui_port": self.ui_port})
+        return dump(result)
 
 
 class CrossmapCacheSettings:
@@ -146,10 +142,9 @@ class CrossmapCacheSettings:
                 self.data = int(val)
 
     def __str__(self):
-        result = ["Crossmap Cache Settings:",
-                  "counts=" + str(self.counts),
-                  "titles=" + str(self.titles),
-                  "ids=" + str(self.ids),
-                  "data=" + str(self.data)]
-        return "\n".join(result)
+        result = dict(cache={"counts": self.counts,
+                             "titles": self.titles,
+                             "ids": self.ids,
+                             "data": self.data})
+        return dump(result)
 

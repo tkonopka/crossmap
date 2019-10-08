@@ -9,8 +9,7 @@ from math import sqrt
 from scipy.sparse import csr_matrix, vstack
 from crossmap.vectors import csr_residual, vec_decomposition
 from crossmap.vectors import num_nonzero, all_zero
-from crossmap.vectors import vec_norm, normalize_vec, normalize_csr
-from crossmap.vectors import sparse_to_dense, threshold_csr
+from crossmap.vectors import vec_norm, normalize_vec
 
 
 class VecNormTests(unittest.TestCase):
@@ -58,50 +57,6 @@ class VecNormTests(unittest.TestCase):
         """produce a unit-norm vector"""
         nvec = normalize_vec
         self.assertListEqual(list(nvec(array([0, 0]))), [0, 0])
-
-    def test_normalize_csr(self):
-        """produce a unit-norm vector from csr"""
-
-        ncsr = normalize_csr
-        result1 = sparse_to_dense(ncsr(csr_matrix([0, 2, 0])))
-        self.assertListEqual(list(result1), [0, 1, 0])
-        result2 = sparse_to_dense(ncsr(csr_matrix([4,0])))
-        self.assertListEqual(list(result2), [1, 0])
-
-
-class VecThresholdingTests(unittest.TestCase):
-    """Vector thresholding"""
-
-    def test_threshold_positives(self):
-        """using a simple vector with positive values"""
-
-        a = csr_matrix([0.0, 0.1, 0.5, 0.35,
-                        0.9, 0.0, 0.0, 0.4])
-        result = threshold_csr(a, 0.3)
-        expected = [0.0, 0.0, 0.5, 0.35,
-                    0.9, 0.0, 0.0, 0.4]
-        self.assertListEqual(list(sparse_to_dense(result)), expected)
-        self.assertEqual(result.shape, (1, 8))
-
-    def test_threshold_w_negatives(self):
-        """thresholding preserves very negative values"""
-
-        b = csr_matrix([0.0, 0.1, -0.5, 0.35,
-                        0.9, -0.2, 0.0, -0.4])
-        result = threshold_csr(b, 0.3)
-        expected = [0.0, 0.0, -0.5, 0.35,
-                    0.9, 0.0, 0.0, -0.4]
-        self.assertListEqual(list(sparse_to_dense(result)), expected)
-        self.assertEqual(result.shape, (1, 8))
-
-    def test_threshold_to_zeros(self):
-        """threshold and all values are set to zero"""
-
-        x = csr_matrix([0.0, 0.0, 0.0, 0.4,
-                        0.2, 0.0, -0.8, 0.1])
-        result = threshold_csr(x, 2)
-        self.assertEqual(sum(sparse_to_dense(result)), 0)
-        self.assertEqual(result.shape, (1, 8))
 
 
 class VecResidualTests(unittest.TestCase):

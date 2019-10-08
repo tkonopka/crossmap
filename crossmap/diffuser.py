@@ -8,7 +8,7 @@ values for certain features into other features.
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
-from .vectors import normalize_csr, threshold_csr
+from .csr import normalize_csr, threshold_csr
 
 
 class CrossmapDiffuser:
@@ -47,21 +47,20 @@ class CrossmapDiffuser:
         result = [empty.copy() for _ in range(nf)]
         self.db.set_counts(dataset, result)
 
-    def _build_counts(self, label=""):
+    def _build_counts(self, dataset=""):
         """construct co-occurance records for one dataset
 
-        :param label: string, identifier for dataset in db
-        :return:
+        :param dataset: string, identifier for dataset in db
         """
 
         # check existing state of counts table
-        num_rows = self.db.count_rows(label, "counts")
+        num_rows = self.db.count_rows(dataset, "counts")
         if num_rows > 0:
-            msg = "Skipping build of diffusion index for " + label
+            msg = "Skipping build of diffusion index for " + dataset
             warning(msg + " - already exists")
             return
 
-        info("Building diffusion index for " + label)
+        info("Building diffusion index for " + dataset)
         threshold = self.settings.diffusion.threshold
         progress = self.settings.logging.progress
         fm = self.feature_map
@@ -69,7 +68,7 @@ class CrossmapDiffuser:
         empty = csr_matrix([0.0]*len(fm))
         result = [empty.copy() for _ in range(nf)]
         total = 0
-        for row in self.db.all_data(label):
+        for row in self.db.all_data(dataset):
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
@@ -78,7 +77,7 @@ class CrossmapDiffuser:
                 result[k] += v
             if total % progress == 0:
                 info("Progress: processed " + str(total))
-        self.db.set_counts(label, result)
+        self.db.set_counts(dataset, result)
 
     def build(self):
         """populate count tables based on all data files"""
@@ -126,17 +125,17 @@ class CrossmapDiffuser:
         :return: csr vector
         """
 
+        csr_matrix.copy
         result = v.copy()
         v_indexes = [int(_) for _ in v.indices]
         v_data = {v.indices[_]: v.data[_] for _ in range(len(v.data))}
         for corpus, value in strength.items():
             diffusion_data = self.db.get_counts(corpus, v_indexes)
             for di, ddata in diffusion_data.items():
-                if sum(ddata.data) == 0:
+                if len(ddata.data) == 0:
                     continue
-                ddata[0, di] = 1
-                vsum = sum(ddata.data)
-                result += ddata.dot(v_data[di]*value/vsum)
+                row_normalization = max(abs(value), abs(sum(ddata.data)))
+                result += ddata.multiply(v_data[di]*value/row_normalization)
         if normalize:
             result = normalize_csr(result)
         return result

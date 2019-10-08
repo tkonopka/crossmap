@@ -31,7 +31,7 @@ class CrossmapSettingsDiffusionTests(unittest.TestCase):
     def test_str(self):
         """can construct a str representation"""
 
-        self.assertTrue("Diffusion" in str(self.default))
+        self.assertTrue("diffusion" in str(self.default))
 
 
 class CrossmapFeaturesSettingsTests(unittest.TestCase):

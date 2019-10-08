@@ -55,24 +55,6 @@ def normalize_vec(a):
     return a
 
 
-def normalize_csr(a):
-    """normalize a csr vector
-
-    Note this performs a normalization in-place,
-    i.e. the original vector will change.
-
-    :param a: csr_matrix, assumed a single row vector
-    :return: csr_matrix of same size as a, with normalized entries
-    """
-
-    n2 = sum([x*x for x in a.data])
-    if n2 == 0:
-        return a
-    inv_norm = 1/sqrt(n2)
-    for i in range(len(a.data)):
-        a.data[i] *= inv_norm
-    return a
-
 @numba.jit
 def add_three(a, b, c, wb, wc):
     """add three vectors with weights
@@ -135,21 +117,4 @@ def vec_decomposition(v_t, b_t):
 def sparse_to_dense(v):
     """convert a one-row sparse matrix into a dense ndarray"""
     return v.toarray()[0]
-
-
-def threshold_csr(v, threshold=0.001):
-    """set elements in v below a threshold to zero
-
-    :param v: csr vector
-    :param threshold: threshold level
-    :return: new csr vector with some elements set to zero
-    """
-
-    data = []
-    indices = []
-    for d, i in zip(v.data, v.indices):
-        if abs(d) > threshold:
-            data.append(d)
-            indices.append(i)
-    return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
 
