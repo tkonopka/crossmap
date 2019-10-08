@@ -1,5 +1,8 @@
 """
 Tests for parsing subsettings (features, server, tokens, etc.)
+
+(Some of these are only stubs; they can be expanded when the
+classes start performing stronger validation)
 """
 
 import unittest
@@ -9,6 +12,7 @@ from crossmap.settings import CrossmapFeatureSettings
 from crossmap.settings import CrossmapTokenSettings
 from crossmap.settings import CrossmapServerSettings
 from crossmap.settings import CrossmapDiffusionSettings
+from crossmap.settings import CrossmapCacheSettings
 
 
 class CrossmapSettingsDiffusionTests(unittest.TestCase):
@@ -140,3 +144,20 @@ class CrossmapLoggingSettingsTests(unittest.TestCase):
 
         self.assertGreater(self.default.progress, 1000)
         self.assertEqual(self.custom.progress, 100)
+
+
+class CrossmapCacheDiffusionTests(unittest.TestCase):
+    """parsing settings for diffusion"""
+
+    def setUp(self):
+        self.default = CrossmapCacheSettings()
+        custom = {"counts": 256, "ids": 128, "titles": 128}
+        self.custom = CrossmapCacheSettings(custom)
+
+    def test_counts(self):
+        """parsing cache sizes"""
+
+        self.assertEqual(self.custom.counts, 256)
+        self.assertEqual(self.custom.ids, 128)
+        self.assertEqual(self.custom.titles, 128)
+

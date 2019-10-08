@@ -269,7 +269,6 @@ class Crossmap:
         """
 
         result = []
-
         # convert db items into vectors
         db = self.indexer.db
         for x in ids:
@@ -372,3 +371,4 @@ def validate_dataset_label(crossmap, label=None, log=True):
             error("dataset label is not valid: " + label)
         label = None
     return label
+

@@ -18,3 +18,7 @@ server:
 logging:
   level: INFO
   progress: 10000
+cache:
+  counts: 32768
+  ids: 32768
+  titles: 8192

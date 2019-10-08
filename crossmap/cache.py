@@ -63,6 +63,8 @@ class CrossmapCache:
         """
 
         result, missing = dict(), []
+        if k2s is None:
+            k2s = []
         cache = self._cache
         copy = self._copy
         for k2 in k2s:

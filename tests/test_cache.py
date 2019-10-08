@@ -15,10 +15,24 @@ class CrossmapCacheTests(unittest.TestCase):
         cache = CrossmapCache(8)
         cache.set(0, 4, 10)
         cache.set(0, 8, 11)
-        result, missing = cache.get(0, [4,8])
+        result, missing = cache.get(0, [4, 8])
         self.assertEqual(len(result), 2)
         self.assertEqual(result[4], 10)
         self.assertEqual(result[8], 11)
+
+    def test_set_get_string_keys(self):
+        """simple handling, using string keys"""
+
+        cache = CrossmapCache(8)
+        cache.set(0, "a", 10)
+        cache.set(0, "b", 20)
+        result0, m0 = cache.get(0, ["a", "b"])
+        self.assertEqual(len(result0), 2)
+        self.assertEqual(len(m0), 0)
+        cache.clear()
+        result1, m1 = cache.get(0, ["a", "b"])
+        self.assertEqual(len(result1), 0)
+        self.assertEqual(len(m1), 2)
 
     def test_report_missing(self):
         """simple addition and extraction from the cache"""
@@ -37,13 +51,22 @@ class CrossmapCacheTests(unittest.TestCase):
         cache = CrossmapCache(8)
         cache.set(0, 0, 10)
         cache.set(0, 1, 20)
-        result0, m0 = cache.get(0, [0,1])
+        result0, m0 = cache.get(0, [0, 1])
         self.assertEqual(len(result0), 2)
         self.assertEqual(len(m0), 0)
         cache.clear()
-        result1, m1 = cache.get(0, [0,1])
+        result1, m1 = cache.get(0, [0, 1])
         self.assertEqual(len(result1), 0)
         self.assertEqual(len(m1), 2)
+
+    def test_get_empty(self):
+        """handling when request is empty"""
+
+        cache = CrossmapCache()
+        cache.set(0, "abc", 2)
+        result, missing = cache.get(0, None)
+        self.assertEqual(result, dict())
+        self.assertEqual(missing, [])
 
     def test_sloppy_get(self):
         """cache can become corrupt if object are changed outside"""

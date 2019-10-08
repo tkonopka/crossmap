@@ -48,11 +48,11 @@ def add_access(response):
 
 
 def process_request(request, process_function):
-    """"""
+    """abstract process function that handles prediction and decomposition"""
     if request.method == "OPTIONS":
         return add_access(HttpResponse(""))
     if request.method != "POST":
-        return HttpResponse("Use POST protocol. For curl, set --request POST\n")
+        return HttpResponse("Use POST. For curl, set --request POST\n")
     # perform core processing
     doc = parse_request(request)
     dataset = doc["dataset"]
@@ -60,7 +60,7 @@ def process_request(request, process_function):
                               aux=doc["aux"], diffusion=doc["diffusion"],
                               query_name="query")
     targets = result["targets"]
-    target_titles = crossmap.indexer.db.get_titles(dataset, ids=targets)
+    target_titles = crossmap.db.get_titles(dataset, ids=targets)
     result["titles"] = [target_titles[_] for _ in targets]
     return add_access(HttpResponse(dumps(result)))
 

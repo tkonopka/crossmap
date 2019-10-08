@@ -9,6 +9,7 @@ from os.path import exists
 from os import remove
 from .csr import csr_to_bytes, bytes_to_csr
 from .cache import CrossmapCache
+from .subsettings import CrossmapCacheSettings
 
 
 def get_conn(dbfile, timeout=5000):
@@ -64,13 +65,17 @@ def valid_dataset(f):
 class CrossmapDB:
     """Management of a DB for features and data vectors"""
 
-    def __init__(self, db_file):
+    def __init__(self, db_file, cache_settings=None):
         """sets up path to db, operations performed via functions"""
 
         self.db_file = db_file
         self.n_features = None
         self.datasets = self._datasets()
-        self.cache = CrossmapCache()
+        # set up cache objects (uses sloppy cache by default)
+        if cache_settings is None:
+            cache_settings = CrossmapCacheSettings()
+        self.counts_cache = CrossmapCache(cache_settings.counts)
+        self.titles_cache = CrossmapCache(cache_settings.titles)
 
     def _datasets(self):
         """read dataset labels from db
@@ -271,7 +276,7 @@ class CrossmapDB:
         :param data: list with rows to insert
         """
 
-        self.cache.clear()
+        self.counts_cache.clear()
         d_index = self.datasets[dataset]
         sql = "INSERT INTO counts (dataset, idx, data) VALUES (?, ?, ?)"
         data_array = []
@@ -292,7 +297,7 @@ class CrossmapDB:
         :return:
         """
 
-        self.cache.clear()
+        self.counts_cache.clear()
         d_index = self.datasets[label]
         sql = "UPDATE counts SET data=? where dataset=? AND idx=?"
         data_array = []
@@ -332,16 +337,6 @@ class CrossmapDB:
             conn.cursor().executemany(sql, data_array)
             conn.commit()
 
-    def _get_cached_counts(self, dataset_index, idxs):
-        """get results for get_counts() from cache instead of a db"""
-
-        result = dict()
-        for idx in idxs:
-            key = (dataset_index, idx)
-            if key in self.counts_cache:
-                result[idx] = self.counts_cache[key]
-        return result
-
     @valid_dataset
     def get_counts(self, dataset, idxs):
         """retrieve information from counts tables.
@@ -355,7 +350,7 @@ class CrossmapDB:
 
         n_features = self.n_features
         d_index = self.datasets[dataset]
-        result, missing = self.cache.get(d_index, idxs)
+        result, missing = self.counts_cache.get(d_index, idxs)
         if len(missing) == 0:
             return result
 
@@ -370,7 +365,7 @@ class CrossmapDB:
             for row in c:
                 row_counts = bytes_to_csr(row["data"], n_features)
                 result[row["idx"]] = row_counts
-                self.cache.set(d_index, row["idx"], row_counts)
+                self.counts_cache.set(d_index, row["idx"], row_counts)
         return result
 
     @valid_dataset
@@ -455,28 +450,35 @@ class CrossmapDB:
     def get_titles(self, dataset, idxs=None, ids=None):
         """retrieve information from db from targets or documents
 
+        (This might be used from a user-interface, so must support
+        querying by ids as well as by idxs)
+
         :param dataset: string identifier for a dataset
         :param ids: list of string ids to query in column "id"
         :param idxs: list of integer indexes to query in column "idx"
         :return: dictionary mapping ids to titles
         """
 
+        d_index = self.datasets[dataset]
         queries, column = idxs, "idx"
         if ids is not None:
             queries, column = ids, "id"
-        if queries is None or len(queries) == 0:
-            return dict()
+        result, missing = self.titles_cache.get(d_index, queries)
+        if len(missing) == 0:
+            return result
+
         sql = "SELECT id, idx, title FROM data WHERE dataset=? AND "
-        sql_where = [column + "=?"]*len(queries)
+        sql_where = [column + "=?"]*len(missing)
         sql += "(" + " OR ".join(sql_where) + ")"
         result = dict()
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
-            vals = [self.datasets[dataset]]
-            vals.extend(queries)
+            vals = [d_index]
+            vals.extend(missing)
             c.execute(sql, vals)
             for row in c:
                 result[row[column]] = row["title"]
+                self.titles_cache.set(d_index, row[column], row["title"])
         return result
 
     @valid_dataset
