@@ -49,10 +49,12 @@ img.controller-icon {
 .chat-user {
   background-color: #c5d9e5;
   float: right;
+  margin-right: 1em;
 }
 .chat-response {
   background-color: #ffffff;
   float: left;
+  margin-left: 1em;
 }
 .chat-list {
   padding: 0px;

@@ -74,3 +74,14 @@ def decompose(request):
     """process an http request to decompose a document into basis"""
     return process_request(request, crossmap.decompose)
 
+
+def datasets(request):
+    """extract summary of available datasets and their sizes"""
+
+    str(request)
+    result = []
+    size = crossmap.db.dataset_size
+    for dataset in crossmap.db.datasets:
+        result.append(dict(label=dataset, size=size(dataset)))
+    return add_access(HttpResponse(dumps(dict(datasets=result))))
+

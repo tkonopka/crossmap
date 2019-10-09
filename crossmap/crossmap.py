@@ -336,13 +336,13 @@ class Crossmap:
             temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
             return {k: round(v, digits) for k, v in temp.items()}
 
-        db = self.indexer.db
+        db = self.db
         datasets = []
-        for label in db.datasets:
-            size = db.dataset_size(label)
-            counts_sparsity = stats(db.sparsity(label, "counts"))
-            data_sparsity = stats(db.sparsity(label, "data"))
-            datasets.append(dict(label=label, size=size,
+        for dataset in db.datasets:
+            size = db.dataset_size(dataset)
+            counts_sparsity = stats(db.sparsity(dataset, "counts"))
+            data_sparsity = stats(db.sparsity(dataset, "data"))
+            datasets.append(dict(label=dataset, size=size,
                                  counts_sparsity=counts_sparsity,
                                  data_sparsity=data_sparsity))
 
@@ -366,7 +366,7 @@ def validate_dataset_label(crossmap, label=None, log=True):
         label = str(crossmap.default_label)
         if log:
             warning("using default dataset: " + label)
-    if label not in crossmap.indexer.db.datasets:
+    if label not in crossmap.db.datasets:
         if log:
             error("dataset label is not valid: " + label)
         label = None
