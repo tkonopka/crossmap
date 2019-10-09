@@ -343,7 +343,7 @@ class CrossmapDB:
 
         :param dataset: string or int, dataset identifier
         :param idxs: list of integers
-        :return: dictionary mapping indexes to count objects
+        :return: dictionary mapping indexes to count csr_matrix objects
         """
 
         n_features = self.n_features

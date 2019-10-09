@@ -5,10 +5,11 @@ The diffuser is a class that can take a vector and diffuse
 values for certain features into other features.
 """
 
+from numpy import array
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
-from .csr import normalize_csr, threshold_csr
+from .csr import normalize_csr, threshold_csr, add_csr
 
 
 class CrossmapDiffuser:
@@ -76,7 +77,7 @@ class CrossmapDiffuser:
             for k in v.indices:
                 result[k] += v
             if total % progress == 0:
-                info("Progress: processed " + str(total))
+                info("Progress: " + str(total))
         self.db.set_counts(dataset, result)
 
     def build(self):
@@ -124,7 +125,11 @@ class CrossmapDiffuser:
         :return: csr vector
         """
 
-        result = v.copy()
+        # this function involves adding many csr vectors together
+        # empirical tests show that it is faster to keep "result"
+        # as dense array and add into it, rather than keep it sparse
+        # and have its structure change many times
+        result = v.toarray()[0]
         v_indexes = [int(_) for _ in v.indices]
         v_data = {v.indices[_]: v.data[_] for _ in range(len(v.data))}
         for corpus, value in strength.items():
@@ -133,12 +138,11 @@ class CrossmapDiffuser:
                 if len(ddata.data) == 0:
                     continue
                 row_normalization = max(abs(value), abs(sum(ddata.data)))
-                # this implementation adjusts the values obtained from the db
-                # in-place. That's OK because the values are not used
-                # again after this loop.
-                # (The DB and cached values are not corrupted)
-                ddata.data *= v_data[di]*value/row_normalization
-                result += ddata
+                data = array(ddata.data)
+                indices = array(ddata.indices)
+                data *= v_data[di]*value/row_normalization
+                result = add_csr(result, data, indices)
+        result = csr_matrix(result)
         if normalize:
             result = normalize_csr(result)
         return result

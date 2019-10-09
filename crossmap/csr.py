@@ -2,6 +2,7 @@
 Handling csr vectors
 """
 
+import numba
 from math import sqrt
 from pickle import loads, dumps
 from scipy.sparse import csr_matrix
@@ -60,4 +61,18 @@ def threshold_csr(v, threshold=0.001):
             data.append(d)
             indices.append(i)
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
+
+
+@numba.jit
+def add_csr(x, data, indices):
+    """add csr data to a dense array
+
+    :param x: dense array of floats
+    :param data: array of floats
+    :param indices: array of integers
+    :return: array consisting of x+data
+    """
+    for i in range(len(indices)):
+        x[indices[i]] += data[i]
+    return x
 
