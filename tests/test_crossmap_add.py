@@ -90,3 +90,19 @@ class CrossmapAddTests(unittest.TestCase):
         self.assertEqual(size_before, size_after)
         self.assertEqual(lines_before, lines_after)
 
+    def test_adding_items_changes_diffusion(self):
+        """add new object into data table"""
+
+        # first add some element
+        doc = {"data": "Alice and Bob", "aux_pos": "Alpha and Bravo"}
+        self.crossmap.add("manual", doc, id="I0")
+        # look at how diffusion works in the current state
+        v = self.crossmap.encoder.document({"data": "Alice"})
+        before = self.crossmap.diffuser.diffuse(v, dict(manual=1))
+        self.assertGreater(len(before.data), len(v.data))
+        # add a second element
+        doc2 = {"data": "Alice and Catherine", "aux_pos": "Charlie and Delta"}
+        self.crossmap.add("manual", doc2, id="I1")
+        after = self.crossmap.diffuser.diffuse(v, dict(manual=1))
+        self.assertGreater(len(after.data), len(before.data))
+

@@ -291,7 +291,6 @@ class CrossmapDB:
 
         :param dataset: string or int, identifier for a dataset
         :param data: dict mapping indexes to csr_matrices
-        :return:
         """
 
         self.counts_cache.clear()
@@ -299,7 +298,7 @@ class CrossmapDB:
         data_array = []
         for i, v in data.items():
             idata = sqlite3.Binary(csr_to_bytes(v))
-            data_array.append((dataset, i, idata))
+            data_array.append((idata, dataset, i))
         with get_conn(self.db_file) as conn:
             cur = conn.cursor()
             cur.executemany(sql, data_array)
@@ -314,6 +313,7 @@ class CrossmapDB:
         :param ids: list with string-like identifiers
         :param titles: list with string-like descriptions
         :param indexes: list with integer identifiers
+        :return: list of indexes used for the new documents
         """
 
         self.data_cache.clear()
@@ -333,6 +333,7 @@ class CrossmapDB:
         with get_conn(self.db_file) as conn:
             conn.cursor().executemany(sql, data_array)
             conn.commit()
+        return indexes
 
     @valid_dataset
     def get_counts(self, dataset, idxs):

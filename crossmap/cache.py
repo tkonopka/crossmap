@@ -1,16 +1,14 @@
 """
 A simple cache object that uses a pair of integers as keys.
 
-This is a sloppy cache by default. The values are not deep-copied
-during get() and set(). This means the cache can become corrupt if objects
-are changed outside.
-
-The cache can be initialized with deepcopy=True. In that case, the
-cache guarantees that get() are separate from what is stored in the cache.
+Values in the cache are deep-copied during get() and set().
+This means the output can be adjusted in-place without corrupting the cache.
 """
 
-
-from copy import deepcopy as deepc
+# For a reason I don't understand "from copy import deepcopy" does not permit
+# using deepcopy as a function...
+# To get around that, deepcopy is given an alias as "safecopy"
+from copy import deepcopy as safecopy
 from math import floor
 from time import time
 
@@ -18,14 +16,10 @@ from time import time
 class CrossmapCache:
     """Management for a cache"""
 
-    def __init__(self, max_size=8192, deepcopy=False):
+    def __init__(self, max_size=8192):
         """sets up path to db, operations performed via functions"""
 
         self.max_size = max(32, max_size)
-        if deepcopy:
-            self._copy = deepc
-        else:
-            self._copy = lambda x: x
         self._cache = dict()
 
     def _make_space(self, num_items):
@@ -46,7 +40,7 @@ class CrossmapCache:
 
         if len(self._cache) >= self.max_size:
             self._make_space(floor(self.max_size/8))
-        self._cache[(k1, k2)] = (time(), self._copy(data))
+        self._cache[(k1, k2)] = (time(), safecopy(data))
 
     def clear(self):
         """remove all content from the cache"""
@@ -66,13 +60,13 @@ class CrossmapCache:
         if k2s is None:
             k2s = []
         cache = self._cache
-        copy = self._copy
+        timestamp = time()
         for k2 in k2s:
             key = (k1, k2)
             if key in cache:
                 value = cache[key][1]
-                cache[key] = (time(), value)
-                result[k2] = copy(value)
+                cache[key] = (timestamp, value)
+                result[k2] = safecopy(value)
             else:
                 missing.append(k2)
         return result, missing

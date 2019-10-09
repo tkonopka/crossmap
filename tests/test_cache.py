@@ -68,23 +68,10 @@ class CrossmapCacheTests(unittest.TestCase):
         self.assertEqual(result, dict())
         self.assertEqual(missing, [])
 
-    def test_sloppy_get(self):
-        """cache can become corrupt if object are changed outside"""
-
-        cache = CrossmapCache(8)
-        cache.set(0, 0, dict(a=3))
-        cache.set(0, 1, dict(b=0))
-        result0, _ = cache.get(0, [0])
-        self.assertEqual(result0[0]["a"], 3)
-        # corrupt the cache object
-        result0[0]["a"] = 10
-        result1, _ = cache.get(0, [0])
-        self.assertNotEqual(result1[0]["a"], 3)
-
     def test_deepcopy_get(self):
         """cache can be initialized to safeguarg against corruption"""
 
-        cache = CrossmapCache(8, deepcopy=True)
+        cache = CrossmapCache(8)
         cache.set(0, 0, dict(a=3))
         cache.set(0, 1, dict(b=0))
         result0, _ = cache.get(0, [0])

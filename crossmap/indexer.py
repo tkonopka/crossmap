@@ -86,13 +86,15 @@ class CrossmapIndexer:
             titles = [doc["title"]]
         v = self.encoder.document(doc)
         size = self.db.dataset_size(dataset)
-        self.db.add_data(dataset, [v], [id], titles, indexes=[size])
+        idxs = self.db.add_data(dataset, [v], [id], titles, indexes=[size])
 
         # remove current index and index file, regenerate
         index_file = self.settings.index_file(dataset)
         if exists(index_file):
             remove(index_file)
         self._build_index(dataset)
+
+        return idxs[0]
 
     def _build_data(self, files, dataset):
         """transfer data from files into a db table

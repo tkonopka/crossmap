@@ -89,11 +89,11 @@ class CrossmapDiffuser:
         for label, filepath in settings.data_files.items():
             self._build_counts(label)
 
-    def update(self, dataset, idxs=[]):
-        """augment an existing dataset
+    def update(self, dataset, data_idxs=[]):
+        """augment counts based on vectors from the data table
 
         :param dataset: string, dataset identifier
-        :param idx: list of integer indexes
+        :param idx: list of integer indexes in the data table
         :return:
         """
 
@@ -103,7 +103,7 @@ class CrossmapDiffuser:
             self._set_empty_counts(dataset)
 
         threshold = self.settings.diffusion.threshold
-        for row in self.db.get_data(dataset, idxs=idxs):
+        for row in self.db.get_data(dataset, idxs=data_idxs):
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
@@ -111,10 +111,9 @@ class CrossmapDiffuser:
             if len(v.indices) == 0:
                 continue
             indices_counts = self.db.get_counts(dataset, v_indices)
-            updated_counts = dict()
-            for k, counts in indices_counts.items():
-                updated_counts[k] = counts + v
-            self.db.update_counts(dataset, updated_counts)
+            for k in list(indices_counts.keys()):
+                indices_counts[k] += v
+            self.db.update_counts(dataset, indices_counts)
 
     def diffuse(self, v, strength, normalize=True):
         """create a new vector by diffusing values
@@ -125,7 +124,6 @@ class CrossmapDiffuser:
         :return: csr vector
         """
 
-        csr_matrix.copy
         result = v.copy()
         v_indexes = [int(_) for _ in v.indices]
         v_data = {v.indices[_]: v.data[_] for _ in range(len(v.data))}
@@ -135,7 +133,12 @@ class CrossmapDiffuser:
                 if len(ddata.data) == 0:
                     continue
                 row_normalization = max(abs(value), abs(sum(ddata.data)))
-                result += ddata.multiply(v_data[di]*value/row_normalization)
+                # this implementation adjusts the values obtained from the db
+                # in-place. That's OK because the values are not used
+                # again after this loop.
+                # (The DB and cached values are not corrupted)
+                ddata.data *= v_data[di]*value/row_normalization
+                result += ddata
         if normalize:
             result = normalize_csr(result)
         return result
