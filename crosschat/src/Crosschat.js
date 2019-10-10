@@ -1,6 +1,6 @@
 import React from 'react';
 import ChatInit from './ChatInit';
-import ChatController from "./ChatController";
+import Controller from "./Controller";
 import ChatHistory from "./ChatHistory";
 
 
@@ -8,16 +8,8 @@ class Crosschat extends React.Component {
     constructor(props) {
         super(props);
         this.addMessage= this.addMessage.bind(this);
-        this.predictQuery = this.predictQuery.bind(this);
-        this.decomposeQuery = this.decomposeQuery.bind(this);
+        this.sendQuery = this.sendQuery.bind(this);
         this.state = {history: [], datasets: []}
-    }
-
-    addMessage(message, type) {
-        this.setState(prevState => {
-            const history = prevState.history.concat([[type, message]]);
-            return {history: history}
-        });
     }
 
     /**
@@ -48,23 +40,37 @@ class Crosschat extends React.Component {
      */
     sendQuery(query, api) {
         // augment the query with settings
-        query["dataset"] = "targets";
-        query["n"] = 3;
-        query["aux"] = {};
+        console.log("Sending to api: "+ api);
+        console.log("query: "+JSON.stringify(query));
         const chat = this;
         chat.addMessage(query, "user");
         let xhr = new XMLHttpRequest();
-        xhr.onload=function(){
-            chat.addMessage(JSON.parse(xhr.response), "server")
+        xhr.onload = function(){
+            let result = JSON.parse(xhr.response);
+            console.log("got response: "+JSON.stringify(result));
+            result["_type"] = api;
+            console.log("edited response: "+JSON.stringify(result));
+            chat.addMessage(result, "server")
         };
-        xhr.open("POST", "http://127.0.0.1:8098/" + api, true);
+        xhr.open("POST", "http://127.0.0.1:8098/" + api + "/", true);
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send(JSON.stringify(query));
     }
-    /** two wrappers for sendQuery to predict and decompose a user's data **/
-    predictQuery = (query) => this.sendQuery(query, "predict/");
-    decomposeQuery = (query) => this.sendQuery(query, "decompose/");
+
+    /**
+     * Add a box into the chat history to record user interaction and server response
+     *
+     * @param message object
+     * @param type string, typically "user" or "server" to distinguish two sides
+     * of a chat
+     */
+    addMessage(message, type) {
+        this.setState(prevState => {
+            const history = prevState.history.concat([[type, message]]);
+            return {history: history}
+        });
+    }
 
     render() {
         if (this.state.history.length === 0) {
@@ -73,7 +79,7 @@ class Crosschat extends React.Component {
         return(
             <div className="crosschat">
                 <ChatHistory messages={this.state.history} />
-                <ChatController datasets={this.state.datasets}/>
+                <Controller datasets={this.state.datasets} send={this.sendQuery}/>
             </div>
         )
     }

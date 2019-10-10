@@ -4,7 +4,7 @@ import Grid from '@material-ui/core/Grid';
 
 
 /** a chat message with a response provided by the server **/
-class AddForm extends React.Component {
+class ControllerAddForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {data: "", aux_pos: "", aux_neg: "", title: "", metadata: {}}
@@ -52,4 +52,4 @@ class AddForm extends React.Component {
     }
 }
 
-export default AddForm;
+export default ControllerAddForm;

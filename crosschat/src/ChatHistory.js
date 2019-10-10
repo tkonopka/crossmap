@@ -5,6 +5,7 @@ import ChatServerMessage from "./ChatServerMessage";
 
 class ChatHistory extends React.Component {
     render() {
+        console.log("----- Chat History render ------");
         let messages = this.props.messages.map(function (x, i) {
             if (x[0] === "user") {
                 return (<ChatUserMessage key={i} data={x[1]}/>)

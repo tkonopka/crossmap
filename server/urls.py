@@ -7,7 +7,7 @@ from . import views
 
 
 urlpatterns = [
-    path('predict/', views.predict, name='predict'),
+    path('search/', views.search, name='search'),
     path('decompose/', views.decompose, name='decompose'),
     path('datasets/', views.datasets, name='datasets'),
 ]

@@ -5,19 +5,29 @@ import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Fab from '@material-ui/core/Fab';
 import Box from '@material-ui/core/Box';
-import AddForm from './AddForm';
-import ChatQueryBox from './ChatQueryBox';
-import SettingsBox from './SettingsBox';
+import ControllerAddForm from './ControllerAddForm';
+import ControllerQueryForm from './ControllerQueryForm';
+import ControllerSettingsBox from './ControllerSettingsBox';
 
 
 /** a chat message with a response provided by the server **/
-class ChatController extends React.Component {
+class Controller extends React.Component {
     constructor(props) {
         super(props);
-        this.handleChangeAction= this.handleChangeAction.bind(this);
+        console.log("Controller constructor with props "+JSON.stringify(props));
+        this.handleChangeAction = this.handleChangeAction.bind(this);
         this.toggleSearchView = this.toggleSearchView.bind(this);
         this.showSettingsView = this.showSettingsView.bind(this);
-        this.state = {"action": "search", "view": "search", "extended": 0}
+        this.handlePayloadUpdate = this.handlePayloadUpdate.bind(this);
+        this.composeAndSend = this.composeAndSend.bind(this);
+        let dataset = "";
+        if (props.datasets.length > 0) {
+            dataset = props.datasets[0]["label"];
+        }
+        console.log("setting state with "+dataset);
+        this.state = {"action": "search", "view": "search", "extended": 0,
+                      "dataset": dataset,
+                       "n": 1, "data": "", "aux_neg": ""}
     }
 
     handleChangeAction = function(event) {
@@ -29,16 +39,49 @@ class ChatController extends React.Component {
     showSettingsView = function() {
         this.setState({ view: "settings"});
     };
+    handlePayloadUpdate = function(key, value) {
+        console.log("payload update: "+key+": "+value);
+        let obj = {};
+        obj[key] = value;
+        this.setState(obj);
+    };
+    composeAndSend = function() {
+        let dataset = this.state.dataset;
+        if (dataset === "") {
+            if (this.props.datasets.length>0) {
+                dataset = this.props.datasets[0]["label"];
+                this.setState({dataset: dataset})
+            } else {
+                return
+            }
+        }
+        const action = this.state.action;
+        let result = {}
+        if (action === "search" || action === "decompose") {
+            result = { "n": this.state.n,
+                       "data": this.state.data,
+                       "aux_neg": this.state.aux_neg
+            }
+        }
+        result["dataset"] = dataset;
+        console.log("composed: "+JSON.stringify(result));
+        this.props.send(result, action)
+    };
 
     render() {
         let middlebox = [];
         const view = this.state.view
         if (view === "search") {
-            middlebox.push(<ChatQueryBox key={0} extended={this.state.extended}/>)
+            middlebox.push(<ControllerQueryForm key={0}
+                                                extended={this.state.extended}
+                                                update={this.handlePayloadUpdate}/>)
         } else if (view === "add") {
-            middlebox.push(<AddForm key={1} />)
+            middlebox.push(<ControllerAddForm key={1} />)
         } else if (view === "settings") {
-            middlebox.push(<SettingsBox key={2} datasets={this.props.datasets}/>)
+            middlebox.push(<ControllerSettingsBox key={2}
+                                                  datasets={this.props.datasets}
+                                                  dataset={this.state.dataset}
+                                                  update={this.handlePayloadUpdate}/>)
         }
 
         return(<div id="crosschat-controller">
@@ -74,11 +117,11 @@ class ChatController extends React.Component {
                 {middlebox}
             </Grid>
             <Grid item xs={1} className="col-send" margin="normal"><Box m={1}>
-                <Fab color="primary" aria-label="add">Send</Fab>
+                <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
             </Box></Grid>
         </Grid>
         </div>);
     }
 }
 
-export default ChatController;
+export default Controller;

@@ -5,7 +5,6 @@ The diffuser is a class that can take a vector and diffuse
 values for certain features into other features.
 """
 
-from numpy import array
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
@@ -133,17 +132,15 @@ class CrossmapDiffuser:
         v_indexes = [int(_) for _ in v.indices]
         v_data = {v.indices[_]: v.data[_] for _ in range(len(v.data))}
         for corpus, value in strength.items():
-            diffusion_data = self.db.get_counts(corpus, v_indexes)
+            diffusion_data = self.db.get_counts_arrays(corpus, v_indexes)
             for di, ddata in diffusion_data.items():
-                if len(ddata.data) == 0:
+                if ddata[2] == 0:
                     continue
-                row_normalization = max(abs(value), abs(sum(ddata.data)))
-                data = array(ddata.data)
-                indices = array(ddata.indices)
+                row_normalization = max(abs(value), ddata[2])
+                data = ddata[0]
                 data *= v_data[di]*value/row_normalization
-                result = add_csr(result, data, indices)
+                result = add_csr(result, data, ddata[1])
         result = csr_matrix(result)
         if normalize:
             result = normalize_csr(result)
         return result
-

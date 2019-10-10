@@ -37,6 +37,12 @@ img.controller-icon {
   text-align: center;
 }
 
+
+/** Settings panel **/
+td.column-dataset {
+  width: 25%;
+}
+
 /** History panel **/
 .chat-user, .chat-response {
   clear: both;

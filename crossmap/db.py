@@ -7,7 +7,8 @@ from functools import wraps
 from logging import info, warning, error
 from os.path import exists
 from os import remove
-from .csr import csr_to_bytes, bytes_to_csr
+from scipy.sparse import csr_matrix
+from .csr import csr_to_bytes, bytes_to_csr, bytes_to_arrays
 from .cache import CrossmapCache
 from .subsettings import CrossmapCacheSettings
 
@@ -336,17 +337,17 @@ class CrossmapDB:
         return indexes
 
     @valid_dataset
-    def get_counts(self, dataset, idxs):
+    def get_counts_arrays(self, dataset, idxs):
         """retrieve information from counts tables.
 
         Uses cache when available. Fetches remaining items from db.
 
         :param dataset: string or int, dataset identifier
         :param idxs: list of integers
-        :return: dictionary mapping indexes to count csr_matrix objects
+        :return: dictionary mapping indexes to arrays with sparse data,
+            sparse indices, and a row sum
         """
 
-        n_features = self.n_features
         result, missing = self.counts_cache.get(dataset, idxs)
         if len(missing) == 0:
             return result
@@ -360,9 +361,32 @@ class CrossmapDB:
             vals.extend(missing)
             c.execute(sql, vals)
             for row in c:
-                row_counts = bytes_to_csr(row["data"], n_features)
-                result[row["idx"]] = row_counts
-                self.counts_cache.set(dataset, row["idx"], row_counts)
+                row_idx = row["idx"]
+                row_counts = bytes_to_arrays(row["data"])
+                result[row_idx] = row_counts
+                self.counts_cache.set(dataset, row_idx, row_counts)
+        return result
+
+    @valid_dataset
+    def get_counts(self, dataset, idxs):
+        """retrieve information from counts tables.
+
+        Uses cache when available. Fetches remaining items from db.
+
+        Note there is a related function get_counts_arrays, which
+        retrieves arrays with a sum instead of csr_matrix objects.
+        That function is faster and should be preferred.
+
+        :param dataset: string or int, dataset identifier
+        :param idxs: list of integers
+        :return: dictionary mapping indexes to count csr_matrix objects
+        """
+
+        shape = (1, self.n_features)
+        pre_result = self.get_counts_arrays(dataset, idxs)
+        result = dict()
+        for k, v in pre_result.items():
+            result[k] = csr_matrix((v[0], v[1], (0, len(v[1]))), shape=shape)
         return result
 
     @valid_dataset
@@ -473,7 +497,6 @@ class CrossmapDB:
         sql = "SELECT id, idx, title FROM data WHERE dataset=? AND "
         sql_where = [column + "=?"]*len(missing)
         sql += "(" + " OR ".join(sql_where) + ")"
-        result = dict()
         with get_conn(self.db_file) as conn:
             c = conn.cursor()
             vals = [dataset]

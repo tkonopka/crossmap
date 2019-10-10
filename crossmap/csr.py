@@ -3,6 +3,7 @@ Handling csr vectors
 """
 
 import numba
+from numpy import array
 from math import sqrt
 from pickle import loads, dumps
 from scipy.sparse import csr_matrix
@@ -27,6 +28,20 @@ def bytes_to_csr(x, ncol):
     """
     raw = loads(x)
     return csr_matrix((raw[0], raw[1], (0, len(raw[1]))), shape=(1, ncol))
+
+
+def bytes_to_arrays(x):
+    """convert a bytes object into a pair of arrays
+
+    :param x: bytes object
+    :param ncol: integer, number of columns in csr matrix
+    :return: arrays with data, indices, and a sum of the data
+        Note the first two elements are ready to use with csr_matrix,
+        but the sum of the data is an ad-hoc extra.
+    """
+    raw = loads(x)
+    data_sum = sum([abs(_) for _ in raw[0]])
+    return array(raw[0]), array(raw[1]), data_sum
 
 
 def normalize_csr(a):
