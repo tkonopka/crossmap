@@ -62,22 +62,34 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         with self.assertRaises(Exception):
             db.get_data(idxs=[0], dataset="abc")
 
-    def test_validate_labels_OK(self):
-        """db can evaluate signal that dataset labels are valid"""
+    def test_valid_labels(self):
+        """db can signal that a new dataset label is allowed"""
 
         self.assertEqual(self.db.validate_dataset_label("abc"), 1)
         self.assertEqual(self.db.validate_dataset_label("a0_8"), 1)
         self.assertEqual(self.db.validate_dataset_label("123"), 1)
 
-    def test_validate_labels_not_OK(self):
-        """db can evaluate signal that dataset labels cannot be registered"""
+    def test_invalid_labels_exist(self):
+        """db can signal that a dataset label because it already exists"""
 
         # two labels already exist
         self.assertEqual(self.db.validate_dataset_label("targets"), 0)
         self.assertEqual(self.db.validate_dataset_label("documents"), 0)
+
+    def test_invalid_labels_bad_form(self):
+        """db can signal that a label is bad, incorrect types etc."""
+
         # certain labels are just not allowed
         self.assertEqual(self.db.validate_dataset_label(4), -1)
         self.assertEqual(self.db.validate_dataset_label("a.b"), -1)
+        self.assertEqual(self.db.validate_dataset_label("a b"), -1)
+
+    def test_invalid_labels_special_cases(self):
+        """db can signal that a label is invalid, special cases"""
+
+        # labels cannot start or end in underscores
+        self.assertEqual(self.db.validate_dataset_label("_leading"), -1)
+        self.assertEqual(self.db.validate_dataset_label("trailing_"), -1)
 
 
 class CrossmapDBBuildAndPopulateTests(unittest.TestCase):

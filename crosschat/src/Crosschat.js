@@ -1,4 +1,5 @@
 import React from 'react';
+import Box from '@material-ui/core/Box';
 import ChatInit from './ChatInit';
 import Controller from "./Controller";
 import ChatHistory from "./ChatHistory";
@@ -9,14 +10,18 @@ class Crosschat extends React.Component {
         super(props);
         this.addMessage= this.addMessage.bind(this);
         this.sendQuery = this.sendQuery.bind(this);
-        this.state = {history: [], datasets: []}
+        this.onresize = this.onresize.bind(this);
+        this.state = {history: [], datasets: [],
+                      chatHeight: '400', controllerHeight: 0}
+        window.addEventListener('resize', this.onresize)
     }
 
     /**
      * when the component first mounts, request summary information from the API
      */
     componentDidMount() {
-        console.log("componentDidMount")
+        console.log("crosschat componentDidMount");
+        //this.setState({chatHeight: chatHeight});
         const chat = this;
         let xhr = new XMLHttpRequest();
         xhr.onload = function() {
@@ -72,16 +77,35 @@ class Crosschat extends React.Component {
         });
     }
 
+
+    /** this is called from the controller to resize the chat/controller boxes **/
+    onresize(controllerHeight) {
+        // avoid setState when not needed to avoid infinite cycles of updates
+        if (this.chatElement === null) {
+            return;
+        }
+        if (!controllerHeight | typeof(controllerHeight) !== "number") {
+            controllerHeight = this.state.controllerHeight;
+        }
+        let chatHeight = parseInt(this.chatElement.clientHeight);
+        if (controllerHeight !== this.state.controllerHeight | chatHeight !== this.state.chatHeight) {
+            this.setState({controllerHeight: controllerHeight, chatHeight: chatHeight});
+        }
+    }
+
     render() {
         if (this.state.history.length === 0) {
             return (<ChatInit />)
         }
-        return(
-            <div className="crosschat">
-                <ChatHistory messages={this.state.history} />
-                <Controller datasets={this.state.datasets} send={this.sendQuery}/>
-            </div>
-        )
+        return(<Box id="chat" ref={(divElement) => this.chatElement = divElement}>
+                <ChatHistory
+                    height={this.state.chatHeight-this.state.controllerHeight}
+                    messages={this.state.history} />
+                <Controller
+                    datasets={this.state.datasets}
+                    onresize={this.onresize}
+                    send={this.sendQuery}/>
+        </Box>)
     }
 }
 

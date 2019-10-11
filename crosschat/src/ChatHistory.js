@@ -1,11 +1,18 @@
 import React from 'react';
+import List from '@material-ui/core/List';
 import ChatUserMessage from './ChatUserMessage';
 import ChatServerMessage from "./ChatServerMessage";
 
 
 class ChatHistory extends React.Component {
+
+    componentDidUpdate () {
+        if (this.chatEndMarker !== null) {
+            this.chatEndMarker.scrollIntoView({behavior: "smooth"})
+        }
+    }
+
     render() {
-        console.log("----- Chat History render ------");
         let messages = this.props.messages.map(function (x, i) {
             if (x[0] === "user") {
                 return (<ChatUserMessage key={i} data={x[1]}/>)
@@ -13,7 +20,11 @@ class ChatHistory extends React.Component {
                 return (<ChatServerMessage key={i} data={x[1]}/>)
             }
         });
-        return (<ul className='chat-list' >{messages}</ul>);
+        let liststyle = {"height": this.props.height, "position": 0, "width": "auto"};
+        return (<List id="chat-history" style={liststyle}>
+                    {messages}
+                    <div ref={(divElement)=> this.chatEndMarker = divElement} className={"chat-end"}></div>
+                </List>);
     }
 }
 

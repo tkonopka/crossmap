@@ -1,0 +1,126 @@
+/** Styles for Crosschat App **/
+
+body {
+  background-color: #f9e9d1;
+  font-size: 1.3em;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+.crosschat {
+  background-color: #f9e9d1;
+  text-align: left;
+  width: 100%;
+}
+
+
+#crosschat-controller {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  border-top: solid 2px #222222;
+  padding-top: 0.5em;
+}
+#controller-action {
+  width: 100%;
+}
+
+#select-dataset {
+  min-width: 120px;
+}
+
+/** Controller **/
+img.controller-icon {
+  height: 20px;
+}
+
+
+.col-send {
+  text-align: center;
+}
+
+
+/** Settings panel **/
+td.column-dataset {
+  width: 25%;
+}
+
+/** History panel **/
+.chat-user, .chat-response {
+  clear: both;
+  width: 65%;
+  margin: 0.2em 0em;
+  padding: 0.5em;
+  border-radius: 5px;
+  border: solid 1px #4d243d;
+}
+.chat-user {
+  background-color: #c5d9e5;
+  float: right;
+  margin-right: 1em;
+}
+.chat-response {
+  background-color: #ffffff;
+  float: left;
+  margin-left: 1em;
+}
+.chat-list {
+  padding: 0px;
+  padding-bottom: 0.5em;
+}
+.chat-list table td {
+  padding-right: 1em;
+}
+/** tables within chat **/
+.chat-td-label {
+  color: #555555;
+}
+.chat-td-numeric {
+  color: #555555;
+}
+
+
+/** query panel with text areas **/
+.chat-query {
+  clear: both;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding: 1em 0em;
+  border-top: solid 1px #4d243d;
+  width: 100%;
+}
+.chat-query textarea {
+  font-size: 1em;
+  background: transparent;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #4d243d;
+  margin-bottom: 0.5em;
+}
+.chat-query textarea:focus {
+  outline: none;
+}
+.chat-query button.button {
+  cursor: pointer;
+  margin-top: 1em;
+  margin-left: 0.5em;
+  background-color: #286f9b;
+  color: #f0f0f0;
+  opacity: 0.8;
+  transition: 0.2s;
+  padding: 0.2em 0.5em;
+  border-radius: 5px;
+  border: solid 1px #4d243d;
+  float: right;
+  font-size: 1em;
+}
+button.button:focus {
+  outline: none;
+}
+button.button:active {
+  opacity: 1;
+}
+
+img.icon {
+  height: 18px;
+}

@@ -17,6 +17,7 @@ class Controller extends React.Component {
         console.log("Controller constructor with props "+JSON.stringify(props));
         this.handleChangeAction = this.handleChangeAction.bind(this);
         this.toggleSearchView = this.toggleSearchView.bind(this);
+        this.showState = this.showState.bind(this);
         this.showSettingsView = this.showSettingsView.bind(this);
         this.handlePayloadUpdate = this.handlePayloadUpdate.bind(this);
         this.composeAndSend = this.composeAndSend.bind(this);
@@ -31,7 +32,9 @@ class Controller extends React.Component {
     }
 
     handleChangeAction = function(event) {
-        this.setState({"action": event.target.value});
+        let action = event.target.value;
+        let view = (action === "add") ? "add" : "search";
+        this.setState({"action": action, "view": view});
     };
     toggleSearchView = function() {
         this.setState((prevstate) => ({ extended: (prevstate.extended+1)%2, view: "search" }));
@@ -40,11 +43,13 @@ class Controller extends React.Component {
         this.setState({ view: "settings"});
     };
     handlePayloadUpdate = function(key, value) {
-        console.log("payload update: "+key+": "+value);
         let obj = {};
         obj[key] = value;
         this.setState(obj);
     };
+    showState = function() {
+        console.log("state: "+JSON.stringify(this.state));
+    }
     composeAndSend = function() {
         let dataset = this.state.dataset;
         if (dataset === "") {
@@ -62,37 +67,48 @@ class Controller extends React.Component {
                        "data": this.state.data,
                        "aux_neg": this.state.aux_neg
             }
+            if (this.state.data === "" && this.state.aux_neg === "") {
+                return;
+            }
         }
         result["dataset"] = dataset;
         console.log("composed: "+JSON.stringify(result));
         this.props.send(result, action)
     };
 
+    componentDidUpdate() {
+        this.props.onresize(this.controllerElement.clientHeight)
+    }
+
     render() {
         let middlebox = [];
-        const view = this.state.view
+        const view = this.state.view;
         if (view === "search") {
             middlebox.push(<ControllerQueryForm key={0}
                                                 extended={this.state.extended}
-                                                update={this.handlePayloadUpdate}/>)
+                                                update={this.handlePayloadUpdate}
+                                                send={this.composeAndSend}/>)
         } else if (view === "add") {
-            middlebox.push(<ControllerAddForm key={1} />)
+            middlebox.push(<ControllerAddForm key={1}
+                                              dataset={this.state.dataset}
+                                              datasets={this.props.datasets}
+                                              update={this.handlePayloadUpdate}/>)
         } else if (view === "settings") {
             middlebox.push(<ControllerSettingsBox key={2}
-                                                  datasets={this.props.datasets}
                                                   dataset={this.state.dataset}
+                                                  datasets={this.props.datasets}
                                                   update={this.handlePayloadUpdate}/>)
         }
 
-        return(<div id="crosschat-controller">
-        <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
+        return(<div width={1} id="chat-controller" ref={(divElement) => this.controllerElement = divElement}>
+            <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
             <Grid item xs={2}>
                 <TextField select id="controller-action" variant="filled" label="Action"
                            value={this.state.action} onChange={this.handleChangeAction}
                            fullWidth margin="normal">
                     <MenuItem value="search">Search</MenuItem>
                     <MenuItem value="decompose">Decompose</MenuItem>
-                    <MenuItem value="train">Train</MenuItem>
+                    <MenuItem value="add">Train</MenuItem>
                 </TextField>
                 <Box m={1}>
                 <Grid container direction="row" justify="space-around" alignItems="baseline">
@@ -110,6 +126,14 @@ class Controller extends React.Component {
                             onClick={this.showSettingsView}
                         />
                     </Button>
+                    <Button>
+                        <img
+                            src="icons/robot.svg"
+                            alt="showState"
+                            className="controller-icon"
+                            onClick={this.showState}
+                        />
+                    </Button>
                 </Grid>
                 </Box>
             </Grid>
@@ -119,8 +143,7 @@ class Controller extends React.Component {
             <Grid item xs={1} className="col-send" margin="normal"><Box m={1}>
                 <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
             </Box></Grid>
-        </Grid>
-        </div>);
+            </Grid></div>);
     }
 }
 

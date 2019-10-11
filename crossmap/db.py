@@ -180,6 +180,8 @@ class CrossmapDB:
         for x in label:
             if not (x == "_" or x.isalnum()):
                 return -1
+        if label.startswith("_") or label.endswith("_"):
+            return -1
         self.datasets = self._datasets()
         return int(label not in self.datasets)
 

@@ -1,38 +1,52 @@
 /** Styles for Crosschat App **/
 
+html, body {
+  height: 100%;
+}
 body {
   background-color: #f9e9d1;
-  font-size: 1.3em;
+  font-size: 1.2em;
   max-width: 100%;
   overflow-x: hidden;
-}
-.crosschat {
-  background-color: #f9e9d1;
-  text-align: left;
-  width: 100%;
+  overflow-y: hidden;
 }
 
-#crosschat-controller {
+
+/** History list and controller **/
+#root, #chat {
+  height: 100%;
+  position: relative;
+}
+#char {
+
+}
+#chat-history {
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+}
+#chat-controller {
+  background: #ffffff;
+  z-index: 999;
   position: absolute;
   bottom: 0;
   width: 100%;
   border-top: solid 2px #222222;
-  padding-top: 0.5em;
+  padding: 0.5em 1em;
 }
+
+
+
+/** Controller, internal **/
 #controller-action {
   width: 100%;
 }
-
 #select-dataset {
   min-width: 120px;
 }
-
-/** Controller **/
 img.controller-icon {
   height: 20px;
 }
-
-
 .col-send {
   text-align: center;
 }
@@ -43,82 +57,35 @@ td.column-dataset {
   width: 25%;
 }
 
+
 /** History panel **/
+.chat-history {
+
+}
 .chat-user, .chat-response {
   clear: both;
-  width: 65%;
-  margin: 0.2em 0em;
-  padding: 0.5em;
+  margin: 0.2em 1em;
   border-radius: 5px;
   border: solid 1px #4d243d;
 }
 .chat-user {
-  background-color: #c5d9e5;
+  background-color: #e5e9f5;
   float: right;
-  margin-right: 1em;
 }
 .chat-response {
+  padding: 0.5em 1em;
   background-color: #ffffff;
+  min-width: 20%;
   float: left;
-  margin-left: 1em;
 }
-.chat-list {
-  padding: 0px;
-  padding-bottom: 0.5em;
-}
-.chat-list table td {
-  padding-right: 1em;
-}
-/** tables within chat **/
-.chat-td-label {
-  color: #555555;
-}
-.chat-td-numeric {
-  color: #555555;
-}
-
-
-/** query panel with text areas **/
-.chat-query {
+.chat-end {
   clear: both;
-  margin-top: 1em;
-  margin-bottom: 1em;
-  padding: 1em 0em;
-  border-top: solid 1px #4d243d;
-  width: 100%;
 }
-.chat-query textarea {
-  font-size: 1em;
-  background: transparent;
-  width: 100%;
-  border: none;
-  border-bottom: 1px solid #4d243d;
-  margin-bottom: 0.5em;
-}
-.chat-query textarea:focus {
-  outline: none;
-}
-.chat-query button.button {
-  cursor: pointer;
-  margin-top: 1em;
-  margin-left: 0.5em;
-  background-color: #286f9b;
-  color: #f0f0f0;
-  opacity: 0.8;
-  transition: 0.2s;
-  padding: 0.2em 0.5em;
-  border-radius: 5px;
-  border: solid 1px #4d243d;
-  float: right;
-  font-size: 1em;
-}
-button.button:focus {
-  outline: none;
-}
-button.button:active {
-  opacity: 1;
+.chat-icon {
+  height: 16px;
 }
 
-img.icon {
-  height: 18px;
+/** Add form **/
+.add-title {
+  margin-top: 1em;
 }

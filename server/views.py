@@ -60,9 +60,7 @@ def process_request(request, process_function):
                               aux=doc["aux"], diffusion=doc["diffusion"],
                               query_name="query")
     targets = result["targets"]
-    print(str(targets))
     target_titles = crossmap.db.get_titles(dataset, ids=targets)
-    print(str(target_titles))
     result["titles"] = [target_titles[_] for _ in targets]
     return add_access(HttpResponse(dumps(result)))
 

@@ -23,10 +23,6 @@ function floatValueText(value) {
  * Used to fine-tune a search or decomposition query
  */
 class ControllerSettingsBox extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         let dataset_items = this.props.datasets.map((x, i) => {
             return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);

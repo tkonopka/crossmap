@@ -1,4 +1,10 @@
 import React from 'react';
+import Typography from '@material-ui/core/Typography';
+import TableBody from "@material-ui/core/TableBody";
+import TableRow from "@material-ui/core/TableRow";
+import TableCell from "@material-ui/core/TableCell";
+import Table from "@material-ui/core/Table";
+
 
 
 /** a chat message with information provided by a user **/
@@ -10,13 +16,20 @@ class ChatUserMessage extends React.Component {
                 return null;
             }
             if (data[x] !== "") {
-                return(<tr key={x}><td className="chat-td-label">{x}</td><td>{data[x]}</td></tr>)
+                return(<TableRow key={x}>
+                    <TableCell><Typography>{data[x]}</Typography></TableCell>
+                    <TableCell className="chat-td-label"><Typography color="secondary">{x}</Typography></TableCell>
+                </TableRow>)
             }
             return null;
         });
         return (
             <div className="chat-user">
-                <table><tbody>{rows}</tbody></table>
+                <Table>
+                    <TableBody>
+                        {rows}
+                    </TableBody>
+                </Table>
             </div>
         )
     }
