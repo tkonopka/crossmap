@@ -22,11 +22,57 @@ function floatValueText(value) {
  * A Form with sliders allowing to set number of auxiliary documents, diffusion, etc.
  * Used to fine-tune a search or decomposition query
  */
-class ControllerSettingsBox extends React.Component {
+class ControllerSettingsForm extends React.Component {
     render() {
+        let dataset = this.props.dataset;
+        if (dataset === "" && this.props.datasets.length>0) {
+            dataset = this.props.datasets[0].label;
+        }
         let dataset_items = this.props.datasets.map((x, i) => {
             return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
         });
+        let update = this.props.update;
+        // construct sliders for diffusion
+        let diffusion_sliders = this.props.datasets.map((row) => {
+            return(<TableRow key={row.label}>
+                <TableCell component="td" scope="row" className={"column-dataset"}>
+                    {row.label}
+                </TableCell>
+                <TableCell>
+                    <Slider
+                        defaultValue={0}
+                        getAriaValueText={floatValueText}
+                        aria-labelledby="discrete-slider"
+                        valueLabelDisplay="auto"
+                        onChange={(e, value) => update("_diffusion_" + row.label, value)}
+                        step={0.01} min={0} max={10}
+                    />
+                </TableCell>
+            </TableRow>)
+        })
+        // construct sliders for indirect paths
+        let paths_sliders = this.props.datasets.map((row) => {
+            if (row.label === dataset) { return null }
+            return(<TableRow key={row.label}>
+                <TableCell component="td" scope="row" className={"column-dataset"}>
+                    {row.label}
+                </TableCell>
+                <TableCell>
+                    <Slider
+                        defaultValue={0}
+                        getAriaValueText={intValueText}
+                        aria-labelledby="discrete-slider"
+                        valueLabelDisplay="auto"
+                        onChange={(e, value) => update("_paths_" + row.label, value)}
+                        marks step={1} min={0} max={10}
+                    />
+                </TableCell>
+            </TableRow>)
+        }).filter((x) => ( x!== null));
+        if (paths_sliders.length === 0) {
+            paths_sliders.push(<TableRow key={0}><TableCell>No other datasets available</TableCell></TableRow>)
+        }
+
         return(<Grid container spacing={2}>
                 <Grid item xs={8}>
                     <Typography variant="h5">Search space</Typography>
@@ -36,9 +82,8 @@ class ControllerSettingsBox extends React.Component {
                         </TableCell>
                         <TableCell>
                             <TextField select id="controller-dataset"
-                                       defaultValue={this.props.dataset}
-                                       value={this.props.dataset}
-                                       onChange={(e) => this.props.update("dataset", e.target.value)}
+                                       value={dataset}
+                                       onChange={(e) => update("dataset", e.target.value)}
                                        fullWidth>
                                 {dataset_items}
                             </TextField>
@@ -50,12 +95,12 @@ class ControllerSettingsBox extends React.Component {
                         </TableCell>
                         <TableCell>
                             <Slider
-                                defaultValue={3}
+                                defaultValue={1}
                                 getAriaValueText={intValueText}
                                 aria-labelledby="discrete-slider"
                                 valueLabelDisplay="auto"
                                 marks step={1} min={1} max={20}
-                                onChangeCommitted={(e, value) => this.props.update("n", value)}
+                                onChangeCommitted={(e, value) => update("n", value)}
                             />
                         </TableCell>
                     </TableRow>
@@ -63,52 +108,16 @@ class ControllerSettingsBox extends React.Component {
                 </Grid>
                 <Grid item xs={8}>
                     <Typography variant="h5">Diffusion</Typography>
-                    <Table>
-                        <TableBody>
-                            {this.props.datasets.map(row => (
-                                <TableRow key={row.label}>
-                                    <TableCell component="td" scope="row" className={"column-dataset"}>
-                                        {row.label}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Slider
-                                            defaultValue={0}
-                                            getAriaValueText={floatValueText}
-                                            aria-labelledby="discrete-slider"
-                                            valueLabelDisplay="auto"
-                                            step={0.01} min={0} max={10}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                    <Table><TableBody>{diffusion_sliders}</TableBody></Table>
                 </Grid>
                 <Grid item xs={8}>
                     <Typography variant="h5">Indirect paths</Typography>
-                    <Table><TableBody>
-                            {this.props.datasets.map(row => (
-                                <TableRow key={row.label}>
-                                    <TableCell component="td" scope="row" className={"column-dataset"}>
-                                        {row.label}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Slider
-                                            defaultValue={0}
-                                            getAriaValueText={intValueText}
-                                            aria-labelledby="discrete-slider"
-                                            valueLabelDisplay="auto"
-                                            marks step={1} min={0} max={10}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                    </TableBody></Table>
+                    <Table><TableBody>{paths_sliders}</TableBody></Table>
                 </Grid>
             </Grid>
         )
     }
 }
 
-export default ControllerSettingsBox;
+export default ControllerSettingsForm;
 

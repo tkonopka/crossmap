@@ -37,9 +37,9 @@ parser.add_argument("--dataset", action="store",
 parser.add_argument("--n", action="store",
                     type=int, default=1,
                     help="number of targets")
-parser.add_argument("--aux", action="store",
+parser.add_argument("--paths", action="store",
                     default=None,
-                    help="JSON of a dict for working with auxiliary datasets")
+                    help="JSON of a dict with numbers of indirect paths")
 parser.add_argument("--diffusion", action="store",
                     default=None,
                     help="JSON of a dict setting diffusion strengths")
@@ -66,8 +66,8 @@ if __name__ != "__main__":
 
 
 config = parser.parse_args()
-if config.aux is not None:
-    config.aux = loads(config.aux)
+if config.paths is not None:
+    config.paths = loads(config.paths)
 if config.diffusion is not None:
     config.diffusion = loads(config.diffusion)
 action = config.action
@@ -112,7 +112,7 @@ if action in set(["predict", "decompose"]):
     if action == "decompose":
         action_fun = crossmap.decompose_file
     result = action_fun(config.data, config.dataset,
-                        n=config.n, aux=config.aux,
+                        n=config.n, paths=config.paths,
                         diffusion=config.diffusion)
     print_exit(result, config.pretty)
 

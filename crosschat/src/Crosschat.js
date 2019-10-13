@@ -20,7 +20,6 @@ class Crosschat extends React.Component {
      * when the component first mounts, request summary information from the API
      */
     componentDidMount() {
-        console.log("crosschat componentDidMount");
         //this.setState({chatHeight: chatHeight});
         const chat = this;
         let xhr = new XMLHttpRequest();
@@ -28,7 +27,7 @@ class Crosschat extends React.Component {
             console.log("received: "+xhr.response);
             let result = JSON.parse(xhr.response);
             result["_type"] = "datasets";
-            chat.addMessage(result, "server")
+            chat.addMessage(result, "server");
             chat.setState({history: [["server", result]],
                            datasets: result["datasets"]})
         };
@@ -52,9 +51,9 @@ class Crosschat extends React.Component {
         let xhr = new XMLHttpRequest();
         xhr.onload = function(){
             let result = JSON.parse(xhr.response);
-            console.log("got response: "+JSON.stringify(result));
+            //console.log("got response: "+JSON.stringify(result));
             result["_type"] = api;
-            console.log("edited response: "+JSON.stringify(result));
+            //console.log("edited response: "+JSON.stringify(result));
             chat.addMessage(result, "server")
         };
         xhr.open("POST", "http://127.0.0.1:8098/" + api + "/", true);

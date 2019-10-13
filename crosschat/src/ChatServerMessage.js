@@ -11,45 +11,47 @@ import TableCell from "@material-ui/core/TableCell";
 import Table from "@material-ui/core/Table";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
+import ChatMessage from "./ChatMessage";
 
 
 /** a chat message with a response provided by the server **/
-class HitsMessage extends React.Component {
+class HitsMessage extends ChatMessage {
     constructor(props) {
         super(props);
-        this.handleMouseEnter = this.handleMouseEnter.bind(this);
-        this.handleMouseLeave = this.handleMouseLeave.bind(this);
         this.handleClipboard = this.handleClipboard.bind(this);
-        this.state = {mouseover: 0}
+        let type = props.data["_type"];
+        let header="Search", value_column = "distances", value_header = "Distance";
+        if (type === "decomposition") {
+            header = "Decomposition";
+            value_column = "coefficients";
+            value_header = "Coefficient";
+        }
+        this.state = {header: header, value_column: value_column, value_header: value_header};
     }
 
-    handleMouseEnter() {
-        this.setState({mouseover: 1})
-    }
-    handleMouseLeave() {
-        this.setState({mouseover: 0})
-    }
     handleClipboard() {
-        console.log("clipboard");
+        let header_line = "ID\tTitle\t"+this.state.value_header;
+        let titles = this.props.data["titles"];
+        let values = this.props.data[this.state.value_column];
+        let ids = this.props.data["targets"];
+        let result = [header_line].concat(values.map(function(x,i) {
+            return(ids[i]+"\t"+titles[i]+"\t"+x.toPrecision(4))
+        }));
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(result.join("\n"))
+        } else {
+            alert("not supported?")
+        }
     }
 
     render() {
-        let type = this.props.data["_type"];
         let targets = this.props.data["targets"];
         let titles = this.props.data["titles"];
-        let hits_header = "Search", value_column = "Distance", values = null;
-        if (type === "search") {
-            values = this.props.data["distances"];
-        } else if (type === "decompose") {
-            console.log("using decomposition");
-            hits_header = "Decomposition";
-            value_column = "Weight";
-            values = this.props.data["coefficients"];
-        }
+        let values = this.props.data[this.state.value_column];
         let header = <TableRow>
-            <TableCell>id</TableCell>
+            <TableCell>ID</TableCell>
             <TableCell>Title</TableCell>
-            <TableCell>{value_column}</TableCell>
+            <TableCell>{this.state.value_header}</TableCell>
         </TableRow>;
         let content = values.map(function(x, i) {
             return (<TableRow key={i}>
@@ -60,7 +62,7 @@ class HitsMessage extends React.Component {
         });
         return (
             <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-                <Typography variant={"h4"}>{hits_header}</Typography>
+                <Typography variant={"h4"}>{this.state.header}</Typography>
                 <Table>
                     <TableHead>{header}</TableHead>
                     <TableBody>{content}</TableBody>
@@ -78,9 +80,8 @@ class HitsMessage extends React.Component {
 }
 
 
-class DatasetsMessage extends React.Component {
+class DatasetsMessage extends ChatMessage {
     render() {
-        //console.log(JSON.stringify(this.props.data));
         let datasets = this.props.data["datasets"].map((x, i) => {
             return(
                 <ListItem key={i}>

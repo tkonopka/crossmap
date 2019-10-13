@@ -34,7 +34,7 @@ def parse_request(request):
         if k in data:
             doc[k] = data[k]
     doc["n"] = get_or_default(data, "n", 1)
-    doc["aux"] = get_or_default(data, "aux", None)
+    doc["paths"] = get_or_default(data, "paths", None)
     doc["diffusion"] = get_or_default(data, "diffusion", None)
     return doc
 
@@ -56,8 +56,8 @@ def process_request(request, process_function):
     # perform core processing
     doc = parse_request(request)
     dataset = doc["dataset"]
-    result = process_function(doc, dataset, doc["n"],
-                              aux=doc["aux"], diffusion=doc["diffusion"],
+    result = process_function(doc, dataset=dataset, n=doc["n"],
+                              paths=doc["paths"], diffusion=doc["diffusion"],
                               query_name="query")
     targets = result["targets"]
     target_titles = crossmap.db.get_titles(dataset, ids=targets)

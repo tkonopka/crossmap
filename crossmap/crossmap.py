@@ -108,15 +108,15 @@ class Crossmap:
 
         return idx
 
-    def predict(self, doc, label, n=3, aux=None, diffusion=None,
+    def predict(self, doc, dataset, n=3, paths=None, diffusion=None,
                 query_name="query"):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
-        :param label: string, identifier for dataset to look for targets
+        :param dataset: string, identifier for dataset to look for targets
         :param n: integer, number of target to report
-        :param aux: dict, map linking auxiliary dataset labels and number of
-            documents to use from those datasets
+        :param paths: dict, map linking dataset labels to number of
+            paths from query to targets through those datasets
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
         :return: a dictionary containing an id, and lists to target ids and
@@ -129,18 +129,18 @@ class Crossmap:
         if diffusion is not None:
             v = self.diffuser.diffuse(v, diffusion)
         suggest = self.indexer.suggest
-        targets, distances = suggest(v, label, n, aux)
+        targets, distances = suggest(v, dataset, n, paths)
         result = prediction_result(targets[:n], distances[:n], query_name)
         return result
 
-    def decompose(self, doc, label, n=3, aux=None, diffusion=None,
+    def decompose(self, doc, dataset, n=3, paths=None, diffusion=None,
                   query_name="query"):
         """decompose of a query document in terms of targets
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
-        :param label: string, identifier for dataset
+        :param dataset: string, identifier for dataset
         :param n: integer, number of target to report
-        :param aux: dict, map passed to predict
+        :param paths: dict, map passed to predict
         :param diffusion: dict, strength of diffusion on primary data
         :param query_name:  character, a name for the document
         :return: dictionary containing an id, and list with target ids and
@@ -148,7 +148,6 @@ class Crossmap:
         """
 
         ids, components, distances = [], [], []
-        # shortcuts to functions
         suggest = self.indexer.suggest
         get_data = self.indexer.db.get_data
         decompose = vec_decomposition
@@ -160,8 +159,8 @@ class Crossmap:
         coefficients = []
         # loop for greedy decomposition
         while len(components) < n and q_residual.sum() > 0:
-            target, _ = suggest(q_residual, label, 1, aux)
-            target_data = get_data(label, ids=target)
+            target, _ = suggest(q_residual, dataset, 1, paths)
+            target_data = get_data(dataset, ids=target)
             if target[0] not in ids:
                 ids.append(target[0])
                 components.append(target_data[0]["data"])
@@ -180,41 +179,48 @@ class Crossmap:
 
         return decomposition_result(ids, coefficients, query_name)
 
-    def predict_file(self, filepath, label, n, aux=None, diffusion=None):
+    def _action_file(self, action, filepath, **kw):
+        """applies an action function to contents of a file
+
+        :param action: function
+        :param filepath: string, path to a file with yaml documents
+        :param kw: keyword arguments, all passed on to action
+        :return: list with result of action function on the documents in the file
+        """
+
+        result = []
+        with open_file(filepath, "rt") as f:
+            for id, doc in yaml_document(f):
+                result.append(action(doc, **kw, query_name=id))
+        return result
+
+    def predict_file(self, filepath, dataset, n, paths=None, diffusion=None):
         """predict nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
-        :param label: string, identifier for target dataset
+        :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
-        :param aux: dict, map providing number of auxiliary documents
+        :param paths: dict, map with number of paths through datasets
         :param diffusion: dict, map with diffusion strengths
-        :return: vector with dicts, each as output by predict()
+        :return: list with dicts, each as output by predict()
         """
 
-        result = []
-        with open_file(filepath, "rt") as f:
-            for id, doc in yaml_document(f):
-                result.append(self.predict(doc, label, n, aux, diffusion,
-                                           query_name=id))
-        return result
+        return self._action_file(self.predict, filepath, dataset=dataset,
+                                 n=n, paths=paths, diffusion=diffusion)
 
-    def decompose_file(self, filepath, label, n=3, aux=None, diffusion=None):
+    def decompose_file(self, filepath, dataset, n=3, paths=None, diffusion=None):
         """perform decomposition for documents defined in a file
 
         :param filepath: string, path to a file with documents
-        :param label: string, identifier for target dataset
+        :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
-        :param aux: dict, number of auxiliary documents
+        :param paths: dict, map with number of paths through datasets
         :param diffusion: dict, map with diffusion strengths
-        :return: vector with dicts, each as output by decompose()
+        :return: list with dicts, each as output by decompose()
         """
 
-        result = []
-        with open_file(filepath, "rt") as f:
-            for id, doc in yaml_document(f):
-                result.append(self.decompose(doc, label, n, aux, diffusion,
-                                             query_name=id))
-        return result
+        return self._action_file(self.decompose, filepath, dataset=dataset,
+                                 n=n, paths=paths, diffusion=diffusion)
 
     def distance(self, doc, ids=[], diffusion=None, query_name="query"):
         """compute distances from one document to specific items in db

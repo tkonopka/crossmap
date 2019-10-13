@@ -73,7 +73,7 @@ class CrossmapIndexer:
         """augment an existing dataset with a new item
 
         :param dataset: string, dataset identifier
-        :param doc: dict with item data, data_aux, etc.
+        :param doc: dict with item data, aux_pos, aux_neg, etc
         :param id: string, identifier for the new item
         :return: integer index for the new data item
         """
@@ -139,7 +139,7 @@ class CrossmapIndexer:
         summary_fun("Total number of items: " + str(offset))
 
     def _build_index(self, dataset):
-        """builds an Annoy index using data from documents on disk"""
+        """builds an Annoy index using data from documents on fdisk"""
 
         index_file = self.settings.index_file(dataset)
         if exists(index_file):
@@ -240,13 +240,13 @@ class CrossmapIndexer:
         if label not in self.item_ids:
             self.item_ids[label] = self.db.all_ids(label)
 
-    def suggest(self, v, label, n=5, aux=None):
+    def suggest(self, v, label, n=5, paths=None):
         """suggest nearest neighbors using a composite algorithm
 
         :param v:
         :param label: string, name of index of integer
         :param n: integer, number of nearest neighbors
-        :param aux: dictionary linking index labels to nearest neighbors
+        :param paths: dictionary defining number of indirect paths
         :return: a list of items ids, a list of composite distances
         """
 
@@ -254,7 +254,7 @@ class CrossmapIndexer:
         v = csr_matrix(v)
         vlist = sparse_to_dense(v)
         db, _n = self.db, self._neighbors
-        aux = aux or dict()
+        paths = paths or dict()
 
         # get direct distances from vector to targets
         nn0, dist0 = _n(v, label, n)
@@ -263,13 +263,13 @@ class CrossmapIndexer:
         hits_targets = db.get_data(label, idxs=nn0)
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_dense(val["data"])
-        # collect relevant auxiliary documents
+        # collect relevant documents traversed in indirect paths
         # nn1 - integer indexes in the auxiliary datasets
         # dist1 - distances from v to the auxiliary items
         # doc1 - dict of arrays with sparse vectors
         # data1 - dict of dicts holding dense vectors
         nn1, dist1, doc1, data1 = dict(), dict(), dict(), dict()
-        for aux_label, aux_n in aux.items():
+        for aux_label, aux_n in paths.items():
             nn1[aux_label], dist1[aux_label] = _n(v, aux_label, aux_n)
             doc1[aux_label] = db.get_data(aux_label, idxs=nn1[aux_label])
             data1[aux_label] = dict()
@@ -296,7 +296,7 @@ class CrossmapIndexer:
 
         # compute weighted distances from vector to targets
         result = target_dist.copy()
-        n_doc = sum([_ for _ in aux.values()])
+        n_doc = sum([_ for _ in paths.values()])
         for aux_label in nn1.keys():
             for i, d_v_i in zip(nn1[aux_label], dist1[aux_label]):
                 i_data = data1[aux_label][i]
