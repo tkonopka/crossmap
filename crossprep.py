@@ -16,7 +16,9 @@ from crossprep.orphanet.build import build_orphanet_dataset
 from crossprep.pubmed.baseline import download_pubmed_baseline
 from crossprep.pubmed.build import build_pubmed_dataset
 from crossprep.genesets.build import build_gmt_dataset
-
+from crossprep.wikipedia.download import download_wikipedia_exintros
+from crossprep.wikipedia.build import build_wikipedia_dataset
+from crossprep.wiktionary.build import build_wiktionary_dataset
 
 # this is a command line utility
 if __name__ != "__main__":
@@ -28,7 +30,8 @@ if __name__ != "__main__":
 parser = argparse.ArgumentParser(description="crossprep")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["obo", "orphanet", "pubmed", "baseline", "genesets"])
+                    choices=["obo", "orphanet", "pubmed", "pubmed_baseline",
+                             "genesets", "wikipedia", "wiktionary"])
 
 # common arguments
 parser.add_argument("--outdir", action="store",
@@ -91,6 +94,23 @@ parser.add_argument("--gmt_max_size", action="store", type=int,
                     help="maximal number of genes in a gmt gene set",
                     default=100)
 
+# settings for wikipedia build
+parser.add_argument("--wikipedia_category", action="store", type=str, nargs="+",
+                    help="name of wikipedia category",
+                    default=None)
+parser.add_argument("--wikipedia_exclude", action="store", type=str,
+                    help="patterns of categories to exclude",
+                    default="^List|by\scountry")
+parser.add_argument("--wikipedia_sleep", action="store",
+                    help="seconds to sleep between requests",
+                    default=0.1)
+
+# settings for wiktionary build
+parser.add_argument("--wiktionary", action="store", type=str,
+                    help="path to wiktionary xml",
+                    default=None)
+
+
 
 # ############################################################################
 # Script below assumes running from command line
@@ -129,11 +149,18 @@ if config.action == "obo":
                                aux=config.obo_aux)
     save_dataset(result, config.outdir, config.name)
 
-elif config.action == "baseline":
+elif config.action == "pubmed_baseline":
     download_pubmed_baseline(config)
 
 elif config.action == "pubmed":
     build_pubmed_dataset(config)
+
+elif config.action == "wikipedia":
+    download_wikipedia_exintros(config)
+    build_wikipedia_dataset(config)
+
+elif config.action == "wiktionary":
+    build_wiktionary_dataset(config)
 
 elif config.action == "orphanet":
     if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):

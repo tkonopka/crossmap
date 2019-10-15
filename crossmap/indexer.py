@@ -139,7 +139,7 @@ class CrossmapIndexer:
         summary_fun("Total number of items: " + str(offset))
 
     def _build_index(self, dataset):
-        """builds an Annoy index using data from documents on fdisk"""
+        """builds an Annoy index using data from documents on disk"""
 
         index_file = self.settings.index_file(dataset)
         if exists(index_file):
