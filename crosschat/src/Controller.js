@@ -28,6 +28,16 @@ class Controller extends React.Component {
                       dataset: dataset, n: 1, data: "", aux_neg: ""}
     }
 
+    static getDerivedStateFromProps(props, state) {
+        console.log("derived state from props: "+JSON.stringify(props));
+        if (props["settings"] == null) {
+            return null;
+        }
+        let s = props["settings"];
+        return {data: s["data"], aux_neg: s["aux_neg"],
+                dataset: s["dataset"], n: s["n"]};
+    }
+
     handleChangeAction = function(event) {
         let action = event.target.value;
         let view = (action === "add") ? "add" : "search";

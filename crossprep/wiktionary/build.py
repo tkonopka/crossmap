@@ -113,12 +113,18 @@ def build_wiktionary_dataset(config):
         info("output file already exists: "+out_file)
         return
 
+    len_ratio = config.wiktionary_length
     with gzip.open(out_file, "wt") as f:
         for page_str in wiktionary_page(wiktionary_file):
             id, data = build_wiktionary_item(page_str)
             title = data["title"]
-            if data["aux_pos"] != "" and title != title.upper():
-                item = dict()
-                item[id] = data
-                f.write(yaml.dump(item))
+            if data["aux_pos"] == "":
+                continue
+            if title == title.upper():
+                continue
+            if len(data["aux_pos"]) < len_ratio * len(data["data"]):
+                continue
+            item = dict()
+            item[id] = data
+            f.write(yaml.dump(item))
 

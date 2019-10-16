@@ -44,10 +44,9 @@ def _count_tokens(tokenizer, files, progress_interval=10000):
 
     :param tokenizer: object with function .tokenize()
     :param files: dict mapping labels to file paths
-
-    :return: two objects.
-        a counter with token frequencies
-        an integer with total number of data items
+    :param progress_interval: integer, interval for print progress messages
+    :return: two objects. a counter with token frequencies.
+        An integer with total number of data items
     """
 
     counts = Counter()
@@ -88,7 +87,6 @@ def feature_map(settings, use_cache=True):
 
     :param settings: object of class CrossmapSettings
     :param use_cache: logical, whether to use fetch data from cache
-
     :return: dictionary mapping tokens to 2-tuples with
         feature index and a weight.
         Features correspond to tokens from target files
@@ -134,30 +132,20 @@ def _feature_map(settings):
 
     info("Computing feature map")
     max_features = settings.features.max_number
+    min_count = settings.features.min_count
+    progress = settings.logging.progress
     if max_features == 0:
         max_features = maxsize
-    else:
-        info("Max features is "+str(max_features))
     tokenizer = CrossmapTokenizer(settings)
-    # partition the dataset into the primary one (first one) and the rest
-    primary_label = list(settings.data_files.keys())[0]
-    primary_file = {primary_label: settings.data_files[primary_label]}
-    other_files = settings.data_files.copy()
-    other_files.pop(primary_label)
     # scan the files and count tokens
-    target_counts, n_targets = _count_tokens(tokenizer, primary_file)
+    counts, n = _count_tokens(tokenizer, settings.data_files, progress)
     result = dict()
-    for k, v in target_counts.items():
-        result[k] = [len(result), v]
-    doc_counts, n_docs = _count_tokens(tokenizer, other_files)
-    for k, v in doc_counts.most_common():
+    for k, v in counts.most_common():
         if len(result) >= max_features:
             break
-        if k in result:
-            result[k][1] += v
-        else:
-            result[k] = [len(result), v]
+        if v < min_count:
+            continue
+        result[k] = [len(result), v]
 
-    N = n_targets + n_docs
-    return _feature_weights(result, N, settings.features.weighting)
+    return _feature_weights(result, n, settings.features.weighting)
 

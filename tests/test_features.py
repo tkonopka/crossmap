@@ -69,18 +69,6 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertFalse("Reading" in str(cm3.output))
         self.assertTrue("Extracting" in str(cm3.output))
 
-    def test_skip_documents(self):
-        """scan for features in targets, but not documents"""
-
-        # when number of features is limited, there is no need
-        # to scan documents. All features come from targets.
-        self.settings.features.max_number=20
-        with self.assertLogs(level="INFO") as cm:
-            map = feature_map(self.settings, False)
-        self.assertTrue("bob" in map)
-        self.assertFalse("g" in map)
-        self.assertLess(len(map), 50)
-
     def test_skipping_partial_documents(self):
         """scan for features in targets, but not documents"""
 
@@ -123,6 +111,19 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         with_mid = map_mid["with"][1]
         self.assertGreater(with_mid, with_ic)
         self.assertGreater(with_mid, with_const)
+
+    def test_feature_map_min_count(self):
+        """only use features present in a miniaml num of docs"""
+
+        with self.assertLogs(level="INFO"):
+            self.settings.features.max_number = 1000
+            self.settings.features.min_count = 1
+            map1 = feature_map(self.settings, False)
+            self.settings.features.min_count = 2
+            map2 = feature_map(self.settings, False)
+        # map will have exactly the max features
+        self.assertTrue("abcde" in map1)
+        self.assertFalse("abcde" in map2)
 
 
 class CrossmapFeatureMapWeightingTests(unittest.TestCase):

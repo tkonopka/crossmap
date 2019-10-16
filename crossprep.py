@@ -109,7 +109,9 @@ parser.add_argument("--wikipedia_sleep", action="store",
 parser.add_argument("--wiktionary", action="store", type=str,
                     help="path to wiktionary xml",
                     default=None)
-
+parser.add_argument("--wiktionary_length", action="store", type=float,
+                    help="minimal ratio of definition to word",
+                    default=6)
 
 
 # ############################################################################

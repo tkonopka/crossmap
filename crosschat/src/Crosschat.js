@@ -9,10 +9,12 @@ class Crosschat extends React.Component {
     constructor(props) {
         super(props);
         this.addMessage= this.addMessage.bind(this);
+        this.cloneQuery = this.cloneQuery.bind(this);
         this.sendQuery = this.sendQuery.bind(this);
         this.onresize = this.onresize.bind(this);
         this.state = {history: [], datasets: [],
-                      chatHeight: '400', controllerHeight: 0}
+                      chatHeight: '400', controllerHeight: 0,
+                      settings: null};
         window.addEventListener('resize', this.onresize)
     }
 
@@ -35,6 +37,15 @@ class Crosschat extends React.Component {
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send();
+    }
+
+    /**
+     * accept a message to reset query settings
+     * e.g. used by a chat history message to clone an old configuration into
+     * the current controller.
+     */
+    cloneQuery(query) {
+        this.setState({settings: query})
     }
 
     /**
@@ -76,7 +87,6 @@ class Crosschat extends React.Component {
         });
     }
 
-
     /** this is called from the controller to resize the chat/controller boxes **/
     onresize(controllerHeight) {
         // avoid setState when not needed to avoid infinite cycles of updates
@@ -99,10 +109,12 @@ class Crosschat extends React.Component {
         return(<Box id="chat" ref={(divElement) => this.chatElement = divElement}>
                 <ChatHistory
                     height={this.state.chatHeight-this.state.controllerHeight}
+                    cloneQuery={this.cloneQuery}
                     messages={this.state.history} />
                 <Controller
                     datasets={this.state.datasets}
                     onresize={this.onresize}
+                    settings={this.state.settings}
                     send={this.sendQuery}/>
         </Box>)
     }

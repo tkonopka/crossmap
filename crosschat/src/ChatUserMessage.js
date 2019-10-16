@@ -15,14 +15,19 @@ class ChatUserMessage extends ChatMessage {
     constructor(props) {
         super(props);
         this.toggleExtendedView = this.toggleExtendedView.bind(this);
+        this.sendClone = this.sendClone.bind(this);
     }
 
     componentDidMount() {
         this.setState({extended: 0});
     }
-
     toggleExtendedView() {
         this.setState((prevState) => ({extended: (prevState.extended+1) %2 }));
+    }
+    sendClone() {
+      let query = {data: this.props.data.data,
+                   aux_neg: this.props.data.aux_neg};
+       this.props.cloneQuery(query);
     }
 
     render() {
@@ -46,9 +51,12 @@ class ChatUserMessage extends ChatMessage {
                         {rows}
                     </TableBody>
                 </Table>
+                <Box display={this.state.extended ? "block": "none"}>
+                    hello
+                </Box>
                 <Box visibility={this.state.mouseover ? "visible": "hidden"}>
                     <Grid container direction="row" justify="flex-end" alignItems="flex-end">
-                        <Button onClick={(x) => {alert("hello")}}>
+                        <Button onClick={this.sendClone}>
                             <img src="icons/clone.svg"
                                  alt="clone settings"
                                  className="chat-icon"/>
