@@ -13,10 +13,10 @@ class ChatHistory extends React.Component {
     }
 
     render() {
-        let cloneQuery = this.props.cloneQuery
+        let cloneQuery = this.props.cloneQuery;
         let messages = this.props.messages.map(function (x, i) {
             if (x[0] === "user") {
-                return (<ChatUserMessage key={i} data={x[1]} cloneQuery={cloneQuery}/>)
+                return (<ChatUserMessage key={i} data={x[1]} clone={cloneQuery}/>)
             } else {
                 return (<ChatServerMessage key={i} data={x[1]}/>)
             }

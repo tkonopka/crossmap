@@ -30,9 +30,7 @@ def parse_request(request):
     data = loads(request.body)
     doc = dict()
     for k in ["dataset", "data", "aux_pos", "aux_neg"]:
-        doc[k] = []
-        if k in data:
-            doc[k] = data[k]
+        doc[k] = data[k] if k in data else []
     doc["n"] = get_or_default(data, "n", 1)
     doc["paths"] = get_or_default(data, "paths", None)
     doc["diffusion"] = get_or_default(data, "diffusion", None)
@@ -55,6 +53,7 @@ def process_request(request, process_function):
         return HttpResponse("Use POST. For curl, set --request POST\n")
     # perform core processing
     doc = parse_request(request)
+    print(str(doc))
     dataset = doc["dataset"]
     result = process_function(doc, dataset=dataset, n=doc["n"],
                               paths=doc["paths"], diffusion=doc["diffusion"],

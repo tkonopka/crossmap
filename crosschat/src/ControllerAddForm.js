@@ -25,13 +25,14 @@ class ControllerAddForm extends React.Component {
         let dataset_items = this.props.datasets.map((x, i) => {
             return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
         });
+        let settings = this.props.settings;
         let dataset_choice = null, dataset_toggle=null;
         if (this.state.mode === "selecting") {
             dataset_choice = <Grid item xs={6} lg={3}>
                                 <TextField select fullWidth
                                            id="dataset" label="Dataset"
-                                           value={this.props.dataset}
-                                           onChange={(e) => this.props.update("dataset", e.target.value)}>
+                                           value={settings.train_dataset}
+                                           onChange={(e) => this.props.update("train_dataset", e.target.value)}>
                                     {dataset_items}
                                 </TextField>
                              </Grid>;
@@ -40,7 +41,9 @@ class ControllerAddForm extends React.Component {
                             </Button></Grid>;
         } else {
             dataset_choice = <Grid item xs={6} lg={3}>
-                                <TextField required id="dataset" label="Dataset" defaultValue="" fullWidth/>
+                                <TextField fullWidth required id="dataset" label="Dataset"
+                                           value={this.props.dataset}
+                                           onChange={(e) => this.props.update("train_dataset", e.target.value)} />
                              </Grid>
             dataset_toggle = <Grid item xs={3}><Button variant="contained" onClick={this.toggleMode}>
                                 Choose existing dataset

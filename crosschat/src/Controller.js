@@ -19,28 +19,36 @@ class Controller extends React.Component {
         this.showState = this.showState.bind(this);
         this.showSettingsView = this.showSettingsView.bind(this);
         this.handleStateUpdate = this.handleStateUpdate.bind(this);
+        this.cloneFromQuery = this.cloneFromQuery.bind(this);
         this.composeAndSend = this.composeAndSend.bind(this);
-        let dataset = "";
+        let dataset = "", train_dataset = "";
+        let diffusion = {}, paths = {};
         if (props.datasets.length > 0) {
             dataset = props.datasets[0]["label"];
+            train_dataset = props.datasets[props.datasets.length-1]["label"];
+            props.datasets.map((x) => {
+                let xlab = x["label"];
+                diffusion[xlab] = 0;
+                paths[xlab] = 0;
+                return null;
+            })
         }
-        this.state = {action: "search", view: "search", extended: 0,
-                      dataset: dataset, n: 1, data: "", aux_neg: ""}
+        this.state = {
+            action: "search", view: "search", extended: 0,
+            dataset: dataset, n: 1,
+            data: "", aux_neg: "", aux_pos: "",
+            diffusion: diffusion, paths: paths,
+            train_dataset: train_dataset
+        }
     }
 
-    static getDerivedStateFromProps(props, state) {
-        console.log("derived state from props: "+JSON.stringify(props));
-        if (props["settings"] == null) {
-            return null;
-        }
-        let s = props["settings"];
-        return {data: s["data"], aux_neg: s["aux_neg"],
-                dataset: s["dataset"], n: s["n"]};
-    }
-
+    /** Transfer state from an object into the current state **/
+    cloneFromQuery = function(query) {
+        this.setState(query)
+    };
     handleChangeAction = function(event) {
         let action = event.target.value;
-        let view = (action === "add") ? "add" : "search";
+        let view = (action === "train") ? "train" : "search";
         this.setState({"action": action, "view": view});
     };
     toggleSearchView = function() {
@@ -49,13 +57,23 @@ class Controller extends React.Component {
     showSettingsView = function() {
         this.setState({ view: "settings"});
     };
-    handleStateUpdate = function(key, value) {
-        let obj = {};
-        obj[key] = value;
-        this.setState(obj);
+    handleStateUpdate = function(key, value, group) {
+        this.setState((prevstate) => {
+            if (group === undefined) {
+                let obj = {};
+                obj[key] = value;
+                return obj
+            } else {
+                let obj = prevstate[group];
+                obj[key] = value;
+                let newstate = {};
+                newstate[group] = obj;
+                return newstate
+            }
+        })
     };
     showState = function() {
-        console.log("state: "+JSON.stringify(this.state));
+        alert("controller state: "+JSON.stringify(this.state));
     };
     composeAndSend = function() {
         let dataset = this.state.dataset;
@@ -70,10 +88,11 @@ class Controller extends React.Component {
         const action = this.state.action;
         let result = null;
         if (action === "search" || action === "decompose") {
-          result = makePayload(this.state, this.props.datasets);
-        }
-        if (result === null) {
-            return
+            result = makeQueryPayload(this.state, this.props.datasets);
+        } else if (action === "train") {
+            result = makeTrainPayload(this.state)
+        } else {
+            return null;
         }
         console.log("composed: "+JSON.stringify(result));
         this.props.send(result, action)
@@ -94,18 +113,17 @@ class Controller extends React.Component {
                                                 extended={this.state.extended}
                                                 update={this.handleStateUpdate}
                                                 send={this.composeAndSend}/>)
-        } else if (view === "add") {
+        } else if (view === "train") {
             middlebox.push(<ControllerAddForm key={1}
-                                              dataset={this.state.dataset}
+                                              settings={this.state}
                                               datasets={this.props.datasets}
                                               update={this.handleStateUpdate}/>)
         } else if (view === "settings") {
             middlebox.push(<ControllerSettingsForm key={2}
-                                                   dataset={this.state.dataset}
                                                    datasets={this.props.datasets}
+                                                   settings={this.state}
                                                    update={this.handleStateUpdate}/>)
         }
-
         return(<div width={1} id="chat-controller" ref={(divElement) => this.controllerElement = divElement}>
             <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
             <Grid item xs={2}>
@@ -114,10 +132,11 @@ class Controller extends React.Component {
                            fullWidth margin="normal">
                     <MenuItem value="search">Search</MenuItem>
                     <MenuItem value="decompose">Decompose</MenuItem>
-                    <MenuItem value="add">Train</MenuItem>
+                    <MenuItem value="train">Train</MenuItem>
                 </TextField>
                 <Box m={1}>
                 <Grid container direction="row" justify="space-around" alignItems="baseline">
+                    <Box display={view === "search" ? "block" : "none"}>
                     <Button>
                         <img src="icons/search.svg" alt="toggle small/extended search view"
                              className="controller-icon"
@@ -130,14 +149,14 @@ class Controller extends React.Component {
                              className="controller-icon"
                              onClick={this.showSettingsView}
                         />
-                    </Button>
-                    <Button>
+                    </Button></Box>
+                    <Box><Button>
                         <img src="icons/robot.svg"
                              alt="showState"
                              className="controller-icon"
                              onClick={this.showState}
                         />
-                    </Button>
+                    </Button></Box>
                 </Grid>
                 </Box>
             </Grid>
@@ -152,9 +171,19 @@ class Controller extends React.Component {
 }
 
 /**
- * Helper to prepare a payload from a controller state
+ * A brute-force copy of an object via stringify and parse
+ *
+ * @param x object
+ * @returns a copy of the input object
  */
-let makePayload = function(state, datasets) {
+let JSONcopy = function(x) {
+    return JSON.parse(JSON.stringify(x));
+};
+
+/**
+ * Helper to prepare a payload for search/ or decompose/
+ */
+let makeQueryPayload = function(state, datasets) {
     let dataset = state.dataset;
     if (dataset === "" && datasets.length>0) {
         dataset = datasets[0].label
@@ -162,29 +191,26 @@ let makePayload = function(state, datasets) {
     if (dataset === "" || (state.data === "" && state.aux_neg === "")) {
         return null;
     }
-    let result = {
-        "dataset": dataset,
-        "n": state.n,
-        "data": state.data,
-        "aux_neg": state.aux_neg,
-        "diffusion": {},
-        "paths": {}
-    };
-    datasets.map(function(x) {
-        let xlab = x.label;
-        let val_diffusion = state["_diffusion_"+xlab];
-        console.log("diffusion value for "+xlab + " "+val_diffusion);
-        let val_paths = state["_paths_"+xlab];
-        if (val_diffusion !== undefined) {
-            result["diffusion"][xlab] = val_diffusion
-        }
-        if (val_paths !== undefined) {
-            result["paths"][xlab] = val_paths
-        }
-        return null;
+    let result = {};
+    let fields = ["action", "dataset", "n",
+                  "data", "aux_pos", "aux_neg",
+                  "diffusion", "paths"];
+    fields.forEach((x)=> { result[x] = JSONcopy(state[x])});
+    // ensure that the paths settings are zero for the primary dataset
+    result.paths[dataset] = 0;
+    return result
+};
+
+/**
+ * Helper to prepare a payload for train/
+ */
+let makeTrainPayload = function(state) {
+    let result = { action: "train"};
+    ["train_dataset", "id", "title", "data", "aux_pos", "aux_neg"].forEach((x) => {
+        result[x] = JSONcopy(state[x])
     });
     return result
-}
+};
 
 
 export default Controller;

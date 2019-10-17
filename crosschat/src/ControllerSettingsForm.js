@@ -24,14 +24,14 @@ function floatValueText(value) {
  */
 class ControllerSettingsForm extends React.Component {
     render() {
-        let dataset = this.props.dataset;
-        if (dataset === "" && this.props.datasets.length>0) {
-            dataset = this.props.datasets[0].label;
-        }
+        let settings = this.props.settings;
+        console.log("rendering settings form with settings: "+JSON.stringify(settings));
+        let update = this.props.update;
+        let dataset = settings.dataset;
+        // construct contents of drop-down (selection of primary dataset)
         let dataset_items = this.props.datasets.map((x, i) => {
             return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
         });
-        let update = this.props.update;
         // construct sliders for diffusion
         let diffusion_sliders = this.props.datasets.map((row) => {
             return(<TableRow key={row.label}>
@@ -40,11 +40,11 @@ class ControllerSettingsForm extends React.Component {
                 </TableCell>
                 <TableCell>
                     <Slider
-                        defaultValue={0}
+                        value={settings.diffusion[row.label]}
                         getAriaValueText={floatValueText}
                         aria-labelledby="discrete-slider"
                         valueLabelDisplay="auto"
-                        onChange={(e, value) => update("_diffusion_" + row.label, value)}
+                        onChange={(e, value) => update(row.label, value, "diffusion")}
                         step={0.01} min={0} max={10}
                     />
                 </TableCell>
@@ -59,11 +59,11 @@ class ControllerSettingsForm extends React.Component {
                 </TableCell>
                 <TableCell>
                     <Slider
-                        defaultValue={0}
+                        value={settings.paths[row.label]}
                         getAriaValueText={intValueText}
                         aria-labelledby="discrete-slider"
                         valueLabelDisplay="auto"
-                        onChange={(e, value) => update("_paths_" + row.label, value)}
+                        onChange={(e, value) => update(row.label, value, "paths")}
                         marks step={1} min={0} max={10}
                     />
                 </TableCell>
@@ -82,7 +82,7 @@ class ControllerSettingsForm extends React.Component {
                         </TableCell>
                         <TableCell>
                             <TextField select id="controller-dataset"
-                                       value={dataset}
+                                       value={settings.dataset}
                                        onChange={(e) => update("dataset", e.target.value)}
                                        fullWidth>
                                 {dataset_items}
@@ -95,7 +95,7 @@ class ControllerSettingsForm extends React.Component {
                         </TableCell>
                         <TableCell>
                             <Slider
-                                defaultValue={1}
+                                value={settings.n}
                                 getAriaValueText={intValueText}
                                 aria-labelledby="discrete-slider"
                                 valueLabelDisplay="auto"

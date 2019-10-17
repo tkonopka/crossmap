@@ -21,7 +21,7 @@ class HitsMessage extends ChatMessage {
         this.handleClipboard = this.handleClipboard.bind(this);
         let type = props.data["_type"];
         let header="Search", value_column = "distances", value_header = "Distance";
-        if (type === "decomposition") {
+        if (type === "decompose") {
             header = "Decomposition";
             value_column = "coefficients";
             value_header = "Coefficient";

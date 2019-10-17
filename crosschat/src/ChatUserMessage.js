@@ -25,9 +25,7 @@ class ChatUserMessage extends ChatMessage {
         this.setState((prevState) => ({extended: (prevState.extended+1) %2 }));
     }
     sendClone() {
-      let query = {data: this.props.data.data,
-                   aux_neg: this.props.data.aux_neg};
-       this.props.cloneQuery(query);
+       this.props.clone(JSON.parse(JSON.stringify(this.props.data)));
     }
 
     render() {

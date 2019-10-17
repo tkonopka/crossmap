@@ -13,8 +13,7 @@ class Crosschat extends React.Component {
         this.sendQuery = this.sendQuery.bind(this);
         this.onresize = this.onresize.bind(this);
         this.state = {history: [], datasets: [],
-                      chatHeight: '400', controllerHeight: 0,
-                      settings: null};
+                      chatHeight: '400', controllerHeight: 0};
         window.addEventListener('resize', this.onresize)
     }
 
@@ -22,7 +21,6 @@ class Crosschat extends React.Component {
      * when the component first mounts, request summary information from the API
      */
     componentDidMount() {
-        //this.setState({chatHeight: chatHeight});
         const chat = this;
         let xhr = new XMLHttpRequest();
         xhr.onload = function() {
@@ -31,7 +29,8 @@ class Crosschat extends React.Component {
             result["_type"] = "datasets";
             chat.addMessage(result, "server");
             chat.setState({history: [["server", result]],
-                           datasets: result["datasets"]})
+                           datasets: result["datasets"],
+                           query: { dataset: result["datasets"][0].label }})
         };
         xhr.open("POST", "http://127.0.0.1:8098/datasets/", true);
         xhr.setRequestHeader('Accept', 'application/json');
@@ -45,7 +44,8 @@ class Crosschat extends React.Component {
      * the current controller.
      */
     cloneQuery(query) {
-        this.setState({settings: query})
+        console.log("handling clone with query: "+JSON.stringify(query));
+        this.controllerElement.cloneFromQuery(query)
     }
 
     /**
@@ -62,7 +62,7 @@ class Crosschat extends React.Component {
         let xhr = new XMLHttpRequest();
         xhr.onload = function(){
             let result = JSON.parse(xhr.response);
-            //console.log("got response: "+JSON.stringify(result));
+            console.log("got response: "+JSON.stringify(result));
             result["_type"] = api;
             //console.log("edited response: "+JSON.stringify(result));
             chat.addMessage(result, "server")
@@ -112,12 +112,15 @@ class Crosschat extends React.Component {
                     cloneQuery={this.cloneQuery}
                     messages={this.state.history} />
                 <Controller
+                    ref={(element) => this.controllerElement = element}
+                    key={JSON.stringify(this.state.query)}
                     datasets={this.state.datasets}
                     onresize={this.onresize}
-                    settings={this.state.settings}
                     send={this.sendQuery}/>
         </Box>)
     }
 }
+
+
 
 export default Crosschat;
