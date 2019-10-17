@@ -62,7 +62,7 @@ class HitsMessage extends ChatMessage {
         });
         return (
             <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-                <Typography variant={"h4"}>{this.state.header}</Typography>
+                <Typography variant={"h6"}>{this.state.header}</Typography>
                 <Table>
                     <TableHead>{header}</TableHead>
                     <TableBody>{content}</TableBody>
@@ -80,6 +80,7 @@ class HitsMessage extends ChatMessage {
 }
 
 
+/** Box showing a list of datasets **/
 class DatasetsMessage extends ChatMessage {
     render() {
         let datasets = this.props.data["datasets"].map((x, i) => {
@@ -97,6 +98,24 @@ class DatasetsMessage extends ChatMessage {
 }
 
 
+/** Box success/failure adding a new item into db**/
+class AddMessage extends ChatMessage {
+    render() {
+        let dataset = this.props.data["dataset"];
+        let idx = parseInt(this.props.data["idx"]);
+        let content = "";
+        if (idx>0) {
+            content = <p>Added new item into dataset: {dataset}</p>
+        } else if (idx === 0) {
+            content = <p>Created new dataset with one item: {dataset}</p>
+        } else {
+            content = <p>Something went wrong.</p>
+        }
+        return(<div xs={8}><Typography variant="h6">Add</Typography>{content}</div>);
+    }
+}
+
+
 /** Class to display server responses **/
 class ChatServerMessage extends React.Component {
     render() {
@@ -106,6 +125,8 @@ class ChatServerMessage extends React.Component {
             content = <DatasetsMessage data={this.props.data} />
         } else if (type === "search" || type === "decompose") {
             content = <HitsMessage data={this.props.data} />
+        } else if (type==="add") {
+            content = <AddMessage data={this.props.data} />
         }
         return (<div className="chat-response">{content}</div>)
     }

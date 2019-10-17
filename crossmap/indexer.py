@@ -69,12 +69,13 @@ class CrossmapIndexer:
         self.indexes = dict()
         self.index_files = dict()
 
-    def update(self, dataset, doc, id):
+    def update(self, dataset, doc, id, rebuild=True):
         """augment an existing dataset with a new item
 
         :param dataset: string, dataset identifier
         :param doc: dict with item data, aux_pos, aux_neg, etc
         :param id: string, identifier for the new item
+        :param rebuild: boolean, True to rebuild index structures, False to skip
         :return: integer index for the new data item
         """
 
@@ -87,13 +88,8 @@ class CrossmapIndexer:
         v = self.encoder.document(doc)
         size = self.db.dataset_size(dataset)
         idxs = self.db.add_data(dataset, [v], [id], titles, indexes=[size])
-
-        # remove current index and index file, regenerate
-        index_file = self.settings.index_file(dataset)
-        if exists(index_file):
-            remove(index_file)
-        self._build_index(dataset)
-
+        if rebuild:
+            self.rebuild_index(dataset)
         return idxs[0]
 
     def _build_data(self, files, dataset):
@@ -167,6 +163,17 @@ class CrossmapIndexer:
         self.indexes[dataset] = result
         self.index_files[dataset] = index_file
         result.saveIndex(index_file, save_data=True)
+
+    def rebuild_index(self, dataset):
+        """delete an exsting index and force a rebuild
+
+        :param dataset: string, name of dataset to rebuild
+        """
+
+        index_file = self.settings.index_file(dataset)
+        if exists(index_file):
+            remove(index_file)
+        self._build_index(dataset)
 
     def build(self):
         """construct indexes from targets and other documents"""

@@ -44,7 +44,6 @@ class Crosschat extends React.Component {
      * the current controller.
      */
     cloneQuery(query) {
-        console.log("handling clone with query: "+JSON.stringify(query));
         this.controllerElement.cloneFromQuery(query)
     }
 
@@ -62,7 +61,6 @@ class Crosschat extends React.Component {
         let xhr = new XMLHttpRequest();
         xhr.onload = function(){
             let result = JSON.parse(xhr.response);
-            console.log("got response: "+JSON.stringify(result));
             result["_type"] = api;
             //console.log("edited response: "+JSON.stringify(result));
             chat.addMessage(result, "server")

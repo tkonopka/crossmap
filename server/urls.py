@@ -10,4 +10,5 @@ urlpatterns = [
     path('search/', views.search, name='search'),
     path('decompose/', views.decompose, name='decompose'),
     path('datasets/', views.datasets, name='datasets'),
+    path('add/', views.add, name='add'),
 ]

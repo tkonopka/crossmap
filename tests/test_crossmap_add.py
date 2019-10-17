@@ -11,6 +11,7 @@ from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_file= join(data_dir, "config-simple.yaml")
+similars_file = join(data_dir, "dataset-similars.yaml")
 
 
 class CrossmapAddTests(unittest.TestCase):
@@ -105,4 +106,36 @@ class CrossmapAddTests(unittest.TestCase):
         self.crossmap.add("manual", doc2, id="I1")
         after = self.crossmap.diffuser.diffuse(v, dict(manual=1))
         self.assertGreater(len(after.data), len(before.data))
+
+
+class CrossmapAddBatchTests(unittest.TestCase):
+    """Add many documents into db at once - in batch"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.crossmap = Crossmap(config_file)
+        cls.crossmap.build()
+        cls.feature_map = cls.crossmap.indexer.feature_map
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_add_batch(self):
+        """exact document matches should produce short decomposition vectors"""
+
+        crossmap = self.crossmap
+        self.assertEqual(len(crossmap.db.datasets), 2)
+        self.assertFalse("manual" in crossmap.db.datasets)
+        idxs = crossmap.add_file("manual", similars_file)
+        # the new data shows up in the database
+        self.assertEqual(len(crossmap.db.datasets), 3)
+        self.assertEqual(crossmap.db.dataset_size("manual"), len(idxs))
+        # the new data is ready to be found
+        b2 = {"data": "Bravo Bob Benjamin Bernard"}
+        hits = crossmap.predict(b2, "manual", n=2)
+        self.assertEqual(set(hits["targets"]), set(["B1", "B2"]))
+        # the first and second hits might be tied because the new data
+        # might look equivalent given the feature_map produced by
+        # the original config_simple setup
 

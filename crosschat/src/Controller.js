@@ -48,7 +48,7 @@ class Controller extends React.Component {
     };
     handleChangeAction = function(event) {
         let action = event.target.value;
-        let view = (action === "train") ? "train" : "search";
+        let view = (action === "add") ? "add" : "search";
         this.setState({"action": action, "view": view});
     };
     toggleSearchView = function() {
@@ -89,12 +89,12 @@ class Controller extends React.Component {
         let result = null;
         if (action === "search" || action === "decompose") {
             result = makeQueryPayload(this.state, this.props.datasets);
-        } else if (action === "train") {
+        } else if (action === "add") {
             result = makeTrainPayload(this.state)
         } else {
             return null;
         }
-        console.log("composed: "+JSON.stringify(result));
+        //console.log("composed: "+JSON.stringify(result));
         this.props.send(result, action)
     };
 
@@ -113,7 +113,7 @@ class Controller extends React.Component {
                                                 extended={this.state.extended}
                                                 update={this.handleStateUpdate}
                                                 send={this.composeAndSend}/>)
-        } else if (view === "train") {
+        } else if (view === "add") {
             middlebox.push(<ControllerAddForm key={1}
                                               settings={this.state}
                                               datasets={this.props.datasets}
@@ -132,7 +132,7 @@ class Controller extends React.Component {
                            fullWidth margin="normal">
                     <MenuItem value="search">Search</MenuItem>
                     <MenuItem value="decompose">Decompose</MenuItem>
-                    <MenuItem value="train">Train</MenuItem>
+                    <MenuItem value="add">Train</MenuItem>
                 </TextField>
                 <Box m={1}>
                 <Grid container direction="row" justify="space-around" alignItems="baseline">
@@ -205,9 +205,13 @@ let makeQueryPayload = function(state, datasets) {
  * Helper to prepare a payload for train/
  */
 let makeTrainPayload = function(state) {
-    let result = { action: "train"};
-    ["train_dataset", "id", "title", "data", "aux_pos", "aux_neg"].forEach((x) => {
-        result[x] = JSONcopy(state[x])
+    let result = { action: "add", dataset: state.train_dataset};
+    ["id", "title", "data", "aux_pos", "aux_neg"].forEach((x) => {
+        if (state[x] !== undefined) {
+            result[x] = JSONcopy(state[x])
+        } else {
+            result[x] = "";
+        }
     });
     return result
 };

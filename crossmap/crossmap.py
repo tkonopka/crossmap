@@ -74,15 +74,16 @@ class Crossmap:
     def load(self):
         """load indexes from prepared files"""
         self.indexer.load()
-        self.diffuser = CrossmapDiffuser(self.settings)
+        self.diffuser = CrossmapDiffuser(self.settings, self.indexer.db)
 
-    def add(self, dataset, doc, id, metadata=None):
+    def add(self, dataset, doc, id, metadata=None, rebuild=True):
         """add a new item into the db
 
         :param dataset: string, name of dataset to append
         :param doc: dict with string data
         :param id: string, identifier for new item
         :param metadata: dict, a free element of additional information
+        :param rebuild: logical, set True to rebuild nearest-neighbor indexing
         :return: an integer signaling
         """
 
@@ -95,7 +96,7 @@ class Crossmap:
             self.db.register_dataset(dataset)
 
         # update the db structures (indexing and diffusion)
-        idx = self.indexer.update(dataset, doc, id)
+        idx = self.indexer.update(dataset, doc, id, rebuild=rebuild)
         self.diffuser.update(dataset, [idx])
 
         # record the item in a disk file
@@ -107,6 +108,21 @@ class Crossmap:
             f.write(dump({id: doc}))
 
         return idx
+
+    def add_file(self, dataset, filepath):
+        """transfer items from a data file into a new dataset in the db
+
+        :param dataset:
+        :param filepath:
+        :return: list with the added ids
+        """
+
+        result = []
+        with open_file(filepath, "rt") as f:
+            for id, doc in yaml_document(f):
+                result.append(self.add(dataset, doc, id, rebuild=False))
+        self.indexer.rebuild_index(dataset)
+        return result
 
     def predict(self, doc, dataset, n=3, paths=None, diffusion=None,
                 query_name="query"):
