@@ -24,7 +24,7 @@ class Crosschat extends React.Component {
         const chat = this;
         let xhr = new XMLHttpRequest();
         xhr.onload = function() {
-            console.log("received: "+xhr.response);
+            //console.log("received: "+xhr.response);
             let result = JSON.parse(xhr.response);
             result["_type"] = "datasets";
             chat.addMessage(result, "server");
@@ -54,8 +54,8 @@ class Crosschat extends React.Component {
      */
     sendQuery(query, api) {
         // augment the query with settings
-        console.log("Sending to api: "+ api);
-        console.log("query: "+JSON.stringify(query));
+        //console.log("Sending to api: "+ api);
+        //console.log("query: "+JSON.stringify(query));
         const chat = this;
         chat.addMessage(query, "user");
         let xhr = new XMLHttpRequest();

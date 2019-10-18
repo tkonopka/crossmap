@@ -63,7 +63,7 @@ class HitsMessage extends ChatMessage {
         return (
             <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
                 <Typography variant={"h6"}>{this.state.header}</Typography>
-                <Table>
+                <Table size={"small"}>
                     <TableHead>{header}</TableHead>
                     <TableBody>{content}</TableBody>
                 </Table>
@@ -92,7 +92,7 @@ class DatasetsMessage extends ChatMessage {
         });
         return(<div xs={8}>
             <Typography variant="h6">Available Datasets</Typography>
-            <List>{datasets}</List>
+            <List dense>{datasets}</List>
         </div>);
     }
 }

@@ -105,7 +105,6 @@ class Controller extends React.Component {
     render() {
         let middlebox = [];
         const view = this.state.view;
-        console.log("rendering controller with view: "+view);
         if (view === "search") {
             middlebox.push(<ControllerQueryForm key={0}
                                                 data={this.state.data}
@@ -136,7 +135,7 @@ class Controller extends React.Component {
                 </TextField>
                 <Box m={1}>
                 <Grid container direction="row" justify="space-around" alignItems="baseline">
-                    <Box display={view === "search" ? "block" : "none"}>
+                    <Box display={view === "add" ? "none" : "block"}>
                     <Button>
                         <img src="icons/search.svg" alt="toggle small/extended search view"
                              className="controller-icon"

@@ -1,4 +1,5 @@
 import React from 'react';
+import Slider from "@material-ui/core/Slider";
 import Typography from '@material-ui/core/Typography';
 import TableBody from "@material-ui/core/TableBody";
 import TableRow from "@material-ui/core/TableRow";
@@ -30,6 +31,7 @@ class ChatUserMessage extends ChatMessage {
 
     render() {
         let data = this.props.data;
+        console.log("rendering user message with data: "+JSON.stringify(data))
         let rows = ["data", "aux_pos", "aux_neg"].map((x) => {
             if (data[x]===undefined) {
                 return null;
@@ -42,15 +44,65 @@ class ChatUserMessage extends ChatMessage {
             }
             return null;
         });
+        let settings_datasets = Object.keys(data.diffusion);
+        let diffusion_marks = [0, 5, 10].map((x) => ({value: x, label: x}));
+        let paths_marks = [0, 5, 10].map((x) => ({value: x, label: x}));
+        let diffusion_rows = settings_datasets.map((d) => {
+            return(<TableRow key={"diffusion_"+d}>
+                <TableCell variant="head">{d===settings_datasets[0] ? "diffusion" : ""}</TableCell>
+                <TableCell>{d}</TableCell>
+                <TableCell><Slider disabled
+                                   value={data["diffusion"][d]}
+                                   valueLabelDisplay="auto"
+                                   marks={diffusion_marks}
+                                   min={0} max={10}/>
+                </TableCell>
+            </TableRow>)
+        });
+        let paths_rows = settings_datasets.map((d) => {
+            return(<TableRow key={"paths"+d}>
+                <TableCell variant="head">{d === settings_datasets[0] ? "paths" : ""}</TableCell>
+                <TableCell>{d}</TableCell>
+                <TableCell><Slider disabled
+                                   value={data["paths"][d]}
+                                   valueLabelDisplay="auto"
+                                   marks={paths_marks}
+                                   min={0} max={10}/>
+                </TableCell>
+            </TableRow>)
+        })
         return (
             <div className="chat-user" onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+                <Typography variant={"h5"}>Query</Typography>
                 <Table>
                     <TableBody>
                         {rows}
                     </TableBody>
                 </Table>
-                <Box display={this.state.extended ? "block": "none"}>
-                    hello
+                <Box display={this.state.extended ? "block": "none"} className={"chat-user-settings"}>
+                    <Typography variant={"h5"}>Settings</Typography>
+                    <Table size={"small"}>
+                        <colgroup>
+                            <col style={{width: '35%'}}/>
+                            <col style={{width: '30%'}}/>
+                            <col style={{width: '30%'}}/>
+                        </colgroup>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell variant={"head"}>action</TableCell>
+                                <TableCell>{data["action"]}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell variant={"head"}>dataset</TableCell>
+                                <TableCell>{data["dataset"]}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell variant={"head"}>number of neighbors</TableCell>
+                                <TableCell>{data["n"]}</TableCell>
+                            </TableRow>
+                            {diffusion_rows}{paths_rows}
+                         </TableBody>
+                    </Table>
                 </Box>
                 <Box visibility={this.state.mouseover ? "visible": "hidden"}>
                     <Grid container direction="row" justify="flex-end" alignItems="flex-end">

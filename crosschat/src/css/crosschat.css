@@ -69,11 +69,12 @@ td.column-dataset {
   border: solid 1px #4d243d;
 }
 .chat-user {
+  padding: 0.5em 1em 0em 1em;
   background-color: #e5e9f5;
   float: right;
 }
 .chat-response {
-  padding: 0.5em 1em;
+  padding: 0.5em 1em 0em 1em;
   background-color: #ffffff;
   min-width: 20%;
   float: left;
@@ -86,6 +87,9 @@ td.column-dataset {
 }
 
 .chat-user-extension {
+}
+.chat-user-settings {
+  min-width: 400px;
 }
 
 /** Add form **/

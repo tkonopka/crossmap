@@ -25,7 +25,7 @@ function floatValueText(value) {
 class ControllerSettingsForm extends React.Component {
     render() {
         let settings = this.props.settings;
-        console.log("rendering settings form with settings: "+JSON.stringify(settings));
+        //console.log("rendering settings form with settings: "+JSON.stringify(settings));
         let update = this.props.update;
         let dataset = settings.dataset;
         // construct contents of drop-down (selection of primary dataset)
