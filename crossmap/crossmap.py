@@ -140,7 +140,7 @@ class Crossmap:
         """
 
         v = self.indexer.encode_document(doc)
-        if v.sum() == 0:
+        if sum(v.data) == 0:
             return prediction_result([], [], query_name)
         if diffusion is not None:
             v = self.diffuser.diffuse(v, diffusion)
@@ -171,25 +171,23 @@ class Crossmap:
         q = self.indexer.encode_document(doc)
         if diffusion is not None:
             q = self.diffuser.diffuse(q, diffusion)
+        # loop for greedy decomposition
         q_residual, q_dense = q.copy(), q.toarray()
         coefficients = []
-        # loop for greedy decomposition
-        while len(components) < n and q_residual.sum() > 0:
+        while len(components) < n and sum(q_residual.data) > 0:
             target, _ = suggest(q_residual, dataset, 1, paths)
             target_data = get_data(dataset, ids=target)
-            if target[0] not in ids:
-                ids.append(target[0])
-                components.append(target_data[0]["data"])
-                basis = vstack(components)
-                coefficients = decompose(q_dense, basis.toarray())
-            else:
-                # residual mapped back onto self?
-                # change the last coefficient (it's a hack)
-                coefficients[len(coefficients)-1] *= 2
+            if target[0] in ids:
+                # residual mapped back onto an existing hit? quit early
+                break
+            ids.append(target[0])
+            components.append(target_data[0]["data"])
+            basis = vstack(components)
+            coefficients = decompose(q_dense, basis.toarray())
+            if coefficients[-1] == 0:
+                break
             q_residual = csr_residual(q, basis, csr_matrix(coefficients))
 
-        # this handles case when the loop doesn't run as well as when
-        # as when the loop produces a column vector
         if len(coefficients) > 0:
             coefficients = [_ for _ in coefficients[:, 0]]
 

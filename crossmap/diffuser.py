@@ -2,7 +2,8 @@
 Diffuser for crossmap vectors
 
 The diffuser is a class that can take a vector and diffuse
-values for certain features into other features.
+values for certain features into other features. The way in which
+the diffusion spreads is controlled via connections store in a db.
 """
 
 from logging import info, warning, error

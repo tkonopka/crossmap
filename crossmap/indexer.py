@@ -1,4 +1,5 @@
-"""Indexer of crossmap data for NN search
+"""
+Indexer of crossmap data for nearest-neighbor search
 """
 
 import logging

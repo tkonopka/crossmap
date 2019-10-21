@@ -24,7 +24,6 @@ class Crosschat extends React.Component {
         const chat = this;
         let xhr = new XMLHttpRequest();
         xhr.onload = function() {
-            //console.log("received: "+xhr.response);
             let result = JSON.parse(xhr.response);
             result["_type"] = "datasets";
             chat.addMessage(result, "server");
@@ -85,7 +84,7 @@ class Crosschat extends React.Component {
         });
     }
 
-    /** this is called from the controller to resize the chat/controller boxes **/
+    /** called from the controller to resize the chat/controller boxes **/
     onresize(controllerHeight) {
         // avoid setState when not needed to avoid infinite cycles of updates
         if (this.chatElement === null) {
@@ -118,7 +117,6 @@ class Crosschat extends React.Component {
         </Box>)
     }
 }
-
 
 
 export default Crosschat;

@@ -1,7 +1,22 @@
 # crossprep
 
+Crossprep is a suite of scripts that parse raw data files and prepare the contents into a format that can be loaded into a crossmap instance.
 
-## pubmed
+The suite contains several components. 
+
+ - [pubmed](#pubmed)
+ - [genesets](#genesets)
+ 
+Each component is launched with a common syntax,
+
+```python
+python3 crossprep.py COMPONENT [...]
+``` 
+
+Here, `COMPONENT` is one of the components listed and `[...]` are arguments that pertain to that component.
+
+
+## pubmed 
 
 `crossprep pubmed` is a command-line utility for downloading and processing pubmed article data.
 
@@ -36,4 +51,6 @@ python3 crossprep.py pubmed --outdir /output/dir --name pubmed-recent-human
 
 This will create a dataset holding articles from the years 2010-2019, containing the text pattern 'human' and containing at least 500 characters in the title and abstract fields. 
 
+
+## genesets
 

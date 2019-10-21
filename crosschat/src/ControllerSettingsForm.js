@@ -28,11 +28,11 @@ class ControllerSettingsForm extends React.Component {
         //console.log("rendering settings form with settings: "+JSON.stringify(settings));
         let update = this.props.update;
         let dataset = settings.dataset;
-        // construct contents of drop-down (selection of primary dataset)
+        // contents of drop-down (selection of primary dataset)
         let dataset_items = this.props.datasets.map((x, i) => {
             return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
         });
-        // construct sliders for diffusion
+        // sliders for diffusion
         let diffusion_sliders = this.props.datasets.map((row) => {
             return(<TableRow key={row.label}>
                 <TableCell component="td" scope="row" className={"column-dataset"}>
@@ -50,7 +50,7 @@ class ControllerSettingsForm extends React.Component {
                 </TableCell>
             </TableRow>)
         })
-        // construct sliders for indirect paths
+        // sliders for indirect paths
         let paths_sliders = this.props.datasets.map((row) => {
             if (row.label === dataset) { return null }
             return(<TableRow key={row.label}>

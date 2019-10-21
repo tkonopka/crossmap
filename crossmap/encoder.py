@@ -81,3 +81,4 @@ def _to_vec(tokens, component, feature_map):
         fm = feature_map[k]
         vec[fm[0]] += fm[1]*v
     return normalize_vec(vec)
+
