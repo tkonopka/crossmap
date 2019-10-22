@@ -30,7 +30,7 @@ class CrossmapDecomposeTests(unittest.TestCase):
     def test_decompose_BD(self):
         """object matching against B and D"""
 
-        doc = dict(data="Bob Bravo Delta David", aux_pos="Bob Bernard")
+        doc = dict(data="Bob Bravo Delta David", aux_pos="Bob Bravo Bernard")
         # standard nearest neighbors should return two Bs
         prediction = self.crossmap.predict(doc, "targets", n=2)
         self.assertTrue("B1" in prediction["targets"])
@@ -38,8 +38,9 @@ class CrossmapDecomposeTests(unittest.TestCase):
         self.assertEqual(len(prediction["targets"]), 2)
         # decomposition should give one B and one D
         decomposition = self.crossmap.decompose(doc, "targets", n=2)
-        self.assertTrue(decomposition["targets"][0] in set(["B1", "B2"]))
-        self.assertTrue(decomposition["targets"][1] in set(["D1", "D2"]))
+        BD = set(["B1", "B2", "D1", "D2"])
+        self.assertTrue(decomposition["targets"][0] in BD)
+        self.assertTrue(decomposition["targets"][1] in BD)
 
     def test_decompose_CC(self):
         """object matching against Cs"""
@@ -94,5 +95,5 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
             self.assertTrue(iresult["targets"][0] in self.targets)
             self.assertEqual(len(iresult["targets"]), 1)
             self.assertEqual(len(iresult["coefficients"]), 1)
-            self.assertEqual(iresult["coefficients"][0], 1.0)
+            self.assertAlmostEqual(iresult["coefficients"][0], 1.0)
 

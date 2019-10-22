@@ -9,7 +9,7 @@ the diffusion spreads is controlled via connections store in a db.
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
-from .csr import normalize_csr, threshold_csr, add_csr
+from .csr import normalize_csr, threshold_csr, add_sparse
 
 
 class CrossmapDiffuser:
@@ -49,7 +49,7 @@ class CrossmapDiffuser:
         self.db.set_counts(dataset, result)
 
     def _build_counts(self, dataset=""):
-        """construct co-occurance records for one dataset
+        """construct co-occurrence records for one dataset
 
         :param dataset: string, identifier for dataset in db
         """
@@ -94,8 +94,7 @@ class CrossmapDiffuser:
         """augment counts based on vectors from the data table
 
         :param dataset: string, dataset identifier
-        :param idx: list of integer indexes in the data table
-        :return:
+        :param data_idxs: list of integer indexes in the data table
         """
 
         # if this is a first update, need to seed the counts table
@@ -140,7 +139,7 @@ class CrossmapDiffuser:
                 row_normalization = max(abs(value), ddata[2])
                 data = ddata[0]
                 data *= v_data[di]*value/row_normalization
-                result = add_csr(result, data, ddata[1])
+                result = add_sparse(result, data, ddata[1])
         result = csr_matrix(result)
         if normalize:
             result = normalize_csr(result)

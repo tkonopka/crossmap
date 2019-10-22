@@ -74,28 +74,21 @@ def add_three(a, b, c, wb, wc):
     return a
 
 
-def csr_residual(v, mat, weights=None):
+def csr_residual(v_t, b_t, weights):
     """get the residual of a vector after subtracting other vectors
 
-    :param v: csr matrix with one row
-    :param mat: csr matrix with possibly many rows
-    :param weights: coefficients for each row in mat, can be in a list,
-    otherwise should be in vertical csr_matrix
+    :param v_t: csr matrix with one row
+    :param b_t: csr matrix with possibly many rows
+    :param weights: coefficients for each row in mat in vertical csr_matrix
     :return: a csr matrix with one row, the v-sum (v dot mat) mat
     """
-    # avoid work if the matrix indicates no subtraction necessary
-    if mat.shape[1] == 0:
-        return v.copy()
-    # convert weights from a vector into a column vector
-    if weights is None:
-        weights = [1]*mat.shape[0]
-    if type(weights) == list:
-        weights = csr_matrix(weights).transpose()
-    # perform the dot product and residual
-    coeffs = mat.dot(v.transpose())
-    components = mat.multiply(coeffs)
-    components = components.multiply(weights)
-    return csr_matrix(v-components.sum(0))
+    # an alternative implementation is
+    # v_t - weights.transpose().dot(b_t)
+    # but in practice the implementation below seems faster in cProfile
+
+    # compute the modeled vector using b*w
+    model = (b_t.transpose()).dot(weights)
+    return v_t - model.transpose()
 
 
 def vec_decomposition(v_t, b_t):

@@ -12,6 +12,7 @@ from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual, vec_decomposition, sparse_to_dense
+from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -124,6 +125,11 @@ class Crossmap:
         self.indexer.rebuild_index(dataset)
         return result
 
+    def _diffuse(self, v, diffusion):
+        if diffusion is None:
+            return v
+        return self.diffuser.diffuse(v, diffusion)
+
     def predict(self, doc, dataset, n=3, paths=None, diffusion=None,
                 query_name="query"):
         """identify targets that are close to the input query
@@ -163,33 +169,42 @@ class Crossmap:
             decomposition coefficients
         """
 
-        ids, components, distances = [], [], []
+        ids, coefficients, components = [], [], []
         suggest = self.indexer.suggest
         get_data = self.indexer.db.get_data
         decompose = vec_decomposition
         # representation of the query document
         q = self.indexer.encode_document(doc)
-        if diffusion is not None:
-            q = self.diffuser.diffuse(q, diffusion)
+        q_indexes = set(q.indices)
+        q = self._diffuse(q, diffusion)
+        q_dense = q.toarray()
         # loop for greedy decomposition
-        q_residual, q_dense = q.copy(), q.toarray()
-        coefficients = []
-        while len(components) < n and sum(q_residual.data) > 0:
+        q_residual = q
+        while len(components) < n and len(q_residual.data) > 0:
             target, _ = suggest(q_residual, dataset, 1, paths)
             target_data = get_data(dataset, ids=target)
             if target[0] in ids:
                 # residual mapped back onto an existing hit? quit early
                 break
             ids.append(target[0])
-            components.append(target_data[0]["data"])
+            target_vec = target_data[0]["data"]
+            components.append(dimcollapse_csr(target_vec, q_indexes))
             basis = vstack(components)
-            coefficients = decompose(q_dense, basis.toarray())
+            q_modeled = q_dense
+            if set(basis.indices) is not q_indexes:
+                q_modeled = dimcollapse_csr(q, set(basis.indices)).toarray()
+            coefficients = decompose(q_modeled, basis.toarray())
             if coefficients[-1] == 0:
                 break
-            q_residual = csr_residual(q, basis, csr_matrix(coefficients))
+            weights = csr_matrix(coefficients)
+            q_residual = csr_residual(q, basis, weights)
 
+        # order the coefficients (decreasing size, most important first)
         if len(coefficients) > 0:
-            coefficients = [_ for _ in coefficients[:, 0]]
+            # re-do decomposition using the entire q vector
+            coefficients = decompose(q_dense, basis.toarray())
+            temp = [_ for _ in coefficients[:, 0]]
+            coefficients, ids = zip(*sorted(zip(temp, ids), reverse=True))
 
         return decomposition_result(ids, coefficients, query_name)
 
@@ -392,3 +407,8 @@ def validate_dataset_label(crossmap, label=None, log=True):
         label = None
     return label
 
+
+def print_q(x, indexes):
+    print("values at indexes")
+    for i in indexes:
+        print(str(i)+"\t"+str(x[0,i]))

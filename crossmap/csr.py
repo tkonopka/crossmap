@@ -4,9 +4,9 @@ Handling csr vectors
 
 import numba
 from numpy import array
-from math import sqrt
 from pickle import loads, dumps
 from scipy.sparse import csr_matrix
+from .vectors import normalize_vec
 
 
 def csr_to_bytes(x):
@@ -44,21 +44,18 @@ def bytes_to_arrays(x):
     return array(raw[0]), array(raw[1]), data_sum
 
 
-def normalize_csr(a):
+def normalize_csr(v):
     """normalize a csr vector
 
     Note this performs a normalization in-place,
     i.e. the original vector will change.
 
-    :param a: csr_matrix, assumed a single row vector
+    :param v: csr_matrix, assumed a single row vector
     :return: csr_matrix of same size as a, with normalized entries
     """
 
-    n2 = sum([x*x for x in a.data])
-    if n2 == 0:
-        return a
-    a.data *= 1/sqrt(n2)
-    return a
+    v.data = normalize_vec(v.data)
+    return v
 
 
 def threshold_csr(v, threshold=0.001):
@@ -78,16 +75,37 @@ def threshold_csr(v, threshold=0.001):
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
 
 
-@numba.jit
-def add_csr(x, data, indices):
-    """add csr data to a dense array
+def dimcollapse_csr(v, indexes=set(), normalize=True):
+    """dimensional collapse of a vector
 
-    :param x: dense array of floats
+    :param v: csr vector
+    :param indexes: allowed dimensional indexes
+    :param normalize: logical, set True to rescale values to unit norm
+    :return: new csr vector, values outside indexes reset to zero
+    """
+
+    data = []
+    indices = []
+    for d, i in zip(v.data, v.indices):
+        if i in indexes:
+            data.append(d)
+            indices.append(i)
+    result = csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
+    if normalize:
+        result = normalize_csr(result)
+    return result
+
+
+@numba.jit
+def add_sparse(arr, data, indices):
+    """add sparse data to a dense array
+
+    :param arr: dense array of floats
     :param data: array of floats
     :param indices: array of integers
     :return: array consisting of x+data
     """
     for i in range(len(indices)):
-        x[indices[i]] += data[i]
-    return x
+        arr[indices[i]] += data[i]
+    return arr
 

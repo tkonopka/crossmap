@@ -63,17 +63,17 @@ class VecResidualTests(unittest.TestCase):
     """computing residuals for vector decomposition"""
 
     def test_residual_from_null_vector(self):
-        """starting with a null vector, residuals are also null"""
+        """starting with a null vector, residuals is non-null"""
         v = csr_matrix([0, 0, 0, 0])
         mat = csr_matrix([0, 1, 0, 0])
-        result = csr_residual(v, mat)
-        self.assertListEqual(list(result.toarray()[0]), list(v.toarray()[0]))
+        result = csr_residual(v, mat, csr_matrix([1]))
+        self.assertListEqual(list(result.toarray()[0]), [0, -1, 0, 0])
 
-    def test_residual_with_null_matrix(self):
+    def test_residual_with_zero_weight(self):
         """subtracting nothing return original input"""
         v = csr_matrix([0, 0, 1, 0])
-        mat = csr_matrix([])
-        result = csr_residual(v, mat)
+        mat = csr_matrix([0,0,1,0])
+        result = csr_residual(v, mat, csr_matrix([0]))
         expected = [0, 0, 1, 0]
         self.assertListEqual(list(result.toarray()[0]), expected)
 
@@ -81,7 +81,7 @@ class VecResidualTests(unittest.TestCase):
         """subtracting can lead to a null vector"""
         v = csr_matrix([0, 0, 1, 0])
         mat = csr_matrix([0, 0, 1, 0])
-        result = csr_residual(v, mat)
+        result = csr_residual(v, mat, csr_matrix([1]))
         expected = [0, 0, 0, 0]
         self.assertListEqual(list(result.toarray()[0]), expected)
 
@@ -89,7 +89,7 @@ class VecResidualTests(unittest.TestCase):
         """subtracting two vectors can eventually lead to a null vector"""
         v = csr_matrix([0, 0, 1, 1])
         mat = csr_matrix([[0, 0, 1, 0], [0, 0, 0, 1]])
-        result = csr_residual(v, mat)
+        result = csr_residual(v, mat, csr_matrix([1, 1]).transpose())
         expected = [0, 0, 0, 0]
         self.assertListEqual(list(result.toarray()[0]), expected)
 
@@ -97,7 +97,7 @@ class VecResidualTests(unittest.TestCase):
         """subtracting two vectors can eventually lead to a null vector"""
         v = csr_matrix([0, 0, 1, 1])
         mat = csr_matrix([[0, 0, 1, 0], [0, 0, 0, 1], [0, 0, 0, 1]])
-        result = csr_residual(v, mat, [1, 0.5, 0.5])
+        result = csr_residual(v, mat, csr_matrix([1, 0.5, 0.5]).transpose())
         expected = [0, 0, 0, 0]
         self.assertListEqual(list(result.toarray()[0]), expected)
 
@@ -105,15 +105,15 @@ class VecResidualTests(unittest.TestCase):
         """subtraction of a partial match produce a non-null residual"""
         v = csr_matrix([0, 0, 1, 1])
         mat = csr_matrix([0, 0, 1, 0])
-        result = csr_residual(v, mat)
+        result = csr_residual(v, mat, csr_matrix([1]))
         expected = [0, 0, 0, 1]
         self.assertListEqual(list(result.toarray()[0]), expected)
 
     def test_residual_with_weights(self):
         """subtraction of a partial match produce a non-null residual"""
         v = csr_matrix([0, 0, 1, 1])
-        mat = csr_matrix([[0, 0, 1, 0],[0, 0, 0, 1]])
-        result = csr_residual(v, mat, [0.5, 0.75])
+        mat = csr_matrix([[0, 0, 1, 0], [0, 0, 0, 1]])
+        result = csr_residual(v, mat, csr_matrix([0.5, 0.75]).transpose())
         expected = [0.0, 0.0, 0.5, 0.25]
         self.assertListEqual(list(result.toarray()[0]), expected)
 

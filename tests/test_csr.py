@@ -6,6 +6,7 @@ import unittest
 from scipy.sparse import csr_matrix
 from crossmap.csr import bytes_to_csr, csr_to_bytes
 from crossmap.csr import normalize_csr, threshold_csr
+from crossmap.csr import dimcollapse_csr
 from crossmap.vectors import sparse_to_dense
 
 
@@ -69,4 +70,29 @@ class CsrThresholdingTests(unittest.TestCase):
         result = threshold_csr(x, 2)
         self.assertEqual(sum(sparse_to_dense(result)), 0)
         self.assertEqual(result.shape, (1, 8))
+
+
+class CsrDimensionalCollapseTests(unittest.TestCase):
+    """csr vector collapse"""
+
+    def test_raw_collapse(self):
+        """raw collapse, setting values to zero without normalization"""
+
+        a = csr_matrix([0.0, 0.1, 0.5, 0.35,
+                        0.9, 0.0, 0.0, 0.4])
+        result = dimcollapse_csr(a, set([0,1,2,3]), normalize=False)
+        expected = [0.0, 0.1, 0.5, 0.35,
+                    0.0, 0.0, 0.0, 0.0]
+        self.assertListEqual(list(sparse_to_dense(result)), expected)
+        self.assertEqual(result.shape, (1, 8))
+
+    def test_normalized_collapse(self):
+        """collapse to dimension, with global rescaling/normalization"""
+
+        a = csr_matrix([0.0, 0.1, 0.5, 0.35,
+                        0.9, 0.0, 0.0, 0.4])
+        result = dimcollapse_csr(a, set([0,1,2,3]), normalize=True)
+        result_dense = sparse_to_dense(result)
+        self.assertEqual(result_dense[4], 0.0)
+        self.assertGreater(result_dense[1], 0.1)
 
