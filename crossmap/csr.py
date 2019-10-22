@@ -75,7 +75,7 @@ def threshold_csr(v, threshold=0.001):
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
 
 
-def dimcollapse_csr(v, indexes=set(), normalize=True):
+def dimcollapse_csr(v, indexes=(), normalize=True):
     """dimensional collapse of a vector
 
     :param v: csr vector
@@ -90,9 +90,9 @@ def dimcollapse_csr(v, indexes=set(), normalize=True):
         if i in indexes:
             data.append(d)
             indices.append(i)
-    result = csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
     if normalize:
-        result = normalize_csr(result)
+        data = normalize_vec(array(data))
+    result = csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
     return result
 
 
