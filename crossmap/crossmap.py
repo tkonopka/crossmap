@@ -203,25 +203,9 @@ class Crossmap:
         if len(coefficients) > 0:
             # re-do decomposition using the entire q vector
             coefficients = decompose(q_dense, basis.toarray())
-            temp = [_ for _ in coefficients[:, 0]]
-            coefficients, ids = zip(*sorted(zip(temp, ids), reverse=True))
+            coefficients, ids = _ranked_decomposition(coefficients, ids)
 
         return decomposition_result(ids, coefficients, query_name)
-
-    def _action_file(self, action, filepath, **kw):
-        """applies an action function to contents of a file
-
-        :param action: function
-        :param filepath: string, path to a file with yaml documents
-        :param kw: keyword arguments, all passed on to action
-        :return: list with result of action function on the documents in the file
-        """
-
-        result = []
-        with open_file(filepath, "rt") as f:
-            for id, doc in yaml_document(f):
-                result.append(action(doc, **kw, query_name=id))
-        return result
 
     def predict_file(self, filepath, dataset, n, paths=None, diffusion=None):
         """predict nearest targets for all documents in a file
@@ -234,8 +218,8 @@ class Crossmap:
         :return: list with dicts, each as output by predict()
         """
 
-        return self._action_file(self.predict, filepath, dataset=dataset,
-                                 n=n, paths=paths, diffusion=diffusion)
+        return _action_file(self.predict, filepath, dataset=dataset,
+                            n=n, paths=paths, diffusion=diffusion)
 
     def decompose_file(self, filepath, dataset, n=3, paths=None, diffusion=None):
         """perform decomposition for documents defined in a file
@@ -248,8 +232,8 @@ class Crossmap:
         :return: list with dicts, each as output by decompose()
         """
 
-        return self._action_file(self.decompose, filepath, dataset=dataset,
-                                 n=n, paths=paths, diffusion=diffusion)
+        return _action_file(self.decompose, filepath, dataset=dataset,
+                            n=n, paths=paths, diffusion=diffusion)
 
     def distance(self, doc, ids=[], diffusion=None, query_name="query"):
         """compute distances from one document to specific items in db
@@ -295,7 +279,7 @@ class Crossmap:
         return result
 
     def vectors(self, filepath, ids=[], diffuse=None):
-        """extraction of feature vectors
+        """extraction of data vectors
 
         :param filepath: string, path to a data file
         :param ids: list of string ids
@@ -408,7 +392,36 @@ def validate_dataset_label(crossmap, label=None, log=True):
     return label
 
 
-def print_q(x, indexes):
-    print("values at indexes")
-    for i in indexes:
-        print(str(i)+"\t"+str(x[0,i]))
+def _action_file(action, filepath, **kw):
+    """applies an action function to contents of a file
+
+    :param action: function
+    :param filepath: string, path to a file with yaml documents
+    :param kw: keyword arguments, all passed on to action
+    :return: list with result of action function on the documents in the file
+    """
+
+    result = []
+    with open_file(filepath, "rt") as f:
+        for id, doc in yaml_document(f):
+            result.append(action(doc, **kw, query_name=id))
+    return result
+
+
+def _ranked_decomposition(coefficients, ids):
+    """order paired values+strings, removing zeros
+
+    :param coefficients: csr_matrix, one-column vertical vector
+    :param ids: list of string identifiers
+    :return: a list of coefficients, a list of matched identifiers.
+        Output is ranked, very small items are removed
+    """
+
+    temp = [_ for _ in coefficients[:, 0]]
+    coefficients, ids = zip(*sorted(zip(temp, ids), reverse=True))
+    zeros = [i for i, v in enumerate(coefficients) if v==0]
+    if len(zeros) == 0:
+        return coefficients, ids
+    ids = [_ for i, _ in enumerate(ids) if i not in zeros]
+    coefficients = [_ for i,_ in enumerate(coefficients) if i not in zeros]
+    return coefficients, ids

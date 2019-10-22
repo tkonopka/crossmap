@@ -6,6 +6,7 @@ import numba
 from math import sqrt
 from .vectors import vec_norm, sparse_to_dense
 
+
 @numba.jit
 def norm_euc_dist(a, b):
     """compute the euclidean distance between two vectors"""
