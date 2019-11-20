@@ -38,10 +38,10 @@ def access_http_response(f):
 
 
 def parse_request(request):
-    """prepare curl data into parts suitable for prediction/decomposition
+    """prepare curl data into parts suitable for search/decomposition
 
     :param request:
-    :return: dictionary with arguments for prediction/decomposition
+    :return: dictionary with arguments for search/decomposition
     """
     data = loads(request.body)
     doc = dict()
@@ -71,7 +71,7 @@ def parse_add_request(request):
 
 
 def process_request(request, process_function):
-    """abstract process function that handles prediction and decomposition"""
+    """abstract process function that handles search and decomposition"""
     if request.method == "OPTIONS":
         return ""
     if request.method != "POST":

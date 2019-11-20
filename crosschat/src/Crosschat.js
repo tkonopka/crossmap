@@ -49,7 +49,7 @@ class Crosschat extends React.Component {
     /**
      * submit a query to the server
      * @param query object, payload sent to the api
-     * @param api character, api endpoint, e.g. "predict/" or "decompose/"
+     * @param api character, api endpoint, e.g. "search/" or "decompose/"
      */
     sendQuery(query, api) {
         // augment the query with settings
@@ -61,7 +61,6 @@ class Crosschat extends React.Component {
         xhr.onload = function(){
             let result = JSON.parse(xhr.response);
             result["_type"] = api;
-            //console.log("edited response: "+JSON.stringify(result));
             chat.addMessage(result, "server")
         };
         xhr.open("POST", "http://127.0.0.1:8098/" + api + "/", true);
