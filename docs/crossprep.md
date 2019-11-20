@@ -7,6 +7,7 @@ The suite contains several components.
  - [pubmed](#pubmed)
  - [genesets](#genesets)
  - [orphanet](#orphanet)
+ - [wiktionary](#wiktionary)
  
 Each component is launched with a common syntax,
 
@@ -68,7 +69,7 @@ This will read gene sets specified on the second line and create a dataset `gene
 
 ## `orphanet`
 
-The `orphanet` utility uses bulk downloads from [ORPHANET](http://www.orphadata.org/). 
+[Orphanet](http://www.orphadata.org/) is a curated knowledge-base on diseases, including their phenotypes and associated genetic causes. Parts of their database are available for download as xml files. The `orphanet` utility can parse these files and prepare summaries suitable for `crossmap`.
 
 ```
 python crossprep.py orphanet --outdir /output/dir --name orphanet
@@ -76,6 +77,19 @@ python crossprep.py orphanet --outdir /output/dir --name orphanet
                              --orphanet_genes en_product6.xml
 ```
 
-The utility assumes the xml files follow a schema concordant with orphanet bulk downloads.
 
 
+
+## `wiktionary`
+
+[Wiktionary](http://www.wiktionary.org) is an online dictionary that is part of [wikimedia](http://www.wikimedia.org). It provides bulk downloads of all the word definitions in its database. The `wiktionary` utility parses the definitions and constructs files that are suitable for `crossmap`.
+
+```
+python crossprep.py wiktionary --outdir /output/dir --name wiktionary
+                       --wiktionary enwiktionary-pages-articles.xml.bz2
+                       --wiktionary_length 10
+```
+
+This command taks as input `xml.bz2` compressed files, as provided by the wiktionary download page. The second argument is numerical factor that instructs the utility to skip over some words and the definitions. The utility looks at the length (number of characters) of words and their definitions. If the ratio of lengths for the definition and the word is smaller than the threshold, the word is omitted from the ouput. 
+
+ 

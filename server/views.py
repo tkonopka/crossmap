@@ -110,7 +110,7 @@ def process_add_request(request):
 @access_http_response
 def search(request):
     """process an http request to map a document onto nearest targets"""
-    return process_request(request, crossmap.predict)
+    return process_request(request, crossmap.search)
 
 
 @access_http_response

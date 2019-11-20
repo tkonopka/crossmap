@@ -1,5 +1,5 @@
 """
-Tests for predicting new documents
+Tests for simple nearest-neighbor search
 """
 
 import unittest
@@ -17,7 +17,7 @@ dataset_file = join(data_dir, "dataset.yaml")
 aux_file = join(data_dir, "documents.yaml")
 
 
-class CrossmapPredictTests(unittest.TestCase):
+class CrossmapSearchTests(unittest.TestCase):
     """Mapping new objects onto targets"""
 
     @classmethod
@@ -39,66 +39,66 @@ class CrossmapPredictTests(unittest.TestCase):
     def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    def test_prediction_is_serializable(self):
-        """prediction output should be compatible with json"""
+    def test_output_is_serializable(self):
+        """search output should be compatible with json"""
 
         A = self.docs["A"]
-        result = self.crossmap.predict(A, "targets", n=3)
+        result = self.crossmap.search(A, "targets", n=3)
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
 
-    def test_predict_empty(self):
-        """prediction on an empty document should not raise exceptions"""
+    def test_search_empty(self):
+        """search given an empty document should not raise exceptions"""
 
         empty = dict(data="")
-        result = self.crossmap.predict(empty, "targets", n=3)
+        result = self.crossmap.search(empty, "targets", n=3)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 0)
         self.assertEqual(len(result["distances"]), 0)
 
-    def test_predict_targets_A(self):
+    def test_search_targets_A(self):
         """target documents should map onto themselves"""
 
         A = self.docs["A"]
-        result = self.crossmap.predict(A, "targets", n=3)
+        result = self.crossmap.search(A, "targets", n=3)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 3)
         self.assertEqual(len(result["distances"]), 3)
         self.assertEqual(result["targets"][0], "A")
 
-    def test_predict_targets_B(self):
+    def test_search_targets_B(self):
         """target documents should map onto themselves"""
 
         B = self.docs["B"]
-        result = self.crossmap.predict(B, "targets", n=1)
+        result = self.crossmap.search(B, "targets", n=1)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 1)
         self.assertEqual(len(result["distances"]), 1)
         self.assertEqual(result["targets"][0], "B")
 
-    def test_predict_misc_doc(self):
+    def test_search_misc_doc(self):
         """similar to dataset:documents should map to dataset:targets"""
 
         doc = {"data": "Catherine C",
                "aux_pos": "Alice alpha A",
                "aux_neg": "B"}
-        result = self.crossmap.predict(doc, "targets", n=2)
+        result = self.crossmap.search(doc, "targets", n=2)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 2)
         self.assertEqual(result["targets"][0], "C")
         self.assertEqual(result["targets"][1], "A")
 
-    def test_predict_from_docs(self):
+    def test_search_from_docs(self):
         """can map onto the documents dataset instead of dataset:targets"""
 
         doc = {"data": "Bob B Alice A"}
-        result = self.crossmap.predict(doc, "documents", n=2)
+        result = self.crossmap.search(doc, "documents", n=2)
         # targets should match this document to C and A
         self.assertEqual(len(result["targets"]), 2)
         self.assertEqual(set(result["targets"]), set(["U:A", "U:B"]))
 
 
-class CrossmapPredictNoDocsTests(unittest.TestCase):
+class CrossmapSearchNoDocsTests(unittest.TestCase):
     """Mapping new objects onto targets without documents"""
 
     @classmethod
@@ -117,15 +117,15 @@ class CrossmapPredictNoDocsTests(unittest.TestCase):
     def tearDownClass(cls):
         remove_crossmap_cache(data_dir, "crossmap_single")
 
-    def test_prediction(self):
-        """prediction should produce output"""
+    def test_search_gives_output(self):
+        """search should produce some output"""
         A = self.docs["A"]
-        result = self.crossmap.predict(A, "targets", n=3)
+        result = self.crossmap.search(A, "targets", n=3)
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
 
 
-class CrossmapPredictBatchTests(unittest.TestCase):
+class CrossmapSearchBatchTests(unittest.TestCase):
     """Mapping new objects onto targets - in batch"""
 
     @classmethod
@@ -147,7 +147,7 @@ class CrossmapPredictBatchTests(unittest.TestCase):
         """target documents should map onto themselves"""
 
         target_file = self.crossmap.settings.data_files["targets"]
-        result = self.crossmap.predict_file(target_file, "targets", 2)
+        result = self.crossmap.search_file(target_file, "targets", 2)
         # all items should match the raw data and map onto themselves
         self.assertEqual(len(result), len(self.targets))
         for i in range(len(result)):
@@ -158,7 +158,7 @@ class CrossmapPredictBatchTests(unittest.TestCase):
         """documents should map onto targets"""
 
         docs_file = self.crossmap.settings.data_files["documents"]
-        result = self.crossmap.predict_file(docs_file, "targets", 2)
+        result = self.crossmap.search_file(docs_file, "targets", 2)
         for i in range(len(result)):
             self.assertTrue(result[i]["targets"][0] in self.targets)
             self.assertTrue(result[i]["targets"][1] in self.targets)

@@ -20,7 +20,7 @@ from crossmap.crossmap import Crossmap, validate_dataset_label
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "predict", "decompose", "server", "ui",
+                    choices=["build", "search", "decompose", "server", "ui",
                              "distances", "vectors", "counts",
                              "features", "summary"])
 parser.add_argument("--config", action="store",
@@ -101,14 +101,14 @@ if action == "build":
     crossmap.build()
     sys.exit()
 
-if action in set(["predict", "decompose"]):
+if action in set(["search", "decompose"]):
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap = Crossmap(settings)
     crossmap.load()
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     if config.dataset is None:
         sys.exit()
-    action_fun = crossmap.predict_file
+    action_fun = crossmap.search_file
     if action == "decompose":
         action_fun = crossmap.decompose_file
     result = action_fun(config.data, config.dataset,

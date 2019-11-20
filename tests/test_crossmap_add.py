@@ -133,7 +133,7 @@ class CrossmapAddBatchTests(unittest.TestCase):
         self.assertEqual(crossmap.db.dataset_size("manual"), len(idxs))
         # the new data is ready to be found
         b2 = {"data": "Bravo Bob Benjamin Bernard"}
-        hits = crossmap.predict(b2, "manual", n=2)
+        hits = crossmap.search(b2, "manual", n=2)
         self.assertEqual(set(hits["targets"]), set(["B1", "B2"]))
         # the first and second hits might be tied because the new data
         # might look equivalent given the feature_map produced by

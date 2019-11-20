@@ -16,13 +16,13 @@ from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
-def prediction_result(ids, distances, name):
-    """structure an object describing a nn prediction"""
+def search_result(ids, distances, name):
+    """structure an object describing a nearest-neighbor search"""
     return dict(query=name, targets=ids, distances=distances)
 
 
 def decomposition_result(ids, weights, name):
-    """structure an object descripting a gnd decomposition"""
+    """structure an object descripting a greedy-nearest-decomposition"""
     return dict(query=name, targets=ids, coefficients=weights)
 
 
@@ -130,8 +130,8 @@ class Crossmap:
             return v
         return self.diffuser.diffuse(v, diffusion)
 
-    def predict(self, doc, dataset, n=3, paths=None, diffusion=None,
-                query_name="query"):
+    def search(self, doc, dataset, n=3, paths=None, diffusion=None,
+               query_name="query"):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
@@ -147,12 +147,12 @@ class Crossmap:
 
         v = self.indexer.encode_document(doc)
         if sum(v.data) == 0:
-            return prediction_result([], [], query_name)
+            return search_result([], [], query_name)
         if diffusion is not None:
             v = self.diffuser.diffuse(v, diffusion)
         suggest = self.indexer.suggest
         targets, distances = suggest(v, dataset, n, paths)
-        result = prediction_result(targets[:n], distances[:n], query_name)
+        result = search_result(targets[:n], distances[:n], query_name)
         return result
 
     def decompose(self, doc, dataset, n=3, paths=None, diffusion=None,
@@ -162,7 +162,7 @@ class Crossmap:
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
         :param dataset: string, identifier for dataset
         :param n: integer, number of target to report
-        :param paths: dict, map passed to predict
+        :param paths: dict, map passed to search function
         :param diffusion: dict, strength of diffusion on primary data
         :param query_name:  character, a name for the document
         :return: dictionary containing an id, and list with target ids and
@@ -207,18 +207,18 @@ class Crossmap:
 
         return decomposition_result(ids, coefficients, query_name)
 
-    def predict_file(self, filepath, dataset, n, paths=None, diffusion=None):
-        """predict nearest targets for all documents in a file
+    def search_file(self, filepath, dataset, n, paths=None, diffusion=None):
+        """find nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
         :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
         :param paths: dict, map with number of paths through datasets
         :param diffusion: dict, map with diffusion strengths
-        :return: list with dicts, each as output by predict()
+        :return: list with dicts, each as output by search()
         """
 
-        return _action_file(self.predict, filepath, dataset=dataset,
+        return _action_file(self.search, filepath, dataset=dataset,
                             n=n, paths=paths, diffusion=diffusion)
 
     def decompose_file(self, filepath, dataset, n=3, paths=None, diffusion=None):
@@ -263,27 +263,27 @@ class Crossmap:
 
         return result
 
-    def distance_file(self, filepath, ids=[], diffuse=None):
+    def distance_file(self, filepath, ids=[], diffusion=None):
         """compute distances from items in a file to specific items in db
 
         :param filepath: string, path to a data file
         :param ids: list of string ids
-        :param diffuse: dict, map of diffusion strengths
+        :param diffusion: dict, map of diffusion strengths
         :return: list
         """
 
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.distance(doc, ids, diffuse, query_name=id))
+                result.append(self.distance(doc, ids, diffusion, query_name=id))
         return result
 
-    def vectors(self, filepath, ids=[], diffuse=None):
+    def vectors(self, filepath, ids=[], diffusion=None):
         """extraction of data vectors
 
         :param filepath: string, path to a data file
         :param ids: list of string ids
-        :param diffuse: dict, map of diffusion strengths
+        :param diffusion: dict, map of diffusion strengths
         :return: list
         """
 
@@ -295,8 +295,8 @@ class Crossmap:
                 x_data = db.get_data(label, ids=[x])
                 if len(x_data) > 0:
                     v = x_data[0]["data"]
-                    if diffuse is not None:
-                        v = self.diffuser.diffuse(v, diffuse)
+                    if diffusion is not None:
+                        v = self.diffuser.diffuse(v, diffusion)
                     v = list(sparse_to_dense(v))
                     x_result = dict(dataset=label, id=x, vector=v)
                     result.append(x_result)
@@ -308,8 +308,8 @@ class Crossmap:
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 v = self.indexer.encode_document(doc)
-                if diffuse is not None:
-                    v = self.diffuser.diffuse(v, diffuse)
+                if diffusion is not None:
+                    v = self.diffuser.diffuse(v, diffusion)
                 v = list(sparse_to_dense(v))
                 result.append(dict(dataset="_file_", id=id, vector=v))
         return result
