@@ -134,9 +134,11 @@ class CrossmapDiffuser:
         for corpus, value in strength.items():
             diffusion_data = self.db.get_counts_arrays(corpus, v_indexes)
             for di, ddata in diffusion_data.items():
-                if ddata[2] == 0:
+                # ddata[2] contains a sum of all data entries in the vector
+                # ddata[3] contains the maximal value
+                row_normalization = ddata[3]
+                if row_normalization == 0.0:
                     continue
-                row_normalization = max(abs(value), ddata[2])
                 data = ddata[0]
                 data *= v_data[di]*value/row_normalization
                 result = add_sparse(result, data, ddata[1])

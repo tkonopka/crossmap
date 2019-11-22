@@ -34,14 +34,15 @@ def bytes_to_arrays(x):
     """convert a bytes object into a pair of arrays
 
     :param x: bytes object
-    :param ncol: integer, number of columns in csr matrix
     :return: arrays with data, indices, and a sum of the data
-        Note the first two elements are ready to use with csr_matrix,
-        but the sum of the data is an ad-hoc extra.
+        Note the first two elements are ready to use with csr_matrix.
+        The sum and max of the data are ad-hoc extras.
     """
     raw = loads(x)
-    data_sum = sum([abs(_) for _ in raw[0]])
-    return array(raw[0]), array(raw[1]), data_sum
+    abs_data = [abs(_) for _ in raw[0]]
+    data_sum = sum(abs_data)
+    data_max = 0.0 if len(abs_data) == 0 else max(abs_data)
+    return array(raw[0]), array(raw[1]), data_sum, data_max
 
 
 def normalize_csr(v):
