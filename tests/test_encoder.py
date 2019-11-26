@@ -43,12 +43,8 @@ class CrossmapEncoderTests(unittest.TestCase):
     def test_encode_no_documents(self):
         """process an empty documents list"""
 
-        result, ids = [], []
-        for _item, _id, _title in self.builder.documents([]):
-            result.append(_item)
-            ids.append(_id)
+        ids = [_id for _item, _id, _title in self.builder.documents([])]
         self.assertEqual(ids, [])
-        self.assertEqual(result, [])
 
     def test_encode_documents(self):
         """process several documents on disk"""
@@ -67,11 +63,11 @@ class CrossmapEncoderTests(unittest.TestCase):
         self.assertEqual(len(r0), len(test_map))
         # entry for item "A" does not have requested features
         names_dict = {ids[_]:_ for _ in range(len(ids))}
-        index_A = names_dict["A"]
-        rA = result[index_A].toarray()[0]
-        self.assertEqual(sum(rA), 0, "all values for item A zero")
-        index_U = names_dict["U"]
-        rU = result[index_U].toarray()[0]
-        self.assertGreater(sum(rU), 0,
+        index_a = names_dict["A"]
+        r_a = result[index_a].toarray()[0]
+        self.assertEqual(sum(r_a), 0, "all values for item A zero")
+        index_u = names_dict["U"]
+        r_u = result[index_u].toarray()[0]
+        self.assertGreater(sum(r_u), 0,
                            "item U has word ABCDEFG which matches features")
 

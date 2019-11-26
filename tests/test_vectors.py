@@ -9,7 +9,7 @@ from math import sqrt
 from scipy.sparse import csr_matrix, vstack
 from crossmap.vectors import csr_residual, vec_decomposition
 from crossmap.vectors import num_nonzero, all_zero
-from crossmap.vectors import vec_norm, normalize_vec
+from crossmap.vectors import vec_norm, normalize_vec, threshold_vec
 
 
 class VecNormTests(unittest.TestCase):
@@ -124,6 +124,25 @@ class VecResidualTests(unittest.TestCase):
         result = csr_residual(v, mat, csr_matrix([[0.5], [0.75]]))
         expected = [0.0, 0.0, 0.5, 0.25]
         self.assertListEqual(list(result.toarray()[0]), expected)
+
+
+class VectorThresholdingTests(unittest.TestCase):
+    """vector thresholding"""
+
+    def test_threshold_vector(self):
+        """thresholding of a simple array"""
+
+        a = array([0.4, 1.2, 0.5, 2.8])
+        self.assertEqual(sum(a), 4.9)
+        result = threshold_vec(a, 1.0)
+        self.assertEqual(sum(result), 4.0)
+
+    def test_threshold_with_negatives(self):
+        """thresholding of a simple array, keep large negative numbers"""
+
+        a = array([0.4, -2.0, 0.5, 3.5])
+        result = threshold_vec(a, 1.0)
+        self.assertEqual(sum(result), 1.5)
 
 
 class VecDecompositionTests(unittest.TestCase):

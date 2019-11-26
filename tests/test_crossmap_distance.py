@@ -4,6 +4,7 @@ Tests for computing specific distances (for debugging/inspection purposes)
 
 import unittest
 from os.path import join
+from crossmap.info import CrossmapInfo
 from crossmap.crossmap import Crossmap
 from crossmap.settings import CrossmapSettings
 from .tools import remove_crossmap_cache
@@ -21,8 +22,9 @@ class CrossmapDistanceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_simple)
-        cls.crossmap = Crossmap(settings)
-        cls.crossmap.build()
+        crossmap = Crossmap(settings)
+        crossmap.build()
+        cls.crossmap = CrossmapInfo(settings)
 
     @classmethod
     def tearDownClass(cls):

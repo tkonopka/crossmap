@@ -3,6 +3,7 @@ Tests for manipulating csr vectors
 """
 
 import unittest
+from numpy import array
 from scipy.sparse import csr_matrix
 from crossmap.csr import bytes_to_csr, csr_to_bytes
 from crossmap.csr import normalize_csr, threshold_csr

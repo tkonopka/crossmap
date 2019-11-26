@@ -4,6 +4,7 @@ Crossprep is a suite of scripts that parse raw data files and prepare the conten
 
 The suite contains several components. 
 
+ - [obo](#obo)
  - [pubmed](#pubmed)
  - [genesets](#genesets)
  - [orphanet](#orphanet)
@@ -18,9 +19,35 @@ python3 crossprep.py COMPONENT [...]
 Here, `COMPONENT` is one of the components listed and `[...]` are arguments that pertain to that component.
 
 
+
+## `obo`
+
+`crossprep obo` is a command-line utility for parsing ontology definition files in `obo` format and preparing their contents for loading into a crossmap build. 
+
+Ontology files must be downloaded separately, for example from the [obo foundry](http://www.obofoundry.org/). The utility can then process the local file,
+
+```
+python crossprep.py obo --obo file.obo --name obo
+``` 
+
+There are two optional settings that tune the output. One of these, `---obo_root`, sets the root node for the output dataset. By default, the utility processes the whole ontology hierarchy, but this setting can create a dataset focused on any sub-branch. 
+
+```
+python crossprep.py obo --obo file.obo --name obo
+                        --obo_root NODE:00001
+```
+
+Another setting, `--obo_aux`, determines what kind of information is transferred from the ontology definition into the output dataset. The allowed values are `parents`, `ancestors`, `children`, `siblings`, or combinations thereof. By default, the utility will incorporate data about a node's parent within the definition of that node. As an example, to incorporate information about parents and siblings, the command would be as follows
+
+```
+python crossprep.py obo --obo file.obo --name obo_parents_siblings
+                        --obo_aux parents,siblings
+```
+
+
 ## `pubmed` 
 
-`crossprep pubmed` is a command-line utility for downloading and processing pubmed article data.
+`crossprep pubmed` is a utility for downloading and processing pubmed article data.
 
 There are two main utilities accessible through the pubmedgraph.py
 interface.

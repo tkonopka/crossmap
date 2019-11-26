@@ -15,13 +15,14 @@ from os.path import join, dirname
 from json import dumps, loads
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap, validate_dataset_label
+from crossmap.info import CrossmapInfo
 
 
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
                     choices=["build", "search", "decompose", "server", "ui",
-                             "distances", "vectors", "counts",
+                             "distances", "vectors", "counts", "diffuse",
                              "features", "summary"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
@@ -116,9 +117,13 @@ if action in set(["search", "decompose"]):
                         diffusion=config.diffusion)
     print_exit(result, config.pretty)
 
+if action == "diffuse":
+    crossmap = CrossmapInfo(settings)
+    result = crossmap.diffuse_ids(config.ids.split(","), diffusion=config.diffusion)
+    print_exit(result, config.pretty)
+
 if action in set(["distances", "vectors"]):
-    crossmap = Crossmap(settings)
-    crossmap.load()
+    crossmap = CrossmapInfo(settings)
     action_fun = crossmap.distance_file
     if action == "vectors":
         action_fun = crossmap.vectors
@@ -127,8 +132,7 @@ if action in set(["distances", "vectors"]):
     print_exit(result, config.pretty)
 
 if action == "counts":
-    crossmap = Crossmap(settings)
-    crossmap.load()
+    crossmap = CrossmapInfo(settings)
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     result = crossmap.counts(config.dataset, features=config.ids.split(","))
     print_exit(result, config.pretty)

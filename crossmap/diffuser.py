@@ -10,6 +10,7 @@ from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
 from .csr import normalize_csr, threshold_csr, add_sparse
+from .vectors import threshold_vec
 
 
 class CrossmapDiffuser:
@@ -23,6 +24,7 @@ class CrossmapDiffuser:
         """
 
         self.settings = settings
+        self.threshold = self.settings.diffusion.threshold
         if db is None:
             self.db = CrossmapDB(settings.db_file())
             self.db.build()
@@ -62,7 +64,7 @@ class CrossmapDiffuser:
             return
 
         info("Building diffusion index for " + dataset)
-        threshold = self.settings.diffusion.threshold
+        threshold = self.threshold
         progress = self.settings.logging.progress
         fm = self.feature_map
         nf = len(fm)
@@ -102,7 +104,7 @@ class CrossmapDiffuser:
         if num_rows == 0:
             self._set_empty_counts(dataset)
 
-        threshold = self.settings.diffusion.threshold
+        threshold = self.threshold
         for row in self.db.get_data(dataset, idxs=data_idxs):
             v = row["data"]
             if threshold > 0:
@@ -115,7 +117,7 @@ class CrossmapDiffuser:
                 indices_counts[k] += v
             self.db.update_counts(dataset, indices_counts)
 
-    def diffuse(self, v, strength, normalize=True):
+    def diffuse(self, v, strength, normalize=True, threshold=0):
         """create a new vector by diffusing values
 
         :param v: csr vector
@@ -140,6 +142,8 @@ class CrossmapDiffuser:
                 if row_normalization == 0.0:
                     continue
                 data = ddata[0]
+                if threshold > 0:
+                    data = threshold_vec(data, threshold*row_normalization)
                 data *= v_data[di]*value/row_normalization
                 result = add_sparse(result, data, ddata[1])
         result = csr_matrix(result)

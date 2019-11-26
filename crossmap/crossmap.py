@@ -7,7 +7,6 @@ from logging import warning, error
 from os import mkdir
 from os.path import exists
 from scipy.sparse import csr_matrix, vstack
-from .distance import sparse_euc_distance
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
@@ -107,7 +106,6 @@ class Crossmap:
         doc["metadata"] = metadata
         with open(self.settings.yaml_file(dataset), "at") as f:
             f.write(dump({id: doc}))
-
         return idx
 
     def add_file(self, dataset, filepath):
@@ -234,85 +232,6 @@ class Crossmap:
 
         return _action_file(self.decompose, filepath, dataset=dataset,
                             n=n, paths=paths, diffusion=diffusion)
-
-    def distance(self, doc, ids=[], diffusion=None, query_name="query"):
-        """compute distances from one document to specific items in db
-
-        :param doc: dictionary with text
-        :param ids: array of string ids, targets or documents
-        :param diffusion: dict, map of diffusion strengths
-        :param query_name: string, an identifier to associate with the doc
-        :return: list of objects containing id and distance
-        """
-
-        result = []
-        v = self.indexer.encode_document(doc)
-        if diffusion is not None:
-            v = self.diffuser.diffuse(v, diffusion)
-        distance = sparse_euc_distance
-        db = self.indexer.db
-        for x in ids:
-            for label in db.datasets.keys():
-                x_data = db.get_data(label, ids=[x])
-                if len(x_data) > 0:
-                    x_vector = x_data[0]["data"]
-                    x_dist = distance(v, x_vector)
-                    x_result = dict(query=query_name, dataset=label,
-                                    id=x, distance=x_dist)
-                    result.append(x_result)
-
-        return result
-
-    def distance_file(self, filepath, ids=[], diffusion=None):
-        """compute distances from items in a file to specific items in db
-
-        :param filepath: string, path to a data file
-        :param ids: list of string ids
-        :param diffusion: dict, map of diffusion strengths
-        :return: list
-        """
-
-        result = []
-        with open_file(filepath, "rt") as f:
-            for id, doc in yaml_document(f):
-                result.append(self.distance(doc, ids, diffusion, query_name=id))
-        return result
-
-    def vectors(self, filepath, ids=[], diffusion=None):
-        """extraction of data vectors
-
-        :param filepath: string, path to a data file
-        :param ids: list of string ids
-        :param diffusion: dict, map of diffusion strengths
-        :return: list
-        """
-
-        result = []
-        # convert db items into vectors
-        db = self.indexer.db
-        for x in ids:
-            for label in db.datasets.keys():
-                x_data = db.get_data(label, ids=[x])
-                if len(x_data) > 0:
-                    v = x_data[0]["data"]
-                    if diffusion is not None:
-                        v = self.diffuser.diffuse(v, diffusion)
-                    v = list(sparse_to_dense(v))
-                    x_result = dict(dataset=label, id=x, vector=v)
-                    result.append(x_result)
-
-        if filepath is None:
-            return result
-
-        # convert from-file items into vectors
-        with open_file(filepath, "rt") as f:
-            for id, doc in yaml_document(f):
-                v = self.indexer.encode_document(doc)
-                if diffusion is not None:
-                    v = self.diffuser.diffuse(v, diffusion)
-                v = list(sparse_to_dense(v))
-                result.append(dict(dataset="_file_", id=id, vector=v))
-        return result
 
     def counts(self, label, features=[], digits=6):
         """extract count vectors associated with features

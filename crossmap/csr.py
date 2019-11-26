@@ -70,7 +70,7 @@ def threshold_csr(v, threshold=0.001):
     data = []
     indices = []
     for d, i in zip(v.data, v.indices):
-        if abs(d) > threshold:
+        if abs(d) >= threshold:
             data.append(d)
             indices.append(i)
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)

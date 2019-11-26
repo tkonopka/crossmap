@@ -91,6 +91,21 @@ def csr_residual(v_t, b_t, weights):
     return v_t - model.transpose()
 
 
+@numba.jit
+def threshold_vec(v, threshold=0.001):
+    """set elements in array v below a threshold to zero
+
+    :param v: array vector
+    :param threshold: threshold level
+    :return: array with elements smaller than threshold set to zero
+    """
+
+    for i in range(len(v)):
+        if abs(v[i]) < threshold:
+            v[i] = 0
+    return v
+
+
 def vec_decomposition(v_t, b_t):
     """solves a linear set of equations.
 

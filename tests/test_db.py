@@ -44,12 +44,6 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         self.assertEqual(self.db.count_rows("targets", "data"), 0)
         self.assertEqual(self.db.count_rows("targets", "counts"), 0)
 
-    @unittest.skip
-    def test_db_registered_datasets(self):
-        """init script registers two datasets"""
-
-        self.assertEqual(len(self.db.get_datasets()), 2)
-
     def test_db_get_data(self):
         """extraction of data from empty db gives empty"""
 
