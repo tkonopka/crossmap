@@ -44,6 +44,8 @@ double_curly = re.compile("{{[^}]+}}")
 ref = [re.compile("<ref[^>]*>"), re.compile("</ref>"),
        re.compile("<!--.*-->")]
 quotes = re.compile("'+")
+# a special regex pattern to detect the inside of curly {{ab|cd|text
+curly_pipe = re.compile("{{.+\|")
 
 
 def parse_def(definition_text):
@@ -52,10 +54,14 @@ def parse_def(definition_text):
     if definition_text is None:
         return ""
 
-    # perform one-pass parsing (English nouns, adjectives, verbs)
-    result = []
+    # sections that contribute bulk content
     hit_sections = {"===Noun===", "===Verb===", "===Adjective==="}
-    section = False
+    # section that contain links (to be copied)
+    link_sections = {"===Related terms===", "====Related terms===="}
+
+    result = []
+    hit_section = False
+    link_section = False
     language = False
     for line in definition_text.split("\n"):
         # assess/update the location of the line in the document
@@ -63,15 +69,20 @@ def parse_def(definition_text):
             level = header_level(line)
             if level == 2:
                 language = (line == "==English==")
-            if level == 3:
-                section = (line in hit_sections)
+            if level == 3 or level == 4:
+                hit_section = (line in hit_sections)
+                link_section = (line in link_sections)
         # decide whether to transfer the line into the result
-        if section and language and line.startswith("# "):
+        if hit_section and language and line.startswith("# "):
             data = line[2:].replace("[[", "").replace("]]", "")
             data = double_curly.sub("", data)
             result.append(data.strip())
+        if link_section and language and line.startswith("* "):
+            data = line[2:].replace("}}", "")
+            data = curly_pipe.sub("", data)
+            result.append(data.strip())
 
-    # clean up some common wiktionary artifacts
+    # clean up some common artifacts
     result = (" ".join(result))
     for x in ref:
         result = x.sub("", result)

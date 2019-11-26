@@ -9,6 +9,8 @@ from .tools import open_file, yaml_document
 from .crossmap import Crossmap
 
 
+# TODO: implement a diffusion not only for single words, but also for entire documents from a file
+
 class CrossmapInfo(Crossmap):
 
     def __init__(self, settings):

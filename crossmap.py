@@ -21,7 +21,8 @@ from crossmap.info import CrossmapInfo
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "search", "decompose", "server", "ui",
+                    choices=["build", "search", "decompose", "add",
+                             "server", "ui",
                              "distances", "vectors", "counts", "diffuse",
                              "features", "summary"])
 parser.add_argument("--config", action="store",
@@ -97,6 +98,9 @@ def print_exit(x, pretty=False):
     sys.exit()
 
 
+# ############################################################################
+# actions associated with primary functionality and batch processing
+
 if action == "build":
     crossmap = Crossmap(settings)
     crossmap.build()
@@ -116,6 +120,16 @@ if action in set(["search", "decompose"]):
                         n=config.n, paths=config.paths,
                         diffusion=config.diffusion)
     print_exit(result, config.pretty)
+
+if action == "add":
+    crossmap = Crossmap(settings)
+    crossmap.load()
+    idxs = crossmap.add_file(config.dataset, config.data)
+    print_exit(idxs, config.pretty)
+
+
+# ############################################################################
+# actions associated with diagnostics
 
 if action == "diffuse":
     crossmap = CrossmapInfo(settings)
@@ -144,6 +158,10 @@ if action in set(["features", "summary"]):
     if config.action == "features":
         action_fun = crossmap.features
     print_exit(action_fun(), config.pretty)
+
+
+# ############################################################################
+# actions associated with the user interface
 
 if action == "server":
     try:

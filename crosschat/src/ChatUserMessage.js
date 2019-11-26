@@ -12,7 +12,7 @@ import Box from "@material-ui/core/Box";
 
 
 /** a chat message with information provided by a user **/
-class ChatUserMessage extends ChatMessage {
+class UserQueryMessage extends ChatMessage {
     constructor(props) {
         super(props);
         this.toggleExtendedView = this.toggleExtendedView.bind(this);
@@ -31,7 +31,7 @@ class ChatUserMessage extends ChatMessage {
 
     render() {
         let data = this.props.data;
-        console.log("rendering user message with data: "+JSON.stringify(data))
+        console.log("rendering user message with data: "+JSON.stringify(data));
         let rows = ["data", "aux_pos", "aux_neg"].map((x) => {
             if (data[x]===undefined) {
                 return null;
@@ -120,6 +120,63 @@ class ChatUserMessage extends ChatMessage {
                 </Box>
             </div>
         )
+    }
+}
+
+
+class UserAddMessage extends ChatMessage {
+    constructor(props) {
+        super(props);
+        this.toggleExtendedView = this.toggleExtendedView.bind(this);
+    }
+
+    componentDidMount() {
+        this.setState({extended: 0});
+    }
+    toggleExtendedView() {
+        this.setState((prevState) => ({extended: (prevState.extended+1) %2 }));
+    }
+
+    render() {
+        let data = this.props.data;
+        //console.log("rendering user message with data: "+JSON.stringify(data));
+        let rows = ["title", "data", "aux_pos", "aux_neg"].map((x) => {
+            if (data[x]===undefined) {
+                return null;
+            }
+            if (data[x] !== "") {
+                return(<TableRow key={x}>
+                    <TableCell><Typography>{data[x]}</Typography></TableCell>
+                    <TableCell className="chat-td-label"><Typography color="secondary">{x}</Typography></TableCell>
+                </TableRow>)
+            }
+            return null;
+        });
+        return (
+            <div className="chat-user" onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+                <Typography variant={"h5"}>Add</Typography>
+                <Table>
+                    <TableBody>
+                        {rows}
+                    </TableBody>
+                </Table>
+            </div>
+        )
+    }
+}
+
+
+/** Class to display server responses **/
+class ChatUserMessage extends React.Component {
+    render() {
+        let action = this.props.data["action"];
+        console.log("action is "+action);
+        if (action === "search" || action === "decompose") {
+            return (<UserQueryMessage data={this.props.data} clone={this.props.clone} />);
+        } else if (action === "add") {
+            return (<UserAddMessage data={this.props.data} />);
+        }
+
     }
 }
 

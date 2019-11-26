@@ -3,7 +3,7 @@ Crossmap class
 """
 
 from yaml import dump
-from logging import warning, error
+from logging import info, warning, error
 from os import mkdir
 from os.path import exists
 from scipy.sparse import csr_matrix, vstack
@@ -120,6 +120,7 @@ class Crossmap:
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 result.append(self.add(dataset, doc, id, rebuild=False))
+        info("Added "+str(len(result))+ " entries")
         self.indexer.rebuild_index(dataset)
         return result
 

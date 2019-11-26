@@ -171,6 +171,7 @@ class CrossmapIndexer:
         :param dataset: string, name of dataset to rebuild
         """
 
+        info("Rebuilding index: " + str(dataset))
         index_file = self.settings.index_file(dataset)
         if exists(index_file):
             remove(index_file)
