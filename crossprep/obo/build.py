@@ -30,7 +30,8 @@ def build_obo_dataset(obo_file, root_id=None, aux="none"):
         build a dataset for an ontology branch
     :param aux: character, the type of data to include in
         aux_pos and aux_neg fields
-    :return:
+    :return: dictionary mapping ids to objects with
+        data, aux_pos, aux_neg components
     """
 
     obo = Obo(obo_file)
@@ -40,6 +41,7 @@ def build_obo_dataset(obo_file, root_id=None, aux="none"):
         hits = set(obo.descendants(root_id))
         hits.add(root_id)
 
+    aux_grandparents = ("grandparents" in aux)
     aux_parents = ("parents" in aux)
     aux_ancestors = ("ancestors" in aux)
     aux_siblings = ("siblings" in aux)
@@ -54,16 +56,25 @@ def build_obo_dataset(obo_file, root_id=None, aux="none"):
         data_pos = []
         data_neg = []
         metadata = dict()
-        if aux_parents:
-            metadata["parents"] = []
-            for parent in obo.parents(id):
-                metadata["parents"].append(parent)
-                data_pos.append(name_def(obo.terms[parent]))
         if aux_ancestors:
             metadata["ancestors"] = []
             for ancestor in obo.ancestors(id):
                 metadata["ancestors"].append(ancestor)
                 data_pos.append(name_def(obo.terms[ancestor]))
+        elif aux_grandparents:
+            metadata["parents"] = []
+            metadata["grandparents"] = []
+            for parent in obo.parents(id):
+                metadata["parents"].append(parent)
+                data_pos.append(name_def(obo.terms[parent]))
+                for grandparent in obo.parents(parent):
+                    metadata["grandparents"].append(grandparent)
+                    data_pos.append(name_def(obo.terms[grandparent]))
+        elif aux_parents:
+            metadata["parents"] = []
+            for parent in obo.parents(id):
+                metadata["parents"].append(parent)
+                data_pos.append(name_def(obo.terms[parent]))
         if aux_siblings:
             for sibling in obo.siblings(id):
                 data_neg.append(obo.terms[sibling].name)

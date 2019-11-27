@@ -13,7 +13,7 @@ The suite contains several components.
 Each component is launched with a common syntax,
 
 ```python
-python3 crossprep.py COMPONENT [...]
+python crossprep.py COMPONENT [...]
 ``` 
 
 Here, `COMPONENT` is one of the components listed and `[...]` are arguments that pertain to that component.
@@ -55,26 +55,26 @@ interface.
 The first utility downloads 'baseline' article data. An example call to this utility is as follows:
 
 ```
-python3 crossprep.py baseline --outdir /output/dir
+python crossprep.py baseline --outdir /output/dir
 ```
 
 This create an output directory and a subdirectory `baseline`, then attempts to download all baseline files from the NCBI servers. It is possible to restrict the downloads via file indexes, e.g.  
 
 ```
-python3 crossprep.py baseline --outdir /output/dir --indexes 1-10
+python crossprep.py baseline --outdir /output/dir --indexes 1-10
 ```
 
 
 The second utility scans the baseline files and builds yaml datasets.
 
 ```
-python3 crossprep.py pubmed--outdir /output/dir --name pubmed-all 
+python crossprep.py pubmed--outdir /output/dir --name pubmed-all 
 ```
 
 It is possible to tune the output dataset using year ranges, pattern matches, and size threholds, e.g.
 
 ```
-python3 crossprep.py pubmed --outdir /output/dir --name pubmed-recent-human
+python crossprep.py pubmed --outdir /output/dir --name pubmed-recent-human
          --year 2010-2019 --pattern humam --length 500
 ``` 
 

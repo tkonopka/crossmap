@@ -3,7 +3,7 @@ Crossmap
 
 Command line interface to crossmap document mapping.
 
-Usage: python3 crossmap.py command
+Usage: python crossmap.py command
 """
 
 
@@ -50,7 +50,9 @@ parser.add_argument("--pretty", action="store_true",
 
 # manual investigation/debugging
 parser.add_argument("--ids", action="store",
-                    help="comma-separate ids")
+                    help="comma-separated ids")
+parser.add_argument("--text", action="store",
+                    help="comma-separated text items")
 
 
 # fine-tuning of predictions and output
@@ -133,7 +135,12 @@ if action == "add":
 
 if action == "diffuse":
     crossmap = CrossmapInfo(settings)
-    result = crossmap.diffuse_ids(config.ids.split(","), diffusion=config.diffusion)
+    result = []
+    result.extend(crossmap.diffuse_text(config.text.split(","),
+                                        diffusion=config.diffusion))
+    result.extend(crossmap.diffuse_ids(config.dataset,
+                                       config.ids.split(","),
+                                       diffusion=config.diffusion))
     print_exit(result, config.pretty)
 
 if action in set(["distances", "vectors"]):

@@ -3,13 +3,12 @@ Add-on class to use a crossmap object to extract diagnostic information
 """
 
 import logging
+from scipy.sparse import csr_matrix
 from .distance import sparse_euc_distance
 from .vectors import sparse_to_dense
 from .tools import open_file, yaml_document
 from .crossmap import Crossmap
 
-
-# TODO: implement a diffusion not only for single words, but also for entire documents from a file
 
 class CrossmapInfo(Crossmap):
 
@@ -32,24 +31,43 @@ class CrossmapInfo(Crossmap):
     def diffuse(self, doc, diffusion=None):
         """provide an explanation for diffusion in terms of original features
 
-        :param s: string, will be tokenized before being diffused
+        :param doc: csr_matrix or a dictionary with raw data (will be tokenized before being diffused)
         :param diffusion: dictionary
         :return:
         """
-        v = self.indexer.encode_document(doc)
+
+        v = doc
+        if type(doc) is not csr_matrix:
+            v = self.indexer.encode_document(doc)
         if diffusion is not None:
             v = self.diffuser.diffuse(v, diffusion)
+
         result = []
+        inv_feature_map = self.inv_feature_map
         for i, d in zip(v.indices, v.data):
-            result.append([round(d, 6), self.inv_feature_map[i]])
+            result.append([round(d, 6), inv_feature_map[i]])
         result = sorted(result)
         return [{"feature": v[1], "value": v[0]} for i, v in enumerate(result)]
 
-    def diffuse_ids(self, ids, diffusion=None):
+    def diffuse_ids(self, dataset, ids, diffusion=None):
+        """compute diffusion for database entries"""
+
+        result = []
+        if ids is None:
+            return result
+        for d in self.db.get_data(dataset, ids=ids):
+            for d_result in self.diffuse(d["data"], diffusion):
+                d_result["input"] = d["id"]
+                result.append(d_result)
+        return result
+
+    def diffuse_text(self, items, diffusion=None):
         """compute diffusion for individual features"""
 
         result = []
-        for d in ids:
+        if items is None:
+            return result
+        for d in items:
             for d_result in self.diffuse({"data": d}, diffusion):
                 d_result["input"] = d
                 result.append(d_result)
