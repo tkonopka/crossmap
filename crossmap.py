@@ -174,7 +174,7 @@ if action == "server":
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
-        raise ImportError("Could not import Django.") from exc
+        raise ImportError("Could not import Django.")
     environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
     environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
     execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
