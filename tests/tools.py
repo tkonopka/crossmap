@@ -23,6 +23,8 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
                  "targets-index", "targets-index.dat",
                  "documents-index", "documents-index.dat",
                  "manual-index", "manual-index.dat",
+                 "pos.yaml", "pos-index", "pos-index.dat",
+                 "neg.yaml", "neg-index", "neg-index.dat",
                  "targets-data", "documents-data", "manual.yaml"]
     filenames = [prefix + "-" + _ for _ in filenames]
     filenames.append(prefix + ".sqlite")

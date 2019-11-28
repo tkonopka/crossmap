@@ -139,3 +139,104 @@ class CrossmapAddBatchTests(unittest.TestCase):
         # might look equivalent given the feature_map produced by
         # the original config_simple setup
 
+
+class CrossmapAddDiffusionTests(unittest.TestCase):
+    """Adding documents to affect diffusion and search"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.crossmap = Crossmap(config_file)
+        cls.crossmap.build()
+        cls.db = cls.crossmap.indexer.db
+        cls.manual_file = cls.crossmap.settings.yaml_file("manual")
+        # at start, project only has "targets" and "documents" datasets
+
+        cls.doc_Alice = dict(data="Alice A")
+        cls.doc_A = dict(data="A")
+        cls.doc_B = dict(data="B")
+        cls.doc_AB = dict(data="A B")
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+        pass
+
+    def test_plain_associations(self):
+        """establish associations before adding any new data entries"""
+
+        # diffused "Alice" should connect to A and B
+        crossmap = self.crossmap
+        d_Alice = crossmap.search(self.doc_Alice, "targets", n=2,
+                                        diffusion=dict(documents=1))
+        self.assertFalse("U" in d_Alice["targets"])
+        self.assertTrue("A" in d_Alice["targets"])
+        self.assertTrue("B" in d_Alice["targets"])
+
+        # diffused "A B" should connect to to "A" and "B"
+        d_AB = crossmap.search(self.doc_AB, "targets", n=2,
+                                   diffusion=dict(documents=1))
+        self.assertFalse("U" in d_AB["targets"])
+        self.assertListEqual(sorted(d_AB["targets"]), ["A", "B"])
+
+    def test_add_positive(self):
+        """adding new documents can create new associations"""
+
+        # some new documents that link Alice to other tokens
+        pos_docs = [dict(data="Alice unique"),
+                    dict(data="Alice token"),
+                    dict(data="Alice has unique token"),
+                    dict(data="Alice Catherine")]
+        docs_indexes = list(range(len(pos_docs)))
+        docs_indexes.reverse()
+        crossmap = self.crossmap
+        for i in docs_indexes:
+            crossmap.add("pos", pos_docs[i], id="P"+str(i), rebuild=(i==0))
+
+        self.assertEqual(crossmap.db.dataset_size("pos"), len(pos_docs))
+        d0_Alice = crossmap.search(self.doc_Alice, "targets", n=2,
+                                   diffusion=None)
+        d1_Alice = crossmap.search(self.doc_Alice, "targets", n=2,
+                                   diffusion=dict(pos=1))
+        self.assertTrue("A" in d0_Alice["targets"])
+        self.assertTrue("A" in d1_Alice["targets"])
+        self.assertTrue("U" in d1_Alice["targets"])
+
+    def test_add_negative(self):
+        """adding documents with neg associations can remove links"""
+
+        # some new documents that link Alice to other tokens
+        neg_docs = [dict(aux_pos="A", aux_neg="B"),
+                    dict(aux_pos="Alice", aux_neg="Bob")]
+        docs_indexes = list(range(len(neg_docs)))
+        docs_indexes.reverse()
+        crossmap = self.crossmap
+        for i in docs_indexes:
+            crossmap.add("neg", neg_docs[i], id="N"+str(i), rebuild=(i==0))
+        self.assertEqual(crossmap.db.dataset_size("neg"), 2)
+
+        # entry "A" should link to B before, but not after adding
+        d0_A = crossmap.search(self.doc_A, "targets", n=2,
+                               diffusion=dict(documents=1))
+        d1_A = crossmap.search(self.doc_A, "targets", n=2,
+                               diffusion=dict(documents=1, neg=1))
+        #print("querying A")
+        #print(str(d0_A))
+        #print(str(d1_A))
+        self.assertEqual(d0_A["targets"][0], "A")
+        self.assertEqual(d1_A["targets"][0], "A")
+        self.assertTrue("B" in d0_A["targets"])
+        self.assertFalse("B" in d1_A["targets"])
+
+        # entry "B" should link to A before, but not after adding
+        d0_B = crossmap.search(self.doc_B, "targets", n=2,
+                               diffusion=dict(documents=1))
+        d1_B = crossmap.search(self.doc_B, "targets", n=2,
+                               diffusion=dict(documents=1, neg=1))
+        #print("querying B")
+        #print(str(d0_B))
+        #print(str(d1_B))
+        self.assertEqual(d0_B["targets"][0], "B")
+        self.assertEqual(d1_B["targets"][0], "B")
+        self.assertTrue("A" in d0_B["targets"])
+        self.assertFalse("A" in d1_B["targets"])
+

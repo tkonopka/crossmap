@@ -13,6 +13,12 @@ from .csr import normalize_csr, threshold_csr, add_sparse
 from .vectors import threshold_vec
 
 
+def sign(x):
+    """get the sign of a number"""
+    result = 1 if x >= 0 else -1
+    return result
+
+
 class CrossmapDiffuser:
     """Vector diffusion for crossmap"""
 
@@ -75,9 +81,10 @@ class CrossmapDiffuser:
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
+            v_max = max(v.data)
             total += 1
-            for k in v.indices:
-                result[k] += v
+            for i, d in zip(v.indices, v.data):
+                result[int(i)] += v*(d/v_max)
             if total % progress == 0:
                 info("Progress: " + str(total))
         self.db.set_counts(dataset, result)
@@ -112,10 +119,15 @@ class CrossmapDiffuser:
             v_indices = [int(_) for _ in v.indices]
             if len(v.indices) == 0:
                 continue
-            indices_counts = self.db.get_counts(dataset, v_indices)
-            for k in list(indices_counts.keys()):
-                indices_counts[k] += v
-            self.db.update_counts(dataset, indices_counts)
+            v_max = max(v.data)
+
+            # update features with positive weights
+            v_dict = {i: d for i, d in zip(v_indices, v.data)}
+            counts = self.db.get_counts(dataset, v_indices)
+            for k in list(counts.keys()):
+                d = v_dict[k]
+                counts[k] += v*(d/v_max)
+            self.db.update_counts(dataset, counts)
 
     def diffuse(self, v, strength, normalize=True, threshold=0):
         """create a new vector by diffusing values
