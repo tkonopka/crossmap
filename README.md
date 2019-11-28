@@ -3,8 +3,7 @@
 crossmap
 
 
-```
-pip install sqlite3 django numpy scipy
-```
+Intro - to do
 
-It is best to use the most recent versions of these packages. 
+[Documentation](docs/README.md)
+
