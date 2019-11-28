@@ -136,11 +136,13 @@ if action == "add":
 if action == "diffuse":
     crossmap = CrossmapInfo(settings)
     result = []
-    result.extend(crossmap.diffuse_text(config.text.split(","),
-                                        diffusion=config.diffusion))
-    result.extend(crossmap.diffuse_ids(config.dataset,
-                                       config.ids.split(","),
-                                       diffusion=config.diffusion))
+    if config.text is not None:
+        result.extend(crossmap.diffuse_text(config.text.split(","),
+                                            diffusion=config.diffusion))
+    if config.ids is not None:
+        result.extend(crossmap.diffuse_ids(config.dataset,
+                                           config.ids.split(","),
+                                           diffusion=config.diffusion))
     print_exit(result, config.pretty)
 
 if action in set(["distances", "vectors"]):

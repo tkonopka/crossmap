@@ -37,6 +37,13 @@ class CsrNormTests(unittest.TestCase):
         result2 = sparse_to_dense(n_csr(csr_matrix([4.0, 0.0])))
         self.assertListEqual(list(result2), [1.0, 0.0])
 
+    def test_normalize_csr_in_place(self):
+        """produce a unit-norm vector from csr (in place)"""
+
+        vec = csr_matrix([0.0, 2.0, 0.0])
+        normalize_csr(vec)
+        self.assertListEqual(list(sparse_to_dense(vec)), [0.0, 1.0, 0.0])
+
 
 class CsrThresholdingTests(unittest.TestCase):
     """csr vector thresholding"""

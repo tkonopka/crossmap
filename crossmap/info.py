@@ -53,7 +53,7 @@ class CrossmapInfo(Crossmap):
         """compute diffusion for database entries"""
 
         result = []
-        if ids is None:
+        if ids is None or len(ids) == 0:
             return result
         for d in self.db.get_data(dataset, ids=ids):
             for d_result in self.diffuse(d["data"], diffusion):
@@ -65,7 +65,7 @@ class CrossmapInfo(Crossmap):
         """compute diffusion for individual features"""
 
         result = []
-        if items is None:
+        if items is None or len(items) == 0:
             return result
         for d in items:
             for d_result in self.diffuse({"data": d}, diffusion):

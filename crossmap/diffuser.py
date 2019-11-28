@@ -10,6 +10,7 @@ from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from .db import CrossmapDB
 from .csr import normalize_csr, threshold_csr, add_sparse
+from .sparsevector import Sparsevector
 from .vectors import threshold_vec
 
 
@@ -74,19 +75,20 @@ class CrossmapDiffuser:
         progress = self.settings.logging.progress
         fm = self.feature_map
         nf = len(fm)
-        empty = csr_matrix([0.0]*len(fm))
-        result = [empty.copy() for _ in range(nf)]
+        result = [Sparsevector() for _ in range(nf)]
         total = 0
         for row in self.db.all_data(dataset):
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            v_max = max(v.data)
             total += 1
             for i, d in zip(v.indices, v.data):
-                result[int(i)] += v*(d/v_max)
+                result[i].add_csr(v, sign(d))
             if total % progress == 0:
                 info("Progress: " + str(total))
+        # replace dictionaries by csr_matrix (in place to save memory)
+        for _ in range(nf):
+            result[_] = result[_].to_csr(nf)
         self.db.set_counts(dataset, result)
 
     def build(self):
@@ -119,14 +121,12 @@ class CrossmapDiffuser:
             v_indices = [int(_) for _ in v.indices]
             if len(v.indices) == 0:
                 continue
-            v_max = max(v.data)
 
-            # update features with positive weights
             v_dict = {i: d for i, d in zip(v_indices, v.data)}
             counts = self.db.get_counts(dataset, v_indices)
             for k in list(counts.keys()):
                 d = v_dict[k]
-                counts[k] += v*(d/v_max)
+                counts[k] += v*sign(d)
             self.db.update_counts(dataset, counts)
 
     def diffuse(self, v, strength, normalize=True, threshold=0):
@@ -144,21 +144,23 @@ class CrossmapDiffuser:
         # and have its structure change many times
         result = v.toarray()[0]
         v_indexes = [int(_) for _ in v.indices]
-        v_data = {v.indices[_]: v.data[_] for _ in range(len(v.data))}
+        v_dict = Sparsevector(v).data
         for corpus, value in strength.items():
             diffusion_data = self.db.get_counts_arrays(corpus, v_indexes)
             for di, ddata in diffusion_data.items():
                 # ddata[2] contains a sum of all data entries in the vector
                 # ddata[3] contains the maximal value
-                row_normalization = ddata[3]
-                if row_normalization == 0.0:
+                row_norm = ddata[3]
+                if row_norm == 0.0:
                     continue
                 data = ddata[0]
                 if threshold > 0:
-                    data = threshold_vec(data, threshold*row_normalization)
-                data *= v_data[di]*value/row_normalization
+                    data = threshold_vec(data, threshold*row_norm)
+                data *= v_dict[di]*value/row_norm
                 result = add_sparse(result, data, ddata[1])
         result = csr_matrix(result)
         if normalize:
+            # this command can be written as just "normalize_csr(result)"
+            # but empirically the running time is much fast with "result=..."
             result = normalize_csr(result)
         return result
