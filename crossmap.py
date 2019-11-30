@@ -136,6 +136,9 @@ if action == "add":
 if action == "diffuse":
     crossmap = CrossmapInfo(settings)
     result = []
+    if config.data is not None:
+        result.extend(crossmap.diffuse_file(config.data.split(","),
+                                            diffusion=config.diffusion))
     if config.text is not None:
         result.extend(crossmap.diffuse_text(config.text.split(","),
                                             diffusion=config.diffusion))

@@ -73,6 +73,20 @@ class CrossmapInfo(Crossmap):
                 result.append(d_result)
         return result
 
+    def diffuse_file(self, paths, diffusion=None):
+        """compute diffusion for items from a file"""
+
+        result = []
+        if paths is None or len(paths) == 0:
+            return result
+        for filepath in paths:
+            with open_file(filepath, "rt") as f:
+                for id, doc in yaml_document(f):
+                    for d_result in self.diffuse(doc, diffusion):
+                        d_result["input"] = id
+                        result.append(d_result)
+        return result
+
     def distance(self, doc, ids=[], diffusion=None, query_name="query"):
         """compute distances from one document to specific items in db
 
