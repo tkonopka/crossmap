@@ -5,34 +5,107 @@ Build a dataset of crossmap using obo files.
 from .obo import Obo
 
 
-def name_def(term, with_comment=False, sep="; "):
-    """helper to get a string with term name and def"""
-
-    result = term.name
-    if term.data is None:
-        return result
-    if "def" in term.data:
-        defstr = "".join(term.data["def"])
-        defstr = (defstr.split("["))[0].strip()
-        if defstr.startswith('"') and defstr.endswith('"'):
-            defstr = defstr[1:-1]
-        if not defstr.endswith("."):
-            defstr += "."
-        result += sep + defstr
-    if with_comment:
-        result += " " + comment(term)
-    return result
-
-
 def comment(term):
     """helper to get a string with the comment string for an obo term"""
 
     if term.data is None or "comment" not in term.data:
         return ""
-    result = "".join(term.data["comment"])
-    if not result.endswith("."):
-        result += "."
-    return result
+    return ", ".join(term.data["comment"])
+
+
+def synonyms(term):
+    """helper to extract synonyms"""
+
+    if term.data is None or len(term.synonyms) == 0:
+        return ""
+    return ", ".join(term.synonyms)
+
+
+class OboBuilder:
+    """Builder of a crossmap dataset from obo"""
+
+    # characters to separate entries, synonyms, etc.
+    sep = "; "
+
+    def __init__(self, obo_file, root_id=None, aux="none"):
+        """set up an obo object and understand building settings"""
+
+        self.obo = Obo(obo_file)
+        if root_id is None:
+            self.hits = set(self.obo.ids())
+        else:
+            self.hits = set(self.obo.descendants(root_id))
+            self.hits.add(root_id)
+
+        self.aux_comments = ("comments" in aux)
+        self.aux_synonyms = ("synonyms" in aux)
+        self.aux_parents = ("parents" in aux)
+        self.aux_ancestors = ("ancestors" in aux)
+        self.aux_siblings = ("siblings" in aux)
+        self.aux_children = ("children" in aux)
+
+    def content(self, term, extras=True):
+        """helper to get a single string to describe a term"""
+
+        result = term.name
+        if term.data is None:
+            return result
+        if "def" in term.data:
+            defstr = "".join(term.data["def"])
+            defstr = (defstr.split("["))[0].strip()
+            if defstr.startswith('"') and defstr.endswith('"'):
+                defstr = defstr[1:-1]
+            result += self.sep + defstr
+        if extras:
+            if self.aux_comments:
+                result += self.sep + comment(term)
+            if self.aux_synonyms:
+                result += self.sep + synonyms(term)
+        return result.strip()
+
+    def build(self):
+        """transfer data from obo into a dictionary"""
+
+        result = dict()
+        obo, hits = self.obo, self.hits
+        for id in obo.ids():
+            if id not in hits:
+                continue
+            term = obo.terms[id]
+            data = self.content(term, extras=False)
+            data_pos = []
+            data_neg = []
+            metadata = dict()
+            if self.aux_comments:
+                data_pos.append(comment(term))
+            if self.aux_synonyms:
+                data_pos.append(synonyms(term))
+            if self.aux_ancestors:
+                metadata["ancestors"] = []
+                for ancestor in obo.ancestors(id):
+                    metadata["ancestors"].append(ancestor)
+                    data_pos.append(self.content(obo.terms[ancestor]))
+            elif self.aux_parents:
+                metadata["parents"] = []
+                for parent in obo.parents(id):
+                    metadata["parents"].append(parent)
+                    data_pos.append(self.content(obo.terms[parent]))
+            if self.aux_siblings:
+                for sibling in obo.siblings(id):
+                    data_neg.append(obo.terms[sibling].name)
+            if self.aux_children:
+                for child in obo.children(id):
+                    data_neg.append(obo.terms[child].name)
+
+            # clean up and create object
+            data_pos = [_ for _ in data_pos if _ != ""]
+            data_neg = [_ for _ in data_neg if _ != ""]
+            result[id] = dict(title=term.name,
+                              data=data,
+                              aux_pos="; ".join(data_pos),
+                              aux_neg="; ".join(data_neg),
+                              metadata=metadata)
+        return result
 
 
 def build_obo_dataset(obo_file, root_id=None, aux="none"):
@@ -47,53 +120,5 @@ def build_obo_dataset(obo_file, root_id=None, aux="none"):
         data, aux_pos, aux_neg components
     """
 
-    obo = Obo(obo_file)
-    if root_id is None:
-        hits = set(obo.ids())
-    else:
-        hits = set(obo.descendants(root_id))
-        hits.add(root_id)
-
-    aux_comments = ("comments" in aux)
-    aux_parents = ("parents" in aux)
-    aux_ancestors = ("ancestors" in aux)
-    aux_siblings = ("siblings" in aux)
-    aux_children = ("children" in aux)
-
-    result = dict()
-    for id in obo.ids():
-        if id not in hits:
-            continue
-        term = obo.terms[id]
-        data = name_def(term, with_comment=False)
-        data_pos = []
-        data_neg = []
-        metadata = dict()
-        if aux_comments:
-            data_pos.append(comment(term))
-        if aux_ancestors:
-            metadata["ancestors"] = []
-            for ancestor in obo.ancestors(id):
-                metadata["ancestors"].append(ancestor)
-                data_pos.append(name_def(obo.terms[ancestor], aux_comments))
-        elif aux_parents:
-            metadata["parents"] = []
-            for parent in obo.parents(id):
-                metadata["parents"].append(parent)
-                data_pos.append(name_def(obo.terms[parent], aux_comments))
-        if aux_siblings:
-            for sibling in obo.siblings(id):
-                data_neg.append(obo.terms[sibling].name)
-        if aux_children:
-            for child in obo.children(id):
-                data_neg.append(obo.terms[child].name)
-
-        # clean up and create object
-        data_pos = [_ for _ in data_pos if _ != ""]
-        data_neg = [_ for _ in data_neg if _ != ""]
-        result[id] = dict(title=term.name,
-                          data=data,
-                          aux_pos="; ".join(data_pos),
-                          aux_neg="; ".join(data_neg),
-                          metadata=metadata)
-    return result
+    builder = OboBuilder(obo_file, root_id, aux)
+    return builder.build()

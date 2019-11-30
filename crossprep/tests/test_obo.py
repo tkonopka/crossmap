@@ -101,6 +101,13 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertEqual(r6["aux_neg"], "")
         self.assertTrue("less" in r6["aux_pos"])
 
+    def test_aux_synonyms(self):
+        """elements can include synonyms"""
+
+        result = build_obo_dataset(int_file, aux="parents,synonyms")
+        self.assertTrue("unity" in result["int:6"]["aux_pos"])
+        self.assertFalse("EXACT" in str(result["int:6"]))
+
     def test_build_subset(self):
         """create a dataset using a branch of the ontology"""
 
