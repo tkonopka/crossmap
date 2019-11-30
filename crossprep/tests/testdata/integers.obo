@@ -9,6 +9,7 @@ ontology: small
 id: int:0
 name: integer
 def: "integer. ontology root."
+comment: root comment
 
 [Term]
 id: int:1

@@ -3,7 +3,7 @@ Class holding a single term defined in an obo file.
 
 This container/parser only supports a few of the data types in an obo term. 
 
-(This file is copied from another project: phenoscoring)
+(This file is derived/modified from another project: phenoscoring)
 """
 
 

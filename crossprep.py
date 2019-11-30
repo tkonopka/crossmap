@@ -3,7 +3,7 @@ Crossprep
 
 Command line interface to a suite of tools to prepare data for crossmap.
 
-Usage: python3 crossprep.py command
+Usage: python crossprep.py command
 """
 
 import argparse
@@ -23,6 +23,7 @@ from crossprep.wiktionary.build import build_wiktionary_dataset
 # this is a command line utility
 if __name__ != "__main__":
     exit()
+
 
 # ############################################################################
 # Arguments
@@ -50,7 +51,7 @@ parser.add_argument("--obo_root", action="store",
                     default=None)
 parser.add_argument("--obo_aux", action="store",
                     help="types of auxiliary data to include",
-                    default="parents")
+                    default="parents,comments")
 
 # settings for orphanet
 parser.add_argument("--orphanet_phenotypes", action="store",

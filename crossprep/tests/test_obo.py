@@ -39,16 +39,30 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertEqual(result["int:1"]["title"], "one")
         self.assertEqual(result["int:2"]["title"], "positive integer")
 
+    def test_aux_comment_only(self):
+        """elements can have auxiliary data fields from comments"""
+
+        result = build_obo_dataset(int_file, aux="comments")
+        self.assertTrue("comment" in result["int:0"]["aux_pos"])
+        self.assertEqual(result["int:1"]["aux_pos"], "")
+
     def test_aux_parents_only(self):
-        """elements can have positive auxiliary data fields"""
+        """elements can have positive auxiliary data fields from parents"""
 
         result = build_obo_dataset(int_file, aux="parents")
         self.assertTrue("integer" in result["int:1"]["aux_pos"])
-        # r4
+        self.assertFalse("comment" in result["int:1"]["aux_pos"])
         r4 = result["int:4"]
         self.assertFalse("zero" in r4["data"])
         self.assertTrue("zero" in r4["aux_pos"])
         self.assertEqual(r4["aux_neg"], "")
+
+    def test_aux_parents_comments(self):
+        """elements can have auxiliary fields from comments of parents"""
+
+        result = build_obo_dataset(int_file, aux="parents,comments")
+        self.assertTrue("integer" in result["int:1"]["aux_pos"])
+        self.assertTrue("comment" in result["int:1"]["aux_pos"])
 
     def test_aux_siblings(self):
         """elements can have negative auxiliary data fields from siblings"""
