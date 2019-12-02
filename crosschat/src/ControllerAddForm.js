@@ -57,19 +57,19 @@ class ControllerAddForm extends React.Component {
             </Grid>
             <Grid container alignItems="center" justify="flex-start" spacing={2}>
                 <Grid item xs={6} lg={3}>
-                    <TextField required fullWidth
+                    <TextField fullWidth
                                id="id"
                                onInput={(e) => this.props.update("id", e.target.value)}
                                label="Identifier" defaultValue=""/>
                 </Grid>
                 <Grid item xs={12}>
-                    <TextField required fullWidth
+                    <TextField fullWidth
                                id="title"
                                onInput={(e) => this.props.update("title", e.target.value)}
                                label="Title" defaultValue=""/>
                 </Grid>
                 <Grid item xs={12}>
-                    <TextField required fullWidth multiline
+                    <TextField fullWidth multiline
                                id="data" rowsMax="12"
                                onInput={(e) => this.props.update("data", e.target.value)}
                                label="Data" defaultValue=""/>

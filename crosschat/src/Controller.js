@@ -205,7 +205,7 @@ let makeQueryPayload = function(state, datasets) {
  */
 let makeTrainPayload = function(state) {
     let result = { action: "add", dataset: state.train_dataset};
-    ["id", "title", "data", "aux_pos", "aux_neg"].forEach((x) => {
+    ["id", "title", "data", "aux_pos", "aux_neg", "metadata"].forEach((x) => {
         if (state[x] !== undefined) {
             result[x] = JSONcopy(state[x])
         } else {

@@ -3,6 +3,7 @@ Tests for turning documents into indexes
 """
 
 import unittest
+from math import sqrt
 from os.path import join, exists
 from crossmap.settings import CrossmapSettings
 from crossmap.indexer import CrossmapIndexer
@@ -126,6 +127,18 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         self.assertEqual(len(self.indexer.indexes), 2)
         self.assertEqual(len(self.indexer.index_files), 2)
 
+    def test_nn_targets_null(self):
+        """find neighbors among targets, when query is not similar to anything"""
+
+        # this doc should have non-zero vector but does not have
+        # features in common with the items in the dataset. So it should
+        # return no neighbors
+        doc = {"data": "alpha bravo"}
+        v = self.indexer.encode_document(doc)
+        nns, distances = self.indexer.nearest(v, "targets", 2)
+        self.assertEqual(len(nns), 2)
+        self.assertAlmostEqual(distances[0], distances[1], places=5)
+
     def test_nn_targets_A(self):
         """find nearest neighbors among targets, A"""
 
@@ -200,9 +213,9 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         v = self.indexer.encode_document(doc)
         aux = dict(documents=0)
         nns, distances = self.indexer.suggest(v, "targets", 2, aux)
-        # without any help from the documents,
-        # all distances to targets should be equal
-        self.assertEqual(distances[0], distances[1])
+        # without any help from the documents, there should be no hits
+        self.assertEqual(len(distances), 2)
+        self.assertAlmostEqual(distances[0], distances[1], places=5)
 
     def test_suggest_many_docs(self):
         """make target suggestiosn and ask for more docs than available"""

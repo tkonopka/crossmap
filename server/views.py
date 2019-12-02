@@ -67,6 +67,8 @@ def parse_add_request(request):
         result[k] = data[k] if k in data else []
     if len(result["metadata"]) == 0:
         result["metadata"] = None
+    else:
+        result["metadata"] = dict(comment=result["metadata"])
     return result
 
 
@@ -91,7 +93,7 @@ def process_add_request(request):
     """handle calculations to add a new document into the db
 
     :param request:
-    :return: HttpResponse
+    :return: dictionary with success status of add
     """
 
     if request.method == "OPTIONS":
@@ -99,12 +101,19 @@ def process_add_request(request):
     if request.method != "POST":
         return "Use POST. For curl, set --request POST\n"
     doc = parse_add_request(request)
-    dataset = doc.pop("dataset")
+    dataset = str(doc.pop("dataset"))
     id = doc.pop("id")
     metadata = doc.pop("metadata")
+    if id == "":
+        id = dataset + ":0"
+        if crossmap.db.validate_dataset_label(dataset) == 0:
+            id = dataset + ":" + str(crossmap.db.dataset_size(dataset))
+    if doc["title"] == "":
+        doc["title"] = id
+    if doc["data"] == "" and doc["data_pos"] == "":
+        return dict(dataset=dataset, idx=[])
     idx = crossmap.add(dataset, doc, id, metadata=metadata)
-    result = dict(dataset=dataset, idx=idx)
-    return result
+    return dict(dataset=dataset, idx=idx)
 
 
 @access_http_response

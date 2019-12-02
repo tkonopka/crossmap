@@ -160,6 +160,8 @@ class CrossmapSearchBatchTests(unittest.TestCase):
         docs_file = self.crossmap.settings.data_files["documents"]
         result = self.crossmap.search_file(docs_file, "targets", 2)
         for i in range(len(result)):
-            self.assertTrue(result[i]["targets"][0] in self.targets)
-            self.assertTrue(result[i]["targets"][1] in self.targets)
+            if len(result[i]["targets"]) > 0:
+                self.assertTrue(result[i]["targets"][0] in self.targets)
+            if len(result[i]["targets"]) > 1:
+                self.assertTrue(result[i]["targets"][1] in self.targets)
 

@@ -4,6 +4,7 @@ Indexer of crossmap data for nearest-neighbor search
 
 import logging
 import nmslib
+from math import sqrt, floor
 from os import remove
 from os.path import exists
 from logging import info, warning, error
@@ -19,6 +20,10 @@ from .tools import read_dict
 
 # this removes the INFO messages from nmslib
 logging.getLogger('nmslib').setLevel(logging.WARNING)
+
+# special constant for maximal distance between normalized vectors
+sqrt2 = sqrt(2.0)
+almost_sqrt2 = floor(sqrt2*1e7)/1e7
 
 
 class CrossmapIndexer:
@@ -297,7 +302,6 @@ class CrossmapIndexer:
                 for target in nn2:
                     if target in target_dist:
                         continue
-                    temp = db.get_data(label, idxs=[target])
                     i_target_data = db.get_data(label, idxs=[target])[0]
                     target_data[target] = sparse_to_dense(i_target_data["data"])
                     target_dist[target] = euc_dist(target_data[target], vlist)
@@ -319,7 +323,7 @@ class CrossmapIndexer:
         result = sorted(result.items(), key=lambda x: x[1])
         target_ids = self.item_ids[label]
         suggestions = [target_ids[i] for i, _ in result]
-        distances = [float(d) for _, d in result]
+        distances = [float(d)/sqrt2 for _, d in result]
         return suggestions, distances
 
     @property
