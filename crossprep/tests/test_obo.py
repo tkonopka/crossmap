@@ -46,6 +46,14 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertTrue("comment" in result["int:0"]["aux_pos"])
         self.assertEqual(result["int:1"]["aux_pos"], "")
 
+    def test_aux_top(self):
+        """elements can have name of top-level term"""
+
+        plain = build_obo_dataset(int_file, root_id="int:0")
+        self.assertFalse("negative" in plain["int:6"]["aux_pos"])
+        result = build_obo_dataset(int_file, root_id="int:0", aux="top")
+        self.assertTrue("negative" in result["int:6"]["aux_pos"])
+
     def test_aux_parents_only(self):
         """elements can have positive auxiliary data fields from parents"""
 

@@ -110,7 +110,7 @@ def process_add_request(request):
             id = dataset + ":" + str(crossmap.db.dataset_size(dataset))
     if doc["title"] == "":
         doc["title"] = id
-    if doc["data"] == "" and doc["data_pos"] == "":
+    if doc["data"] == "" and doc["aux_pos"] == "":
         return dict(dataset=dataset, idx=[])
     idx = crossmap.add(dataset, doc, id, metadata=metadata)
     return dict(dataset=dataset, idx=idx)

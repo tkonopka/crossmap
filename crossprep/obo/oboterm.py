@@ -7,7 +7,7 @@ This container/parser only supports a few of the data types in an obo term.
 """
 
 
-## ##################################################################
+# ##################################################################
 # Container for an ontology term
 # To use this, create an object, then add data to it. 
 

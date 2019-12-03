@@ -31,11 +31,13 @@ class OboBuilder:
         """set up an obo object and understand building settings"""
 
         self.obo = Obo(obo_file)
+        self.top = set()
         if root_id is None:
             self.hits = set(self.obo.ids())
         else:
             self.hits = set(self.obo.descendants(root_id))
             self.hits.add(root_id)
+            self.top = set(self.obo.children(root_id))
 
         self.aux_comments = ("comments" in aux)
         self.aux_synonyms = ("synonyms" in aux)
@@ -43,6 +45,7 @@ class OboBuilder:
         self.aux_ancestors = ("ancestors" in aux)
         self.aux_siblings = ("siblings" in aux)
         self.aux_children = ("children" in aux)
+        self.aux_top = ("top" in aux)
 
     def content(self, term, extras=True):
         """helper to get a single string to describe a term"""
@@ -80,6 +83,10 @@ class OboBuilder:
                 data_pos.append(comment(term))
             if self.aux_synonyms:
                 data_pos.append(synonyms(term))
+            if self.aux_top:
+                for ancestor in obo.ancestors(id):
+                    if ancestor in self.top:
+                        data_pos.append(obo.terms[ancestor].name)
             if self.aux_ancestors:
                 metadata["ancestors"] = []
                 for ancestor in obo.ancestors(id):
