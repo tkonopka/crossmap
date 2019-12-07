@@ -2,6 +2,7 @@
 Tests for adding documents into a new dataset
 """
 
+import yaml
 import unittest
 from os.path import join, exists
 from crossmap.crossmap import Crossmap
@@ -90,6 +91,46 @@ class CrossmapAddTests(unittest.TestCase):
         # the db as well as the file-on-disk should be unchanged
         self.assertEqual(size_before, size_after)
         self.assertEqual(lines_before, lines_after)
+
+    def test_add_preserved_doc_metadata(self):
+        """documents may have metadata, which should be preserved"""
+
+        doc1 = dict(data="new data", metadata=dict(abc="xyz"))
+        self.crossmap.add("manual", doc1, id="Tadd")
+        with open(self.manual_file, "rt") as f:
+            manual_data = "".join(f.readlines())
+            result = yaml.load(manual_data, Loader=yaml.CBaseLoader)
+        self.assertTrue("Tadd" in result)
+        result = result["Tadd"]
+        self.assertTrue("metadata" in result)
+        self.assertTrue("abc" in result["metadata"])
+        self.assertEqual(result["metadata"]["abc"], "xyz")
+
+    def test_add_can_overwrite_metadata(self):
+        """if metadata is not a dict, its contents is overwritten"""
+
+        doc1 = dict(data="new data", metadata="xyz")
+        self.crossmap.add("manual", doc1, id="Toverwrite")
+        with open(self.manual_file, "rt") as f:
+            manual_data = "".join(f.readlines())
+            result = yaml.load(manual_data, Loader=yaml.CBaseLoader)
+        self.assertTrue("Toverwrite" in result)
+        result = result["Toverwrite"]
+        self.assertTrue("metadata" in result)
+        self.assertTrue(type(result["metadata"]) is dict)
+
+    def test_add_preserves_arbitrary_fields(self):
+        """if metadata is not a dict, its contents is overwritten"""
+
+        doc1 = dict(data="new data", abc=123)
+        self.crossmap.add("manual", doc1, id="Tabc")
+        with open(self.manual_file, "rt") as f:
+            manual_data = "".join(f.readlines())
+            result = yaml.load(manual_data, Loader=yaml.CBaseLoader)
+        self.assertTrue("Tabc" in result)
+        result = result["Tabc"]
+        self.assertTrue("abc" in result)
+        self.assertEqual(result["abc"], "123")
 
     def test_adding_items_changes_diffusion(self):
         """add new object into data table"""

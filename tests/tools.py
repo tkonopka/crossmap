@@ -2,6 +2,7 @@
 Helper functions used within the test suite
 """
 
+from contextlib import suppress
 from os import remove, rmdir
 from os.path import join, exists
 
@@ -30,10 +31,8 @@ def remove_crossmap_cache(dir, name, use_subdir=True):
     filenames.append(prefix + ".sqlite")
     remove_file(filenames)
     if exists(crossmap_data_dir):
-        try:
+        with suppress(OSError):
             rmdir(crossmap_data_dir)
-        except OSError:
-            pass
 
 
 def remove_cachefile(dir, filename):

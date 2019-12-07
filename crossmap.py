@@ -90,14 +90,13 @@ if not settings.valid:
     sys.exit()
 
 
-def print_exit(x, pretty=False):
+def print_pretty(x, pretty=False):
     """helper to print something and terminate"""
     if pretty:
         x = dumps(x, indent=2)
     else:
         x = dumps(x)
     print(x)
-    sys.exit()
 
 
 # ############################################################################
@@ -106,7 +105,6 @@ def print_exit(x, pretty=False):
 if action == "build":
     crossmap = Crossmap(settings)
     crossmap.build()
-    sys.exit()
 
 if action in set(["search", "decompose"]):
     logging.getLogger().setLevel(level=logging.ERROR)
@@ -121,13 +119,14 @@ if action in set(["search", "decompose"]):
     result = action_fun(config.data, config.dataset,
                         n=config.n, paths=config.paths,
                         diffusion=config.diffusion)
-    print_exit(result, config.pretty)
+    print_pretty(result, config.pretty)
 
 if action == "add":
     crossmap = Crossmap(settings)
     crossmap.load()
     idxs = crossmap.add_file(config.dataset, config.data)
-    print_exit(idxs, config.pretty)
+    # should this action display the indexes associated with the new entries?
+    # print_pretty(idxs, config.pretty)
 
 
 # ############################################################################
@@ -146,7 +145,7 @@ if action == "diffuse":
         result.extend(crossmap.diffuse_ids(config.dataset,
                                            config.ids.split(","),
                                            diffusion=config.diffusion))
-    print_exit(result, config.pretty)
+    print_pretty(result, config.pretty)
 
 if action in set(["distances", "vectors"]):
     crossmap = CrossmapInfo(settings)
@@ -155,13 +154,13 @@ if action in set(["distances", "vectors"]):
         action_fun = crossmap.vectors
     result = action_fun(config.data, ids=config.ids.split(","),
                         diffusion=config.diffusion)
-    print_exit(result, config.pretty)
+    print_pretty(result, config.pretty)
 
 if action == "counts":
     crossmap = CrossmapInfo(settings)
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     result = crossmap.counts(config.dataset, features=config.ids.split(","))
-    print_exit(result, config.pretty)
+    print_pretty(result, config.pretty)
 
 if action in set(["features", "summary"]):
     crossmap = Crossmap(settings)
@@ -169,7 +168,7 @@ if action in set(["features", "summary"]):
     action_fun = crossmap.summary
     if config.action == "features":
         action_fun = crossmap.features
-    print_exit(action_fun(), config.pretty)
+    print_pretty(action_fun(), config.pretty)
 
 
 # ############################################################################
@@ -183,7 +182,6 @@ if action == "server":
     environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
     environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
     execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
-    sys.exit()
 
 if action == "ui":
     environ.setdefault('PORT', str(settings.server.ui_port))

@@ -100,10 +100,13 @@ class Crossmap:
         self.diffuser.update(dataset, [idx])
 
         # record the item in a disk file
-        if metadata is None:
-            metadata = dict()
-        metadata["timestamp"] = time()
-        doc["metadata"] = metadata
+        # (preserve existing metadata fields, perhaps add new fields)
+        if "metadata" not in doc or type(doc["metadata"]) is not dict:
+            doc["metadata"] = dict()
+        if metadata is not None:
+            for k, v in metadata:
+                doc["metadata"][k] = v
+        doc["metadata"]["timestamp"] = time()
         with open(self.settings.yaml_file(dataset), "at") as f:
             f.write(dump({id: doc}))
         return idx
