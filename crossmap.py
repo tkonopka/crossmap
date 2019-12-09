@@ -96,7 +96,12 @@ def print_pretty(x, pretty=False):
         x = dumps(x, indent=2)
     else:
         x = dumps(x)
-    print(x)
+    # this try/except is necessary for some platforms
+    # it allows the user to pipe output to head on command line
+    try:
+        print(x)
+    except BrokenPipeError:
+        pass
 
 
 # ############################################################################
