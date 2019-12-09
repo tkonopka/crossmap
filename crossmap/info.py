@@ -45,9 +45,9 @@ class CrossmapInfo(Crossmap):
         result = []
         inv_feature_map = self.inv_feature_map
         for i, d in zip(v.indices, v.data):
-            result.append([round(d, 6), inv_feature_map[i]])
-        result = sorted(result)
-        return [{"feature": v[1], "value": v[0]} for i, v in enumerate(result)]
+            result.append([abs(d), round(d, 6), inv_feature_map[i]])
+        result = sorted(result, reverse=True)
+        return [{"feature": v[2], "value": v[1]} for i, v in enumerate(result)]
 
     def diffuse_ids(self, dataset, ids, diffusion=None):
         """compute diffusion for database entries"""
