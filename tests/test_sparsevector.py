@@ -64,3 +64,15 @@ class SparsevectorTests(unittest.TestCase):
         self.assertEqual(result_dense[1], 1.0)
         self.assertEqual(result_dense[5], 2.5)
 
+    def test_to_str(self):
+        """write out a string representation"""
+
+        temp = Sparsevector()
+        temp.add_csr(csr_matrix([0, 1, 0, 0, 0, 1, 0, 0]))
+        temp.add_csr(csr_matrix([1, 0, 0, 0, 0, 1.5, 0, 0]))
+        result = str(temp)
+        self.assertTrue("1" in result)
+        self.assertTrue("2.5" in result)
+
+
+

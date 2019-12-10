@@ -127,10 +127,14 @@ class Crossmap:
         self.indexer.rebuild_index(dataset)
         return result
 
-    def _diffuse(self, v, diffusion):
+    def _prep_vector(self, doc, diffusion=None):
+        v = self.encoder.document(doc)
         if diffusion is None:
             return v
-        return self.diffuser.diffuse(v, diffusion)
+        #print(str(v))
+        w = self.encoder.document(doc, scale_fun="sq")
+        #print(str(v))
+        return self.diffuser.diffuse(v, diffusion, weight=w)
 
     def search(self, doc, dataset, n=3, paths=None, diffusion=None,
                query_name="query"):
@@ -147,11 +151,9 @@ class Crossmap:
             distances
         """
 
-        v = self.indexer.encode_document(doc)
+        v = self._prep_vector(doc, diffusion)
         if sum(v.data) == 0:
             return search_result([], [], query_name)
-        if diffusion is not None:
-            v = self.diffuser.diffuse(v, diffusion)
         suggest = self.indexer.suggest
         targets, distances = suggest(v, dataset, n, paths)
         result = search_result(targets[:n], distances[:n], query_name)
@@ -175,10 +177,11 @@ class Crossmap:
         suggest = self.indexer.suggest
         get_data = self.indexer.db.get_data
         decompose = vec_decomposition
-        # representation of the query document
-        q = self.indexer.encode_document(doc)
+        # representation of the query document, raw and diffused
+        q = self.encoder.document(doc)
         q_indexes = set(q.indices)
-        q = self._diffuse(q, diffusion)
+        if diffusion is not None:
+            q = self._prep_vector(doc, diffusion)
         q_dense = q.toarray()
         # loop for greedy decomposition
         q_residual = q

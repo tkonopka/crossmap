@@ -26,10 +26,11 @@ class CrossmapEncoder:
         self.tokenizer = tokenizer
         self.aux_weight = aux_weight
 
-    def documents(self, filepaths):
+    def documents(self, filepaths, scale_fun="sqrt"):
         """generator to parsing data from disk files
 
         :param filepaths: paths to yaml documents
+        :param scale_fun: string, scaling type
         :return: array with encoded  matrix and a dict mapping ids
             associated with each matrix row array with one string
         """
@@ -44,14 +45,14 @@ class CrossmapEncoder:
             open_fn = gzip.open if filepath.endswith(".gz") else open
             with open_fn(filepath, "rt") as f:
                 for id, doc in yaml_document(f):
-                    tokens = encode(tokenize(doc))
+                    tokens = encode(tokenize(doc, scale_fun))
                     title = doc["title"] if "title" in doc else ""
                     yield tokens, id, title
 
-    def document(self, doc):
+    def document(self, doc, scale_fun="sqrt"):
         """encode one document into a vector"""
 
-        tokens = self.tokenizer.tokenize(doc)
+        tokens = self.tokenizer.tokenize(doc, scale_fun)
         return self.encode(tokens)
 
     def encode(self, tokens):
@@ -80,5 +81,5 @@ def _to_vec(tokens, component, feature_map):
             continue
         fm = feature_map[k]
         vec[fm[0]] += fm[1]*v
-    return normalize_vec(vec)
+    return vec
 

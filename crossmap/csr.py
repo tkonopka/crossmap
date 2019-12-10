@@ -98,15 +98,17 @@ def dimcollapse_csr(v, indexes=(), normalize=True):
 
 
 @numba.jit
-def add_sparse(arr, data, indices):
+def add_sparse(arr, data, indices, skip_index=-1):
     """add sparse data to a dense array
 
     :param arr: dense array of floats
     :param data: array of floats
     :param indices: array of integers
+    :param skip_index: integer, skip adding this index
     :return: array consisting of x+data
     """
     for i in range(len(indices)):
-        arr[indices[i]] += data[i]
+        if indices[i] != skip_index:
+            arr[indices[i]] += data[i]
     return arr
 

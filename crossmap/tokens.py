@@ -34,16 +34,16 @@ class Kmerizer:
     def __init__(self, k=5, case_sensitive=False, alphabet=None):
         """configure a tokenizer
 
-        Arguments:
-            k               length of kmers (words will be split into overlapping kmers)
-            case_sensitive  logical, if False, all tokens will be lowercase
-            alphabet        string with all possible characters
+        :param k: integer, length of kmers (words will be split into
+            overlapping kmers)
+        :param case_sensitive: logical, if False, tokens will be lowercase
+        :param alphabet: string with all possible characters
         """
 
         self.k = k
         self.case_sensitive = case_sensitive
         if alphabet is None:
-            alphabet =  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             alphabet += "abcdefghijklmnopqrstuvwxyz"
             alphabet += "0123456789-"
         if not case_sensitive:
@@ -63,17 +63,28 @@ class Kmerizer:
             for id, doc in yaml_document(f):
                 yield id, tokenize(doc)
 
-    def tokenize(self, doc):
+    def tokenize(self, doc, scale_overlap="sqrt"):
         """obtain token counts from a single document"""
+
+        scale_fun = _unit_fun
+        if scale_overlap == "sqrt":
+            scale_fun = sqrt
+        elif scale_overlap == "sq":
+            scale_fun = _sq_fun
 
         parse = self.parse
         result = dict()
         for k, data in doc.items():
-            result[k] = parse(str(data))
+            result[k] = parse(str(data), scale_fun)
         return result
 
-    def parse(self, s):
-        """parse a long string into tokens"""
+    def parse(self, s, scale_fun):
+        """parse a long string into tokens
+
+        :param s: string
+        :param scale_fun: scaling function, used for overlapping tokens
+        :return: Counter, map from tokens to a scaling-adjusted count
+        """
 
         k = self.k
         alphabet = self.alphabet
@@ -89,7 +100,7 @@ class Kmerizer:
             if word == "":
                 continue
             wlen = len(word)
-            weight = sqrt(max(1.0, wlen/k) / max(1.0, wlen - k + 1))
+            weight = scale_fun(max(1.0, wlen/k) / max(1.0, wlen - k + 1))
             for _ in kmers(word, k):
                 result[_.strip()] += weight
         return result
@@ -103,6 +114,17 @@ class CrossmapTokenizer(Kmerizer):
 
         :param settings: object of class CrossmapSettings
         """
+
         super().__init__(k=settings.tokens.k,
                          alphabet=settings.tokens.alphabet)
+
+
+def _unit_fun(x):
+    """unit function"""
+    return x
+
+
+def _sq_fun(x):
+    """square function"""
+    return x*x
 

@@ -64,7 +64,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         self.assertEqual(data[abcde_idx], 0)
 
     def test_retrieve_many_counts(self):
-        """extract counts from db for multiple feature"""
+        """extract counts from db for multiple features"""
 
         fm = self.feature_map
         a, b = fm["a"][0], fm["b"][0]
@@ -76,7 +76,7 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
         self.assertEqual(len(result[b].toarray()[0]), len(fm))
 
     def test_retrieve_from_documents(self):
-        """extract counts from db for multiple feature"""
+        """extract counts from documents"""
 
         fm = self.feature_map
         a = fm["a"][0]
@@ -186,10 +186,13 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         for _ in temp:
             cls.data[_["id"]] = sparse_to_dense(_["data"])
 
-        # for debugging, show the feature map
-        print("feature map")
-        print(str(cls.feature_map))
-        print("\n")
+        # for debugging
+        #print("feature map")
+        #print(str(cls.feature_map))
+        #print("\n")
+        #for _ in cls.data:
+        #    print(str(_)+"\n"+str(cls.data[_]))
+        #print("\n")
 
     @classmethod
     def tearDownClass(cls):
@@ -205,7 +208,9 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
                                euc_dist(v_dense, self.data["L4"]))
 
         # after diffusion, L3 should be clearly preferred
-        vd = self.diffuser.diffuse(v, dict(documents=1000))
+        # the strengths of diffusion should not matter here
+        # (any diffusion should break a tie in favor or L3)
+        vd = self.diffuser.diffuse(v, dict(documents=1))
         vd_dense = sparse_to_dense(vd)
         self.assertLess(euc_dist(vd_dense, self.data["L3"]),
                         euc_dist(vd_dense, self.data["L4"]))
@@ -229,23 +234,27 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         """encoding is reasonable after diffusion"""
 
         v = self.encoder.document(self.long_bc)
+        w = self.encoder.document(self.long_bc, scale_fun="sq")
         v_dense = sparse_to_dense(v)
-        vd = self.diffuser.diffuse(v, dict(documents=0.1))
+        # w_dense = sparse_to_dense(w)
+        vd = self.diffuser.diffuse(v, dict(targets=0.5))
         vd_dense = sparse_to_dense(vd)
-        print("before:\n"+str(v_dense))
-        print("after:\n"+str(vd_dense))
-        print("\n")
+        vd2 = self.diffuser.diffuse(v, dict(targets=0.5), weight=w)
+        vd2_dense = sparse_to_dense(vd2)
         # distances from doc to targets before and after diffusion
-        before, after = dict(), dict()
+        before, after, after2 = dict(), dict(), dict()
         for id, target in self.data.items():
             before[id] = euc_dist(target, v_dense)
             after[id] = euc_dist(target, vd_dense)
-        print("before:\n"+str(before))
-        print("after:\n"+str(after))
+            after2[id] = euc_dist(target, vd2_dense)
+
+        #print("before: "+str(before))
+        #print("after: "+str(after))
+        #print("after2: "+str(after2))
 
         # document should become closer to L1 than to L0
         # i.e. opposite relation compared to previous test
-        d0 = euc_dist(vd_dense, self.data["L0"])
-        d1 = euc_dist(vd_dense, self.data["L1"])
+        d0 = euc_dist(vd2_dense, self.data["L0"])
+        d1 = euc_dist(vd2_dense, self.data["L1"])
         self.assertLess(d1, d0)
 
