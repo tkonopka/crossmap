@@ -13,7 +13,7 @@ The command requires access to a configuration file in order to identify what da
 In a second console, launch the front-end server,
 
 ```
-python crossmap.py ui --config path-to-config.yaml
+python crossmap.py gui --config path-to-config.yaml
 ```
 
 This command should also provide output on status. 

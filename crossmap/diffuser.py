@@ -151,8 +151,11 @@ class CrossmapDiffuser:
                 # ddata[2] contains a sum of all data entries in the vector
                 # ddata[3] contains the maximal value
                 row_norm = ddata[3]
+                #print(str(di)+" "+str(row_norm))
+                #print(str(ddata))
                 if row_norm == 0.0:
                     continue
+                #print("continuing here")
                 data = ddata[0]
                 if threshold > 0:
                     data = threshold_vec(data, threshold*row_norm)

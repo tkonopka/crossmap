@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
                     choices=["build", "search", "decompose", "add",
-                             "server", "ui",
+                             "server", "gui",
                              "distances", "vectors", "counts", "diffuse",
                              "features", "summary"])
 parser.add_argument("--config", action="store",
@@ -130,8 +130,6 @@ if action == "add":
     crossmap = Crossmap(settings)
     crossmap.load()
     idxs = crossmap.add_file(config.dataset, config.data)
-    # should this action display the indexes associated with the new entries?
-    # print_pretty(idxs, config.pretty)
 
 
 # ############################################################################
@@ -188,7 +186,7 @@ if action == "server":
     environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
     execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
 
-if action == "ui":
+if action == "gui":
     environ.setdefault('PORT', str(settings.server.ui_port))
     cmd = "npm start --prefix " + join(dirname(__file__), "crosschat")
     system(cmd)

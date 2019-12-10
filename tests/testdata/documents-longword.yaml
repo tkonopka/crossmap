@@ -1,0 +1,11 @@
+doc0:
+  data: longword
+  metadata: is a decoy document that creates internal token associations
+doc1:
+  aux_pos: B
+  aux_neg: A
+  metadata: creates a distinction between A and B
+doc2:
+  aux_pos: H
+  aux_neg: I
+  metadata: creates a distinction between H and I

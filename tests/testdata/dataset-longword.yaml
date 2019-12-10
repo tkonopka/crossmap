@@ -1,0 +1,15 @@
+L0:
+  title: item with long word and bait "A"
+  data: longword A
+L1:
+  title: item with several short words
+  data: B C D E F
+L2:
+  title: decoy item with short words
+  data: C D E F G
+L3:
+  title: another decoy item ith short words
+  data: D E F G H
+L4:
+  title: yet another decoy items with short words
+  data: E F G H I

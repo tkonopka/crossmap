@@ -8,10 +8,13 @@ from crossmap.settings import CrossmapSettings
 from crossmap.indexer import CrossmapIndexer
 from crossmap.diffuser import CrossmapDiffuser
 from .tools import remove_crossmap_cache
+from crossmap.vectors import sparse_to_dense
+from crossmap.distance import euc_dist
 
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
+config_longword = join(data_dir, "config-longword.yaml")
 
 
 class CrossmapDiffuserBuildTests(unittest.TestCase):
@@ -158,4 +161,91 @@ class CrossmapDiffuserBuildReBuildTests(unittest.TestCase):
 
         after = diffuser.db.count_rows("targets", "counts")
         self.assertEqual(after, before)
+
+
+class CrossmapDiffuserWeightsTests(unittest.TestCase):
+    """Checking overlapping tokens do not swamp diffusion"""
+
+    long_bc = dict(data="longword B C")
+    gh = dict(data="G H")
+
+    @classmethod
+    def setUpClass(cls):
+        settings = CrossmapSettings(config_longword, create_dir=True)
+        cls.indexer = CrossmapIndexer(settings)
+        cls.indexer.build()
+        cls.diffuser = CrossmapDiffuser(settings)
+        cls.diffuser.build()
+        cls.feature_map = cls.diffuser.feature_map
+        cls.db = cls.diffuser.db
+        cls.encoder = cls.indexer.encoder
+        # extract data vectors
+        cls.data = dict()
+        temp = cls.db.get_data(dataset="targets",
+                                   ids=["L0", "L1", "L2", "L3", "L4"])
+        for _ in temp:
+            cls.data[_["id"]] = sparse_to_dense(_["data"])
+
+        # for debugging, show the feature map
+        print("feature map")
+        print(str(cls.feature_map))
+        print("\n")
+
+    @classmethod
+    def tearDownClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_longword")
+
+    def test_diffusion_shifts_away_from_a_target(self):
+        """example using diffusion unaffected by longword"""
+
+        # before diffusion gh should be roughly equally distant to L3 and L4
+        v = self.encoder.document(self.gh)
+        v_dense = sparse_to_dense(v)
+        self.assertAlmostEqual(euc_dist(v_dense, self.data["L3"]),
+                               euc_dist(v_dense, self.data["L4"]))
+
+        # after diffusion, L3 should be clearly preferred
+        vd = self.diffuser.diffuse(v, dict(documents=1000))
+        vd_dense = sparse_to_dense(vd)
+        self.assertLess(euc_dist(vd_dense, self.data["L3"]),
+                        euc_dist(vd_dense, self.data["L4"]))
+
+    def test_longword_document_before_diffusion(self):
+        """encoding before diffusion accounts for overlapping tokens"""
+
+        v = self.encoder.document(self.long_bc)
+        self.assertGreater(len(v.data), 5)
+        # overlapping tokens from "longword" should be weighted lower than
+        # tokens from "B" or "C" that are stand-alone
+        v_dense = sparse_to_dense(v)
+        fm = self.feature_map
+        self.assertGreater(v_dense[fm["b"][0]], v_dense[fm["longw"][0]])
+        # document should be closer to L0 than to L1
+        d0 = euc_dist(v_dense, self.data["L0"])
+        d1 = euc_dist(v_dense, self.data["L1"])
+        self.assertLess(d0, d1)
+
+    def test_diffusion_shifts_away_from_longword(self):
+        """encoding is reasonable after diffusion"""
+
+        v = self.encoder.document(self.long_bc)
+        v_dense = sparse_to_dense(v)
+        vd = self.diffuser.diffuse(v, dict(documents=0.1))
+        vd_dense = sparse_to_dense(vd)
+        print("before:\n"+str(v_dense))
+        print("after:\n"+str(vd_dense))
+        print("\n")
+        # distances from doc to targets before and after diffusion
+        before, after = dict(), dict()
+        for id, target in self.data.items():
+            before[id] = euc_dist(target, v_dense)
+            after[id] = euc_dist(target, vd_dense)
+        print("before:\n"+str(before))
+        print("after:\n"+str(after))
+
+        # document should become closer to L1 than to L0
+        # i.e. opposite relation compared to previous test
+        d0 = euc_dist(vd_dense, self.data["L0"])
+        d1 = euc_dist(vd_dense, self.data["L1"])
+        self.assertLess(d1, d0)
 

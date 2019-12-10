@@ -1,0 +1,8 @@
+name: crossmap_longword
+comment: a configuration designed to test diffusion in presence of long words.
+  Long words lead to overlapping tokens.
+data:
+  targets: dataset-longword.yaml
+  documents: documents-longword.yaml
+tokens:
+  k: 5

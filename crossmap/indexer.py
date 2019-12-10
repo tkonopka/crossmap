@@ -195,23 +195,23 @@ class CrossmapIndexer:
             self._build_index(dataset)
         self.db.get_feature_map()
 
-    def _load_index(self, label):
+    def _load_index(self, dataset):
         """retrieve a nmslib index from disk into memory
 
-        :param label: string, label identifier for the index
+        :param dataset: string, label identifier for the index
         :return: nothing, the internal state changes
         """
-        index_file = self.settings.index_file(label)
+        index_file = self.settings.index_file(dataset)
         if not exists(index_file):
-            error("Skipping loading index for " + label)
+            error("Skipping loading index for " + dataset)
             return
 
-        info("Loading index for " + label)
+        info("Loading index for " + dataset)
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         result.loadIndex(index_file, load_data=True)
-        self.indexes[label] = result
-        self.index_files[label] = index_file
+        self.indexes[dataset] = result
+        self.index_files[dataset] = index_file
 
     def load(self):
         """Load indexes from disk files"""
@@ -247,33 +247,33 @@ class CrossmapIndexer:
         """
         return self._neighbors(v, label, n, names=True)
 
-    def _load_item_ids(self, label):
+    def _load_item_ids(self, dataset):
         """cache string identifiers"""
 
-        if label not in self.item_ids:
-            self.item_ids[label] = self.db.all_ids(label)
+        if dataset not in self.item_ids:
+            self.item_ids[dataset] = self.db.all_ids(dataset)
 
-    def suggest(self, v, label, n=5, paths=None):
+    def suggest(self, v, dataset, n=5, paths=None):
         """suggest nearest neighbors using a composite algorithm
 
         :param v:
-        :param label: string, name of index of integer
+        :param dataset: string or integer, name of index/dataset
         :param n: integer, number of nearest neighbors
         :param paths: dictionary defining number of indirect paths
         :return: a list of items ids, a list of composite distances
         """
 
-        self._load_item_ids(label)
+        self._load_item_ids(dataset)
         v = csr_matrix(v)
         vlist = sparse_to_dense(v)
         db, _n = self.db, self._neighbors
         paths = paths or dict()
 
         # get direct distances from vector to targets
-        nn0, dist0 = _n(v, label, n)
+        nn0, dist0 = _n(v, dataset, n)
         target_dist = {i: d for i, d in zip(nn0, dist0)}
         target_data = dict()
-        hits_targets = db.get_data(label, idxs=nn0)
+        hits_targets = db.get_data(dataset, idxs=nn0)
         for _, val in enumerate(hits_targets):
             target_data[val["idx"]] = sparse_to_dense(val["data"])
         # collect relevant documents traversed in indirect paths
@@ -295,14 +295,14 @@ class CrossmapIndexer:
         for aux_label in nn1.keys():
             for doc in nn1[aux_label]:
                 i_data = data1[aux_label][doc]
-                nn2, dist2 = _n(i_data, label, n)
+                nn2, dist2 = _n(i_data, dataset, n)
                 doc_target_dist[aux_label+str(doc)] = dict()
                 for j, d in zip(nn2, dist2):
                     doc_target_dist[aux_label+str(doc)][j] = d
                 for target in nn2:
                     if target in target_dist:
                         continue
-                    i_target_data = db.get_data(label, idxs=[target])[0]
+                    i_target_data = db.get_data(dataset, idxs=[target])[0]
                     target_data[target] = sparse_to_dense(i_target_data["data"])
                     target_dist[target] = euc_dist(target_data[target], vlist)
 
@@ -321,7 +321,7 @@ class CrossmapIndexer:
                     result[j] += (d_v_i + d_i_j)/n_doc
 
         result = sorted(result.items(), key=lambda x: x[1])
-        target_ids = self.item_ids[label]
+        target_ids = self.item_ids[dataset]
         suggestions = [target_ids[i] for i, _ in result]
         distances = [float(d)/sqrt2 for _, d in result]
         return suggestions, distances

@@ -14,7 +14,7 @@ def vec_norm(a):
     """compute the vector norm of a vector"""
     sum2 = 0
     for i in range(len(a)):
-        sum2 += a[i] *a[i]
+        sum2 += a[i] * a[i]
     return sqrt(sum2)
 
 
