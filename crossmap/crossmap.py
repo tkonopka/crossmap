@@ -345,7 +345,7 @@ def _ranked_decomposition(coefficients, ids):
 
     temp = [_ for _ in coefficients[:, 0]]
     coefficients, ids = zip(*sorted(zip(temp, ids), reverse=True))
-    zeros = [i for i, v in enumerate(coefficients) if v==0]
+    zeros = [i for i, v in enumerate(coefficients) if v == 0]
     if len(zeros) == 0:
         return coefficients, ids
     ids = [_ for i, _ in enumerate(ids) if i not in zeros]

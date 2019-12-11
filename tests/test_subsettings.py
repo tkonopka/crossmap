@@ -6,6 +6,7 @@ classes start performing stronger validation)
 """
 
 import unittest
+import yaml
 from os.path import join
 from crossmap.settings import CrossmapLoggingSettings
 from crossmap.settings import CrossmapFeatureSettings
@@ -40,16 +41,23 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
     def setUp(self):
         self.default = CrossmapFeatureSettings()
         custom = {"max_number": 200,
+                  "min_count": 2,
                   "decoy": 0,
                   "weighting": [0.5, 0.5],
                   "aux": [1, 0.2]}
         self.custom = CrossmapFeatureSettings(custom)
 
-    def test_features_number(self):
+    def test_features_max_number(self):
         """By default max number of features is 0"""
 
         self.assertEqual(self.default.max_number, 0)
         self.assertEqual(self.custom.max_number, 200)
+
+    def test_features_min_count(self):
+        """By default min_count for a features is 1"""
+
+        self.assertEqual(self.default.min_count, 1)
+        self.assertEqual(self.custom.min_count, 2)
 
     def test_weighting(self):
         """configure weight assigned to auxiliary data fields"""
@@ -145,6 +153,18 @@ class CrossmapLoggingSettingsTests(unittest.TestCase):
         self.assertGreater(self.default.progress, 1000)
         self.assertEqual(self.custom.progress, 100)
 
+    def test_str(self):
+        """settings can be displayed as a yaml string"""
+
+        # string format
+        self.assertTrue("level" in str(self.custom))
+        self.assertTrue("progress" in str(self.custom))
+        self.assertTrue("INFO" in str(self.custom))
+        self.assertTrue("WARNING" in str(self.default))
+        # yaml format
+        parsed_custom = yaml.load(str(self.custom), yaml.CBaseLoader)
+        self.assertTrue("logging" in parsed_custom)
+
 
 class CrossmapCacheTests(unittest.TestCase):
     """parsing settings for caching items from the database"""
@@ -162,4 +182,16 @@ class CrossmapCacheTests(unittest.TestCase):
         self.assertEqual(self.custom.ids, 128)
         self.assertEqual(self.custom.titles, 128)
         self.assertEqual(self.custom.data, 1024)
+
+    def test_str(self):
+        """settings can be displayed in yaml string"""
+
+        # string format
+        custom_str = str(self.custom)
+        self.assertTrue("256" in custom_str and "1024" in custom_str)
+        self.assertTrue("data" in custom_str and "counts" in custom_str)
+        # yaml format
+        parsed_custom = yaml.load(custom_str, yaml.CBaseLoader)
+        self.assertTrue("cache" in parsed_custom)
+        self.assertTrue("counts" in parsed_custom["cache"])
 

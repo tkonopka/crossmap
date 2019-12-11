@@ -86,7 +86,7 @@ class CrossmapLoggingSettings:
 
     def __init__(self, config=None):
         self.level = "WARNING"
-        self.progress = pow(10, 5)
+        self.progress = 2*pow(10, 5)
 
         if config is None:
             return

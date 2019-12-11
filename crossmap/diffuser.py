@@ -120,6 +120,8 @@ class CrossmapDiffuser:
         result = [Sparsevector() for _ in range(nf)]
         total = 0
         encoder = self.encoder
+        # TO DO - if this uses encoding using sqrt,
+        # then this  might as well use _build_counts_db
         for v, _id, _title in encoder.documents([filepath], "sqrt"):
             if all_zero(v.toarray()[0]):
                 warning("Skipping item id: " + str(_id))
@@ -133,7 +135,6 @@ class CrossmapDiffuser:
                 info("Progress: " + str(total))
         # replace dictionaries by csr_matrix (in place to save memory)
         for _ in range(nf):
-            # avoid counting self
             result[_] = result[_].to_csr(nf)
         self.db.set_counts(dataset, result)
 
