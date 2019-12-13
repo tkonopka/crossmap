@@ -4,15 +4,19 @@ Tests for turning datasets into tokens
 
 import unittest
 import numpy as np
+import yaml
 from os.path import join, exists
 from crossmap.tools import read_obj, write_obj, write_matrix
 from crossmap.tools import write_csv, read_csv_set, read_set
 from crossmap.tools import write_dict, read_dict
+from crossmap.tools import yaml_document
 from .tools import remove_cachefile
 
 
 data_dir = join("tests", "testdata")
 tsv_file = join(data_dir, "crossmap-testing-temp.tsv")
+good_yaml_file = join(data_dir, "dataset.yaml")
+bad_yaml_file = join(data_dir, "bad_data.yaml")
 
 
 class WriteCsvTests(unittest.TestCase):
@@ -126,4 +130,30 @@ class WriteMatrixTests(unittest.TestCase):
         self.assertEqual(result[0], "id\tX1\tX2\tX3\n")
         self.assertEqual(result[1], "X\t0.0\t1.0\t2.0\n")
         self.assertEqual(result[2], "Y\t3.0\t0.123\t5.0\n")
+
+
+class ReadYamlTests(unittest.TestCase):
+    """Read yaml documents one item at a time"""
+
+    def test_signal_incorrect_yaml(self):
+        """raise an exception when yaml is incorrect"""
+
+        with self.assertRaises(Exception) as e:
+            with open(bad_yaml_file, "r") as f:
+                for id, doc in yaml_document(f):
+                    pass
+
+    def test_read_yaml(self):
+        """read yaml document one item at a time"""
+
+        # read all at once
+        with open(good_yaml_file, "r") as f:
+            docs = yaml.load(f, yaml.CBaseLoader)
+        # read one at a time
+        result = dict()
+        with open(good_yaml_file, "r") as f:
+            for id, doc in yaml_document(f):
+                result[id] = doc
+        self.assertEqual(len(docs), len(result))
+        self.assertSetEqual(set(docs.keys()), set(result.keys()))
 

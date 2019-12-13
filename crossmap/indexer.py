@@ -323,6 +323,8 @@ class CrossmapIndexer:
         result = sorted(result.items(), key=lambda x: x[1])
         target_ids = self.item_ids[dataset]
         suggestions = [target_ids[i] for i, _ in result]
+        # Two entirely different unit vectors have a distance of sqrt(2)
+        # The division below transforms output to [0, 1]
         distances = [float(d)/sqrt2 for _, d in result]
         return suggestions, distances
 

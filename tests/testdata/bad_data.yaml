@@ -1,0 +1,4 @@
+good:
+  title: This item is valid yaml
+  data: The next line is invalid yaml
+bad

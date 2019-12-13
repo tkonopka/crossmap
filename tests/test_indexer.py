@@ -3,7 +3,6 @@ Tests for turning documents into indexes
 """
 
 import unittest
-from math import sqrt
 from os.path import join, exists
 from crossmap.settings import CrossmapSettings
 from crossmap.indexer import CrossmapIndexer

@@ -3,11 +3,15 @@ Add-on class to use a crossmap object to extract diagnostic information
 """
 
 import logging
+from math import sqrt
 from scipy.sparse import csr_matrix
 from .distance import sparse_euc_distance
 from .vectors import sparse_to_dense
 from .tools import open_file, yaml_document
 from .crossmap import Crossmap
+
+# special constant
+sqrt2 = sqrt(2.0)
 
 
 class CrossmapInfo(Crossmap):
@@ -98,9 +102,7 @@ class CrossmapInfo(Crossmap):
         """
 
         result = []
-        v = self.indexer.encode_document(doc)
-        if diffusion is not None:
-            v = self.diffuser.diffuse(v, diffusion)
+        v = self._prep_vector(doc, diffusion)
         distance = sparse_euc_distance
         db = self.indexer.db
         for x in ids:
@@ -108,7 +110,7 @@ class CrossmapInfo(Crossmap):
                 x_data = db.get_data(label, ids=[x])
                 if len(x_data) > 0:
                     x_vector = x_data[0]["data"]
-                    x_dist = distance(v, x_vector)
+                    x_dist = distance(v, x_vector) / sqrt2
                     x_result = dict(query=query_name, dataset=label,
                                     id=x, distance=x_dist)
                     result.append(x_result)
@@ -127,10 +129,10 @@ class CrossmapInfo(Crossmap):
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.append(self.distance(doc, ids, diffusion, query_name=id))
+                result.extend(self.distance(doc, ids, diffusion, query_name=id))
         return result
 
-    def vectors(self, filepath, ids=[], diffusion=None):
+    def vectors(self, filepath=None, ids=[], diffusion=None):
         """extraction of data vectors
 
         :param filepath: string, path to a data file
@@ -169,7 +171,9 @@ class CrossmapInfo(Crossmap):
     def counts(self, label, features=[], digits=6):
         """extract count vectors associated with features
 
+        :param label: dataset name
         :param features: list of features
+        :param digits: integer, number of digits for output printing
         :return:
         """
 
@@ -202,8 +206,8 @@ class CrossmapInfo(Crossmap):
         """prepare an ad-hoc summary of the contents of the configuration"""
 
         def stats(x):
-            if len(x) == 0:
-                return {"min": 0, "mean": 0, "max": 0}
+            #if len(x) == 0:
+            #    return {"min": 0, "mean": 0, "max": 0}
             temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
             return {k: round(v, digits) for k, v in temp.items()}
 

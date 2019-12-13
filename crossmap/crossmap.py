@@ -131,9 +131,7 @@ class Crossmap:
         v = self.encoder.document(doc)
         if diffusion is None:
             return v
-        #print(str(v))
         w = self.encoder.document(doc, scale_fun="sq")
-        #print(str(v))
         return self.diffuser.diffuse(v, diffusion, weight=w)
 
     def search(self, doc, dataset, n=3, paths=None, diffusion=None,
@@ -239,62 +237,6 @@ class Crossmap:
 
         return _action_file(self.decompose, filepath, dataset=dataset,
                             n=n, paths=paths, diffusion=diffusion)
-
-    def counts(self, label, features=[], digits=6):
-        """extract count vectors associated with features
-
-        :param features: list of features
-        :return:
-        """
-
-        # convert features into indexes, and an inverse mapping
-        fm, ifm = self.indexer.feature_map, dict()
-        idxs = []
-        for f in features:
-            if f in fm:
-                ifm[fm[f][0]] = f
-                idxs.append(fm[f][0])
-
-        counts = self.indexer.db.get_counts(label, idxs)
-        result = []
-        for k, v in counts.items():
-            vlist = list(sparse_to_dense(v))
-            vmax = max(vlist)
-            vlist = [round(_/vmax, digits) for _ in vlist]
-            result.append(dict(feature=ifm[k], counts=vlist))
-        return result
-
-    def features(self):
-        """extract feature information"""
-
-        result = []
-        for k, v in self.indexer.feature_map.items():
-            result.append(dict(feature=k, index=v[0], weight=v[1]))
-        return result
-
-    def summary(self, digits=4):
-        """prepare an ad-hoc summary of the contents of the configuration"""
-
-        def stats(x):
-            if len(x) == 0:
-                return {"min": 0, "mean": 0, "max": 0}
-            temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
-            return {k: round(v, digits) for k, v in temp.items()}
-
-        db = self.db
-        datasets = []
-        for dataset in db.datasets:
-            size = db.dataset_size(dataset)
-            counts_sparsity = stats(db.sparsity(dataset, "counts"))
-            data_sparsity = stats(db.sparsity(dataset, "data"))
-            datasets.append(dict(label=dataset, size=size,
-                                 counts_sparsity=counts_sparsity,
-                                 data_sparsity=data_sparsity))
-
-        return dict(name=self.settings.name,
-                    dir=self.settings.dir,
-                    features=len(self.indexer.feature_map),
-                    datasets=datasets)
 
 
 def validate_dataset_label(crossmap, label=None, log=True):
