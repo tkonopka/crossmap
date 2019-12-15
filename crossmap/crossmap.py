@@ -15,14 +15,44 @@ from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
-def search_result(ids, distances, name):
-    """structure an object describing a nearest-neighbor search"""
-    return dict(query=name, targets=ids, distances=distances)
+def search_result(ids, distances, name, n=1):
+    """structure an object describing a nearest-neighbor search
+
+    :param ids: list of string identifiers
+    :param distances: list of numeric values
+    :param name: query name included in the output dictionary
+    :param n: integer, maximal number of items to report in output
+    :return: dicionary, contain lists with ids and distances,
+      ordered by distance from smallest to largerst
+    """
+
+    if len(ids) > 0:
+        distances, ids = zip(*sorted(zip(distances, ids)))
+    return dict(query=name, targets=ids[:n], distances=distances[:n])
 
 
 def decomposition_result(ids, weights, name):
     """structure an object descripting a greedy-nearest-decomposition"""
     return dict(query=name, targets=ids, coefficients=weights)
+
+
+def _ranked_decomposition(coefficients, ids):
+    """order paired values+strings, removing zeros
+
+    :param coefficients: csr_matrix, one-column vertical vector
+    :param ids: list of string identifiers
+    :return: a list of coefficients, a list of matched identifiers.
+        Output is ranked, very small items are removed
+    """
+
+    temp = [_ for _ in coefficients[:, 0]]
+    coefficients, ids = zip(*sorted(zip(temp, ids), reverse=True))
+    zeros = [i for i, v in enumerate(coefficients) if v == 0]
+    if len(zeros) == 0:
+        return coefficients, ids
+    ids = [_ for i, _ in enumerate(ids) if i not in zeros]
+    coefficients = [_ for i,_ in enumerate(coefficients) if i not in zeros]
+    return coefficients, ids
 
 
 class Crossmap:
@@ -128,11 +158,17 @@ class Crossmap:
         return result
 
     def _prep_vector(self, doc, diffusion=None):
+        """prepare text document into sparse vectors
+
+        :param doc: dictionary with component data, aux_pos, etc.
+        :param diffusion: dictionary with diffusion strengths
+        :return: two csr vectors, a raw encoding and a diffused encoding
+        """
         v = self.encoder.document(doc)
         if diffusion is None:
-            return v
+            return v, v
         w = self.encoder.document(doc, scale_fun="sq")
-        return self.diffuser.diffuse(v, diffusion, weight=w)
+        return v, self.diffuser.diffuse(v, diffusion, weight=w)
 
     def search(self, doc, dataset, n=3, paths=None, diffusion=None,
                query_name="query"):
@@ -149,13 +185,24 @@ class Crossmap:
             distances
         """
 
-        v = self._prep_vector(doc, diffusion)
-        if sum(v.data) == 0:
-            return search_result([], [], query_name)
+        raw, diffused = self._prep_vector(doc, diffusion)
+        if sum(raw.data) == 0:
+            return search_result([], [], query_name, n)
         suggest = self.indexer.suggest
-        targets, distances = suggest(v, dataset, n, paths)
-        result = search_result(targets[:n], distances[:n], query_name)
-        return result
+        targets, distances = suggest(diffused, dataset, n, paths)
+        if diffusion is None:
+            return search_result(targets, distances, query_name, n)
+
+        # when diffusion is nontrivial, also find hits for raw vector
+        targets_raw, _ = suggest(raw, dataset, n, paths)
+        new_targets = [_ for _ in targets_raw if _ not in targets]
+        if len(new_targets):
+            new_distances, new_ids = self.indexer.distances(raw, dataset,
+                                                            ids=new_targets)
+            targets.extend(new_ids)
+            distances.extend(new_distances)
+
+        return search_result(targets, distances, query_name, n)
 
     def decompose(self, doc, dataset, n=3, paths=None, diffusion=None,
                   query_name="query"):
@@ -176,10 +223,8 @@ class Crossmap:
         get_data = self.indexer.db.get_data
         decompose = vec_decomposition
         # representation of the query document, raw and diffused
-        q = self.encoder.document(doc)
-        q_indexes = set(q.indices)
-        if diffusion is not None:
-            q = self._prep_vector(doc, diffusion)
+        q_raw, q = self._prep_vector(doc, diffusion)
+        q_indexes = set(q_raw.indices)
         q_dense = q.toarray()
         # loop for greedy decomposition
         q_residual = q
@@ -275,21 +320,3 @@ def _action_file(action, filepath, **kw):
             result.append(action(doc, **kw, query_name=id))
     return result
 
-
-def _ranked_decomposition(coefficients, ids):
-    """order paired values+strings, removing zeros
-
-    :param coefficients: csr_matrix, one-column vertical vector
-    :param ids: list of string identifiers
-    :return: a list of coefficients, a list of matched identifiers.
-        Output is ranked, very small items are removed
-    """
-
-    temp = [_ for _ in coefficients[:, 0]]
-    coefficients, ids = zip(*sorted(zip(temp, ids), reverse=True))
-    zeros = [i for i, v in enumerate(coefficients) if v == 0]
-    if len(zeros) == 0:
-        return coefficients, ids
-    ids = [_ for i, _ in enumerate(ids) if i not in zeros]
-    coefficients = [_ for i,_ in enumerate(coefficients) if i not in zeros]
-    return coefficients, ids

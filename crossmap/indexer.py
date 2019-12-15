@@ -253,6 +253,18 @@ class CrossmapIndexer:
         if dataset not in self.item_ids:
             self.item_ids[dataset] = self.db.all_ids(dataset)
 
+    def distances(self, v, dataset, ids=[]):
+        """get distances between a dense vector and items in the db"""
+
+        v_dense = sparse_to_dense(v)
+        target_data = self.db.get_data(dataset, ids=ids)
+        distances, ids = [], []
+        for d in target_data:
+            ids.append(d["id"])
+            d_dense = sparse_to_dense(d["data"])
+            distances.append(euc_dist(v_dense, d_dense)/sqrt2)
+        return distances, ids
+
     def suggest(self, v, dataset, n=5, paths=None):
         """suggest nearest neighbors using a composite algorithm
 
