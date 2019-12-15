@@ -22,14 +22,13 @@ class Controller extends React.Component {
         this.cloneFromQuery = this.cloneFromQuery.bind(this);
         this.composeAndSend = this.composeAndSend.bind(this);
         let dataset = "", train_dataset = "";
-        let diffusion = {}, paths = {};
+        let diffusion = {};
         if (props.datasets.length > 0) {
             dataset = props.datasets[0]["label"];
             train_dataset = props.datasets[props.datasets.length-1]["label"];
             props.datasets.map((x) => {
                 let xlab = x["label"];
                 diffusion[xlab] = 0;
-                paths[xlab] = 0;
                 return null;
             })
         }
@@ -37,7 +36,7 @@ class Controller extends React.Component {
             action: "search", view: "search", extended: 0,
             dataset: dataset, n: 1,
             data: "", aux_neg: "", aux_pos: "",
-            diffusion: diffusion, paths: paths,
+            diffusion: diffusion,
             train_dataset: train_dataset
         }
     }
@@ -193,10 +192,8 @@ let makeQueryPayload = function(state, datasets) {
     let result = {};
     let fields = ["action", "dataset", "n",
                   "data", "aux_pos", "aux_neg",
-                  "diffusion", "paths"];
+                  "diffusion"];
     fields.forEach((x)=> { result[x] = JSONcopy(state[x])});
-    // ensure that the paths settings are zero for the primary dataset
-    result.paths[dataset] = 0;
     return result
 };
 

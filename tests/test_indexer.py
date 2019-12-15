@@ -169,7 +169,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         self.assertEqual(nns[0], "U:D")
         self.assertEqual(nns[1], "U:A")
 
-    def test_suggest_A_wo_docs(self):
+    def test_suggest_A(self):
         """target suggestion, direct hits possible"""
 
         # this doc should be close to first two items in target dataset
@@ -179,54 +179,17 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         self.assertEqual(nns[0], "A")
         self.assertEqual(nns[1], "B")
 
-    def test_suggest_A_w_docs(self):
-        """target suggestion, direct hits possible, using aux docs"""
-
-        # this doc should be close to first two items in target dataset
-        doc = {"data": "Alice", "aux_pos": "A B", "aux_neg": "unique token"}
-        v = self.indexer.encode_document(doc)
-        aux = dict(documents=2)
-        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
-        self.assertEqual(nns[0], "A")
-        self.assertEqual(nns[1], "B")
-
-    def test_suggest_alpha(self):
-        """target suggestion, when direct hits not possible"""
-
-        # this doc should be close to two auxiliary items
-        doc = {"data": "alpha", "aux_pos": "A bravo"}
-        v = self.indexer.encode_document(doc)
-        aux = dict(documents=2)
-        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
-        self.assertEqual(nns[0], "A")
-        self.assertEqual(nns[1], "B")
-        # the distances should not be equal
-        self.assertNotEqual(distances[0], distances[1])
-
     def test_suggest_without_docs(self):
         """make target suggestion without docs"""
 
-        # this doc should be close to two auxiliary items
-        # but no overlap with target items
+        # this doc should be close to items in documents dataset
+        # but no overlap with targets
         doc = {"data": "alpha", "aux_pos": "bravo"}
         v = self.indexer.encode_document(doc)
-        aux = dict(documents=0)
-        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
+        nns, distances = self.indexer.suggest(v, "targets", 2)
         # without any help from the documents, there should be no hits
         self.assertEqual(len(distances), 2)
         self.assertAlmostEqual(distances[0], distances[1], places=5)
-
-    def test_suggest_many_docs(self):
-        """make target suggestiosn and ask for more docs than available"""
-
-        # this doc should be close to two auxiliary items
-        # but no overlap with target items
-        doc = {"data": "alpha", "aux_pos": "bravo"}
-        v = self.indexer.encode_document(doc)
-        aux = dict(documents=100)
-        nns, distances = self.indexer.suggest(v, "targets", 2, aux)
-        # the objective here is for the calculation not to crash
-        self.assertLess(distances[0], distances[1])
 
 
 class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):

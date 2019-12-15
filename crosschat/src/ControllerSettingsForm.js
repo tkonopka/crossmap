@@ -27,7 +27,6 @@ class ControllerSettingsForm extends React.Component {
         let settings = this.props.settings;
         //console.log("rendering settings form with settings: "+JSON.stringify(settings));
         let update = this.props.update;
-        let dataset = settings.dataset;
         // contents of drop-down (selection of primary dataset)
         let dataset_items = this.props.datasets.map((x, i) => {
             return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
@@ -49,29 +48,7 @@ class ControllerSettingsForm extends React.Component {
                     />
                 </TableCell>
             </TableRow>)
-        })
-        // sliders for indirect paths
-        let paths_sliders = this.props.datasets.map((row) => {
-            if (row.label === dataset) { return null }
-            return(<TableRow key={row.label}>
-                <TableCell component="td" scope="row" className={"column-dataset"}>
-                    {row.label}
-                </TableCell>
-                <TableCell>
-                    <Slider
-                        value={settings.paths[row.label]}
-                        getAriaValueText={intValueText}
-                        aria-labelledby="discrete-slider"
-                        valueLabelDisplay="auto"
-                        onChange={(e, value) => update(row.label, value, "paths")}
-                        marks step={1} min={0} max={10}
-                    />
-                </TableCell>
-            </TableRow>)
-        }).filter((x) => ( x!== null));
-        if (paths_sliders.length === 0) {
-            paths_sliders.push(<TableRow key={0}><TableCell>No other datasets available</TableCell></TableRow>)
-        }
+        });
 
         return(<Grid container spacing={2}>
                 <Grid item xs={8}>
@@ -109,10 +86,6 @@ class ControllerSettingsForm extends React.Component {
                 <Grid item xs={8}>
                     <Typography variant="h5">Diffusion</Typography>
                     <Table><TableBody>{diffusion_sliders}</TableBody></Table>
-                </Grid>
-                <Grid item xs={8}>
-                    <Typography variant="h5">Indirect paths</Typography>
-                    <Table><TableBody>{paths_sliders}</TableBody></Table>
                 </Grid>
             </Grid>
         )

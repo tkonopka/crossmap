@@ -26,8 +26,6 @@ def search_result(ids, distances, name, n=1):
       ordered by distance from smallest to largerst
     """
 
-    if len(ids) > 0:
-        distances, ids = zip(*sorted(zip(distances, ids)))
     return dict(query=name, targets=ids[:n], distances=distances[:n])
 
 
@@ -170,15 +168,12 @@ class Crossmap:
         w = self.encoder.document(doc, scale_fun="sq")
         return v, self.diffuser.diffuse(v, diffusion, weight=w)
 
-    def search(self, doc, dataset, n=3, paths=None, diffusion=None,
-               query_name="query"):
+    def search(self, doc, dataset, n=3, diffusion=None, query_name="query"):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
         :param dataset: string, identifier for dataset to look for targets
         :param n: integer, number of target to report
-        :param paths: dict, map linking dataset labels to number of
-            paths from query to targets through those datasets
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
         :return: a dictionary containing an id, and lists to target ids and
@@ -189,29 +184,30 @@ class Crossmap:
         if sum(raw.data) == 0:
             return search_result([], [], query_name, n)
         suggest = self.indexer.suggest
-        targets, distances = suggest(diffused, dataset, n, paths)
+
+        # search for neighbors based on diffused vector
+        targets, distances = suggest(diffused, dataset, n)
         if diffusion is None:
             return search_result(targets, distances, query_name, n)
 
-        # when diffusion is nontrivial, also find hits for raw vector
-        targets_raw, _ = suggest(raw, dataset, n, paths)
+        # in a second pass, also find hits for raw vector
+        targets_raw, _ = suggest(raw, dataset, n)
         new_targets = [_ for _ in targets_raw if _ not in targets]
         if len(new_targets):
             new_distances, new_ids = self.indexer.distances(raw, dataset,
                                                             ids=new_targets)
             targets.extend(new_ids)
             distances.extend(new_distances)
+            distances, targets = zip(*sorted(zip(distances, targets)))
 
         return search_result(targets, distances, query_name, n)
 
-    def decompose(self, doc, dataset, n=3, paths=None, diffusion=None,
-                  query_name="query"):
+    def decompose(self, doc, dataset, n=3, diffusion=None, query_name="query"):
         """decompose of a query document in terms of targets
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
         :param dataset: string, identifier for dataset
         :param n: integer, number of target to report
-        :param paths: dict, map passed to search function
         :param diffusion: dict, strength of diffusion on primary data
         :param query_name:  character, a name for the document
         :return: dictionary containing an id, and list with target ids and
@@ -229,7 +225,7 @@ class Crossmap:
         # loop for greedy decomposition
         q_residual = q
         while len(components) < n and len(q_residual.data) > 0:
-            target, _ = suggest(q_residual, dataset, 1, paths)
+            target, _ = suggest(q_residual, dataset, 1)
             target_data = get_data(dataset, ids=target)
             if target[0] in ids:
                 # residual mapped back onto an existing hit? quit early
@@ -255,33 +251,31 @@ class Crossmap:
 
         return decomposition_result(ids, coefficients, query_name)
 
-    def search_file(self, filepath, dataset, n, paths=None, diffusion=None):
+    def search_file(self, filepath, dataset, n, diffusion=None):
         """find nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
         :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
-        :param paths: dict, map with number of paths through datasets
         :param diffusion: dict, map with diffusion strengths
         :return: list with dicts, each as output by search()
         """
 
         return _action_file(self.search, filepath, dataset=dataset,
-                            n=n, paths=paths, diffusion=diffusion)
+                            n=n, diffusion=diffusion)
 
-    def decompose_file(self, filepath, dataset, n=3, paths=None, diffusion=None):
+    def decompose_file(self, filepath, dataset, n=3, diffusion=None):
         """perform decomposition for documents defined in a file
 
         :param filepath: string, path to a file with documents
         :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
-        :param paths: dict, map with number of paths through datasets
         :param diffusion: dict, map with diffusion strengths
         :return: list with dicts, each as output by decompose()
         """
 
         return _action_file(self.decompose, filepath, dataset=dataset,
-                            n=n, paths=paths, diffusion=diffusion)
+                            n=n, diffusion=diffusion)
 
 
 def validate_dataset_label(crossmap, label=None, log=True):

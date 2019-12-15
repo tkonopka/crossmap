@@ -46,7 +46,6 @@ class UserQueryMessage extends ChatMessage {
         });
         let settings_datasets = Object.keys(data.diffusion);
         let diffusion_marks = [0, 5, 10].map((x) => ({value: x, label: x}));
-        let paths_marks = [0, 5, 10].map((x) => ({value: x, label: x}));
         let diffusion_rows = settings_datasets.map((d) => {
             return(<TableRow key={"diffusion_"+d}>
                 <TableCell variant="head">{d===settings_datasets[0] ? "diffusion" : ""}</TableCell>
@@ -59,18 +58,6 @@ class UserQueryMessage extends ChatMessage {
                 </TableCell>
             </TableRow>)
         });
-        let paths_rows = settings_datasets.map((d) => {
-            return(<TableRow key={"paths"+d}>
-                <TableCell variant="head">{d === settings_datasets[0] ? "paths" : ""}</TableCell>
-                <TableCell>{d}</TableCell>
-                <TableCell><Slider disabled
-                                   value={data["paths"][d]}
-                                   valueLabelDisplay="auto"
-                                   marks={paths_marks}
-                                   min={0} max={10}/>
-                </TableCell>
-            </TableRow>)
-        })
         return (
             <div className="chat-user" onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
                 <Typography variant={"h5"}>Query</Typography>
@@ -100,7 +87,7 @@ class UserQueryMessage extends ChatMessage {
                                 <TableCell variant={"head"}>number of neighbors</TableCell>
                                 <TableCell>{data["n"]}</TableCell>
                             </TableRow>
-                            {diffusion_rows}{paths_rows}
+                            {diffusion_rows}
                          </TableBody>
                     </Table>
                 </Box>

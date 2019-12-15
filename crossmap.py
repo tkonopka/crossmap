@@ -39,9 +39,6 @@ parser.add_argument("--dataset", action="store",
 parser.add_argument("--n", action="store",
                     type=int, default=1,
                     help="number of targets")
-parser.add_argument("--paths", action="store",
-                    default=None,
-                    help="JSON of a dict with numbers of indirect paths")
 parser.add_argument("--diffusion", action="store",
                     default=None,
                     help="JSON of a dict setting diffusion strengths")
@@ -70,8 +67,6 @@ if __name__ != "__main__":
 
 
 config = parser.parse_args()
-if config.paths is not None:
-    config.paths = loads(config.paths)
 if config.diffusion is not None:
     config.diffusion = loads(config.diffusion)
 action = config.action
@@ -122,8 +117,7 @@ if action in set(["search", "decompose"]):
     if action == "decompose":
         action_fun = crossmap.decompose_file
     result = action_fun(config.data, config.dataset,
-                        n=config.n, paths=config.paths,
-                        diffusion=config.diffusion)
+                        n=config.n, diffusion=config.diffusion)
     print_pretty(result, config.pretty)
 
 if action == "add":

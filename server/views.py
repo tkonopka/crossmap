@@ -48,7 +48,6 @@ def parse_request(request):
     for k in ["dataset", "data", "aux_pos", "aux_neg"]:
         doc[k] = data[k] if k in data else []
     doc["n"] = get_or_default(data, "n", 1)
-    doc["paths"] = get_or_default(data, "paths", None)
     doc["diffusion"] = get_or_default(data, "diffusion", None)
     return doc
 
@@ -81,8 +80,7 @@ def process_request(request, process_function):
     doc = parse_request(request)
     dataset = doc["dataset"]
     result = process_function(doc, dataset=dataset, n=doc["n"],
-                              paths=doc["paths"], diffusion=doc["diffusion"],
-                              query_name="query")
+                              diffusion=doc["diffusion"], query_name="query")
     targets = result["targets"]
     target_titles = crossmap.db.get_titles(dataset, ids=targets)
     result["titles"] = [target_titles[_] for _ in targets]

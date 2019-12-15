@@ -265,79 +265,23 @@ class CrossmapIndexer:
             distances.append(euc_dist(v_dense, d_dense)/sqrt2)
         return distances, ids
 
-    def suggest(self, v, dataset, n=5, paths=None):
+    def suggest(self, v, dataset, n=5):
         """suggest nearest neighbors using a composite algorithm
 
         :param v:
         :param dataset: string or integer, name of index/dataset
         :param n: integer, number of nearest neighbors
-        :param paths: dictionary defining number of indirect paths
         :return: a list of items ids, a list of composite distances
         """
 
         self._load_item_ids(dataset)
         v = csr_matrix(v)
-        vlist = sparse_to_dense(v)
-        db, _n = self.db, self._neighbors
-        paths = paths or dict()
-
-        # get direct distances from vector to targets
-        nn0, dist0 = _n(v, dataset, n)
-        target_dist = {i: d for i, d in zip(nn0, dist0)}
-        target_data = dict()
-        hits_targets = db.get_data(dataset, idxs=nn0)
-        for _, val in enumerate(hits_targets):
-            target_data[val["idx"]] = sparse_to_dense(val["data"])
-        # collect relevant documents traversed in indirect paths
-        # nn1 - integer indexes in the auxiliary datasets
-        # dist1 - distances from v to the auxiliary items
-        # doc1 - dict of arrays with sparse vectors
-        # data1 - dict of dicts holding dense vectors
-        nn1, dist1, doc1, data1 = dict(), dict(), dict(), dict()
-        for aux_label, aux_n in paths.items():
-            nn1[aux_label], dist1[aux_label] = _n(v, aux_label, aux_n)
-            doc1[aux_label] = db.get_data(aux_label, idxs=nn1[aux_label])
-            data1[aux_label] = dict()
-            for _, val in enumerate(doc1[aux_label]):
-                data1[aux_label][val["idx"]] = sparse_to_dense(val["data"])
-
-        # record distances from auxiliary documents to targets
-        # (some docs may introduce new targets to consider)
-        doc_target_dist = dict()
-        for aux_label in nn1.keys():
-            for doc in nn1[aux_label]:
-                i_data = data1[aux_label][doc]
-                nn2, dist2 = _n(i_data, dataset, n)
-                doc_target_dist[aux_label+str(doc)] = dict()
-                for j, d in zip(nn2, dist2):
-                    doc_target_dist[aux_label+str(doc)][j] = d
-                for target in nn2:
-                    if target in target_dist:
-                        continue
-                    i_target_data = db.get_data(dataset, idxs=[target])[0]
-                    target_data[target] = sparse_to_dense(i_target_data["data"])
-                    target_dist[target] = euc_dist(target_data[target], vlist)
-
-        # compute weighted distances from vector to targets
-        result = target_dist.copy()
-        n_doc = sum([_ for _ in paths.values()])
-        for aux_label in nn1.keys():
-            for i, d_v_i in zip(nn1[aux_label], dist1[aux_label]):
-                i_data = data1[aux_label][i]
-                i_target_dist = doc_target_dist[aux_label+str(i)]
-                for j in target_dist.keys():
-                    if j in i_target_dist:
-                        d_i_j = i_target_dist[j]
-                    else:
-                        d_i_j = euc_dist(i_data, target_data[j])
-                    result[j] += (d_v_i + d_i_j)/n_doc
-
-        result = sorted(result.items(), key=lambda x: x[1])
-        target_ids = self.item_ids[dataset]
-        suggestions = [target_ids[i] for i, _ in result]
+        neighbors, distances = self._neighbors(v, dataset, n)
+        item_ids = self.item_ids[dataset]
+        suggestions = [item_ids[_] for _ in neighbors]
         # Two entirely different unit vectors have a distance of sqrt(2)
         # The division below transforms output to [0, 1]
-        distances = [float(d)/sqrt2 for _, d in result]
+        distances = [float(_)/sqrt2 for _ in distances]
         return suggestions, distances
 
     @property
