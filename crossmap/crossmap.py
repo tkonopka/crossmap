@@ -197,11 +197,12 @@ class Crossmap:
             targets_raw, _ = suggest(raw, dataset, n)
             new_targets.extend([_ for _ in targets_raw if _ not in targets])
         # attempt to find without aux fields
-        if "data" in doc and len(doc) > 1:
+        if "data" in doc and len(doc["data"]) > 0:
             small_doc = dict(data=doc["data"])
             _, small_diffused = self._prep_vector(small_doc, diffusion)
-            small_targets, _ = suggest(small_diffused, dataset, n)
-            new_targets.extend([_ for _ in small_targets if _ not in targets])
+            if len(small_diffused.data):
+                small_targets, _ = suggest(small_diffused, dataset, n)
+                new_targets.extend([_ for _ in small_targets if _ not in targets])
 
         # compute distances from diffused document to all the candidates
         if len(new_targets):
@@ -321,6 +322,8 @@ def _action_file(action, filepath, **kw):
     """
 
     result = []
+    if filepath is None:
+        return result
     with open_file(filepath, "rt") as f:
         for id, doc in yaml_document(f):
             result.append(action(doc, **kw, query_name=id))
