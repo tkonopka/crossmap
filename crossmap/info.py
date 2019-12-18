@@ -110,7 +110,7 @@ class CrossmapInfo(Crossmap):
                 x_data = db.get_data(label, ids=[x])
                 if len(x_data) > 0:
                     x_vector = x_data[0]["data"]
-                    x_dist = distance(v_raw, x_vector) / sqrt2
+                    x_dist = distance(v_diffused, x_vector) / sqrt2
                     x_result = dict(query=query_name, dataset=label,
                                     id=x, distance=x_dist)
                     result.append(x_result)

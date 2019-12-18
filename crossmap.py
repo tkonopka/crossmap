@@ -39,6 +39,8 @@ parser.add_argument("--dataset", action="store",
 parser.add_argument("--n", action="store",
                     type=int, default=1,
                     help="number of targets")
+parser.add_argument("--fast_search", action="store_true",
+                    help="faster search with approximate neighbors")
 parser.add_argument("--diffusion", action="store",
                     default=None,
                     help="JSON of a dict setting diffusion strengths")
@@ -109,6 +111,7 @@ if action == "build":
 if action in set(["search", "decompose"]):
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap = Crossmap(settings)
+    crossmap.fast_search = config.fast_search
     crossmap.load()
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     if config.dataset is None:

@@ -23,6 +23,8 @@ class CrossmapSettingsDefaults:
         self.dir = getcwd()
         self.prefix = join(self.dir, self.name)
         self.file = "crossmap.yaml"
+        # toggling quality of search
+        self.fast_search = False
         # paths to disk files
         self.data_files = dict()
         # settings for features (e.g. max number, or from file)

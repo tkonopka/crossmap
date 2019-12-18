@@ -62,7 +62,7 @@ class CrossmapDiffuser:
         result = [empty.copy() for _ in range(nf)]
         self.db.set_counts(dataset, result)
 
-    def _build_counts_db(self, dataset=""):
+    def _build_counts(self, dataset=""):
         """construct co-occurrence records for one dataset
 
         (This version uses building from database)
@@ -73,11 +73,11 @@ class CrossmapDiffuser:
         # check existing state of counts table
         num_rows = self.db.count_rows(dataset, "counts")
         if num_rows > 0:
-            msg = "Skipping build of diffusion index for " + dataset
+            msg = "Skipping build of diffusion index: " + dataset
             warning(msg + " - already exists")
             return
 
-        info("Building diffusion index for " + dataset)
+        info("Building diffusion index: " + dataset)
         threshold = self.threshold
         progress = self.settings.logging.progress
         fm = self.feature_map
@@ -98,7 +98,7 @@ class CrossmapDiffuser:
             result[_] = result[_].to_csr(nf)
         self.db.set_counts(dataset, result)
 
-    def _build_counts(self, dataset="", filepath=None):
+    def _build_counts_from_scratch(self, dataset="", filepath=None):
         """construct co-occurrence records for one dataset
 
         :param dataset: string, identifier for dataset in db
@@ -138,15 +138,23 @@ class CrossmapDiffuser:
             result[_] = result[_].to_csr(nf)
         self.db.set_counts(dataset, result)
 
-    def build(self):
+    def build_db(self):
         """populate count tables based on all data files"""
 
         settings = self.settings
-        for label in self.settings.data_files.keys():
+        for label in settings.data_files.keys():
             if label not in self.db.datasets:
                 self.db.register_dataset(label)
         for label, filepath in settings.data_files.items():
             self._build_counts(label, filepath)
+
+    def build(self):
+        """populate count tables based on all data files"""
+
+        for label in self.settings.data_files.keys():
+            if label not in self.db.datasets:
+                self.db.register_dataset(label)
+            self._build_counts(label)
 
     def update(self, dataset, data_idxs=[]):
         """augment counts based on vectors from the data table
@@ -176,53 +184,15 @@ class CrossmapDiffuser:
                 counts[k] += v*sign(d)
             self.db.update_counts(dataset, counts)
 
-    def diffuse_old(self, v, strength, weight=None, normalize=True, threshold=0):
-        """create a new vector by diffusing values
-
-        :param v: csr vector
-        :param strength: dict, diffusion strength from each dataset
-        :param normalize: logical, ensures final vector has unit norm
-        :param threshold: numerical, when >0, weak items in diffused
-            vector will be hard-set to exactly zero
-        :return: csr vector
-        """
-
-        # this function involves adding many csr vectors together
-        # empirical tests show that it is faster to keep "result"
-        # as dense array and add into it, rather than keep it sparse
-        # and have its structure change many times
-        result = v.toarray()[0]
-        v_indexes = [int(_) for _ in v.indices]
-        v_dict = Sparsevector(v).data
-        for corpus, value in strength.items():
-            diffusion_data = self.db.get_counts_arrays(corpus, v_indexes)
-            for di, ddata in diffusion_data.items():
-                # ddata[2] contains a sum of all data entries in the vector
-                # ddata[3] contains the maximal value
-                row_norm = ddata[3]
-                #print(str(di)+" "+str(row_norm))
-                #print(str(ddata))
-                if row_norm == 0.0:
-                    continue
-                #print("continuing here")
-                data = ddata[0]
-                if threshold > 0:
-                    data = threshold_vec(data, threshold*row_norm)
-                data *= v_dict[di]*value/row_norm
-                # TO DO - avoid diffusing into itself !!!!!!!
-                result = add_sparse(result, data, ddata[1])
-        result = csr_matrix(result)
-        if normalize:
-            # this command can be written as just "normalize_csr(result)"
-            # but empirically the running time is much fast with "result=..."
-            result = normalize_csr(result)
-        return result
-
     def diffuse(self, v, strength, weight=None, normalize=True, threshold=0):
         """create a new vector by diffusing values
 
         :param v: csr vector
         :param strength: dict, diffusion strength from each dataset
+        :param weight: csr vector with weights for each feature for diffusion.
+            Algorithm uses v if weight is unspecified, but this can give too
+            much emphasis to features that represent overlapping kmers from
+            long words.
         :param normalize: logical, ensures final vector has unit norm
         :param threshold: numerical, when >0, weak items in diffused
             vector will be hard-set to exactly zero

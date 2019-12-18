@@ -118,7 +118,7 @@ class CrossmapInfoTests(unittest.TestCase):
         e = [_ for _ in result if _["id"] == "E"]
         self.assertEqual(len(e), 0)
 
-    def test_info_distances_match_search(self):
+    def test_info_distances_match_search_wo_diffusion(self):
         """info can reproduce distances reported via search"""
 
         doc = {"data": "alpha A", "aux_pos": "bravo B"}
@@ -133,7 +133,27 @@ class CrossmapInfoTests(unittest.TestCase):
         info_distances = dict()
         for _ in result:
             info_distances[_["id"]] = _["distance"]
-        # should be equal
+        self.assertEqual(len(search_distances), len(info_distances))
+        for id in search_targets:
+            self.assertAlmostEqual(search_distances[id], info_distances[id])
+
+    def test_info_distances_match_search_w_diffusion(self):
+        """info can reproduce distances reported via search"""
+
+        doc = {"data": "alpha A", "aux_pos": "bravo"}
+        # distances from search
+        diff = dict(targets=1)
+        crossmap = self.crossmap
+        search_result = crossmap.search(doc, "targets", n=4, diffusion=diff)
+        search_targets = search_result["targets"]
+        search_distances = dict()
+        for i, d in enumerate(search_result["distances"]):
+            search_distances[search_targets[i]] = d
+        # distances computed through info
+        result = self.crossinfo.distance(doc, ids=search_targets, diffusion=diff)
+        info_distances = dict()
+        for _ in result:
+            info_distances[_["id"]] = _["distance"]
         self.assertEqual(len(search_distances), len(info_distances))
         for id in search_targets:
             self.assertAlmostEqual(search_distances[id], info_distances[id])

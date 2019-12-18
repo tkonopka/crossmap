@@ -15,18 +15,17 @@ from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
-def search_result(ids, distances, name, n=1):
+def search_result(ids, distances, name):
     """structure an object describing a nearest-neighbor search
 
     :param ids: list of string identifiers
     :param distances: list of numeric values
     :param name: query name included in the output dictionary
-    :param n: integer, maximal number of items to report in output
     :return: dicionary, contain lists with ids and distances,
       ordered by distance from smallest to largerst
     """
 
-    return dict(query=name, targets=ids[:n], distances=distances[:n])
+    return dict(query=name, targets=ids, distances=distances)
 
 
 def decomposition_result(ids, weights, name):
@@ -65,6 +64,7 @@ class Crossmap:
         if type(settings) is str:
             settings = CrossmapSettings(settings)
         self.settings = settings
+        self.fast_search = settings.fast_search
         self.indexer = None
         self.db = None
         if not settings.valid:
@@ -182,25 +182,37 @@ class Crossmap:
 
         raw, diffused = self._prep_vector(doc, diffusion)
         if sum(raw.data) == 0:
-            return search_result([], [], query_name, n)
+            return search_result([], [], query_name)
         suggest = self.indexer.suggest
 
         # search for neighbors based on diffused vector
         targets, distances = suggest(diffused, dataset, n)
-        if diffusion is None:
-            return search_result(targets, distances, query_name, n)
+        if diffusion is None or self.fast_search:
+            return search_result(targets, distances, query_name)
 
-        # in a second pass, also find hits for raw vector
-        targets_raw, _ = suggest(raw, dataset, n)
-        new_targets = [_ for _ in targets_raw if _ not in targets]
+        # for a more thorough search, get additional candidates
+        new_targets = []
+        # attempt to find using document without diffusion
+        if diffusion is not None:
+            targets_raw, _ = suggest(raw, dataset, n)
+            new_targets.extend([_ for _ in targets_raw if _ not in targets])
+        # attempt to find without aux fields
+        if "data" in doc and len(doc) > 1:
+            small_doc = dict(data=doc["data"])
+            _, small_diffused = self._prep_vector(small_doc, diffusion)
+            small_targets, _ = suggest(small_diffused, dataset, n)
+            new_targets.extend([_ for _ in small_targets if _ not in targets])
+
+        # compute distances from diffused document to all the candidates
         if len(new_targets):
-            new_distances, new_ids = self.indexer.distances(raw, dataset,
-                                                            ids=new_targets)
+            new_distances, new_ids = self.indexer.distances(diffused, dataset,
+                                                            ids=set(new_targets))
             targets.extend(new_ids)
             distances.extend(new_distances)
+            # the asterisk in *sorted provides the outer zip with two lists
             distances, targets = zip(*sorted(zip(distances, targets)))
 
-        return search_result(targets, distances, query_name, n)
+        return search_result(targets[:n], distances[:n], query_name)
 
     def decompose(self, doc, dataset, n=3, diffusion=None, query_name="query"):
         """decompose of a query document in terms of targets
