@@ -7,6 +7,7 @@ from os.path import join
 from crossmap.settings import CrossmapSettings
 from crossmap.indexer import CrossmapIndexer
 from crossmap.diffuser import CrossmapDiffuser
+from crossmap.diffuser import _pass_weights
 from .tools import remove_crossmap_cache
 from crossmap.vectors import sparse_to_dense
 from crossmap.distance import euc_dist
@@ -166,7 +167,7 @@ class CrossmapDiffuserBuildReBuildTests(unittest.TestCase):
 class CrossmapDiffuserWeightsTests(unittest.TestCase):
     """Checking overlapping tokens do not swamp diffusion"""
 
-    long_bc = dict(data="longword B C")
+    long_b = dict(data="longword B")
     gh = dict(data="G H")
 
     @classmethod
@@ -218,13 +219,13 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
     def test_longword_document_before_diffusion(self):
         """encoding before diffusion accounts for overlapping tokens"""
 
-        v = self.encoder.document(self.long_bc)
-        self.assertGreater(len(v.data), 5)
+        v = self.encoder.document(self.long_b)
+        self.assertGreater(len(v.data), 4)
         # overlapping tokens from "longword" should be weighted lower than
         # tokens from "B" or "C" that are stand-alone
         v_dense = sparse_to_dense(v)
         fm = self.feature_map
-        self.assertGreater(v_dense[fm["b"][0]], v_dense[fm["longw"][0]])
+        self.assertGreater(v_dense[fm["b"][0]], v_dense[fm["ngwor"][0]])
         # document should be closer to L0 than to L1
         d0 = euc_dist(v_dense, self.data["L0"])
         d1 = euc_dist(v_dense, self.data["L1"])
@@ -233,8 +234,8 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
     def test_diffusion_shifts_away_from_longword(self):
         """encoding is reasonable after diffusion"""
 
-        v = self.encoder.document(self.long_bc)
-        w = self.encoder.document(self.long_bc, scale_fun="sq")
+        v = self.encoder.document(self.long_b)
+        w = self.encoder.document(self.long_b, scale_fun="sq")
         v_dense = sparse_to_dense(v)
         # w_dense = sparse_to_dense(w)
         vd = self.diffuser.diffuse(v, dict(targets=0.5))
@@ -248,13 +249,35 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
             after[id] = euc_dist(target, vd_dense)
             after2[id] = euc_dist(target, vd2_dense)
 
-        #print("before: "+str(before))
-        #print("after: "+str(after))
-        #print("after2: "+str(after2))
-
         # document should become closer to L1 than to L0
         # i.e. opposite relation compared to previous test
         d0 = euc_dist(vd2_dense, self.data["L0"])
         d1 = euc_dist(vd2_dense, self.data["L1"])
         self.assertLess(d1, d0)
+
+
+class CrossmapDiffuserMultistep(unittest.TestCase):
+    """diffusion through multiple passes"""
+
+    def test_multistep_weights_1(self):
+        """weighting for a single-step diffusion"""
+        result = _pass_weights(1)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], 1.0)
+
+    def test_multistep_weights_2(self):
+        """weighting for a two-step diffusion"""
+        result = _pass_weights(2)
+        self.assertEqual(len(result), 2)
+        self.assertAlmostEqual(result[0], 2/3)
+        self.assertAlmostEqual(result[1], 1/3)
+
+    def test_multistep_weights_3(self):
+        """weighting for a three-step diffusion"""
+
+        result = _pass_weights(3)
+        self.assertEqual(len(result), 3)
+        self.assertAlmostEqual(result[0], 6/11)
+        self.assertAlmostEqual(result[1], 3/11)
+        self.assertAlmostEqual(result[2], 2/11)
 

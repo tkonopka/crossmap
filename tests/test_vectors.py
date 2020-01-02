@@ -10,6 +10,7 @@ from scipy.sparse import csr_matrix, vstack
 from crossmap.vectors import csr_residual, vec_decomposition
 from crossmap.vectors import num_nonzero, all_zero
 from crossmap.vectors import vec_norm, normalize_vec, threshold_vec
+from crossmap.vectors import nonzero_indices
 
 
 class VecNormTests(unittest.TestCase):
@@ -198,4 +199,36 @@ class VecDecompositionTests(unittest.TestCase):
         self.assertAlmostEqual(result[0, 0], result[1, 0])
         self.assertAlmostEqual(result[0,0], 2.0/3)
         self.assertAlmostEqual(result[1,0], 2.0/3)
+
+
+class VecIndicesTests(unittest.TestCase):
+    """Nonzero indices in a vector"""
+
+    v = array([0, 2, 4, 1, 0])
+
+    def test_nonzero_1(self):
+        """nonzero index with maximal value"""
+
+        result = nonzero_indices(self.v)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], 2)
+
+    def test_nonzero_zeros(self):
+        """nonzero indices from zero vector is empty"""
+
+        result = nonzero_indices(array([0, 0, 0, 0, 0]))
+        self.assertEqual(len(result), 0)
+
+    def test_nonzero_2(self):
+        """nonzero indices, with a limit"""
+
+        result = nonzero_indices(self.v, 2)
+        self.assertEqual(len(result), 2)
+        self.assertListEqual(result, [2, 1])
+
+    def test_nonzero_return_nonzero(self):
+        """nonzero return only nonzero indices, even when request for more"""
+
+        result = nonzero_indices(self.v, 10)
+        self.assertEqual(len(result), 3)
 

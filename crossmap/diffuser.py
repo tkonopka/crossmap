@@ -8,13 +8,14 @@ the diffusion spreads is controlled via connections store in a db.
 
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
-from numpy import zeros
+from numpy import zeros, array
 from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, add_sparse
 from .sparsevector import Sparsevector
 from .vectors import threshold_vec, all_zero
+from .vectors import sparse_to_dense
 
 
 def sign(x):
@@ -45,6 +46,7 @@ class CrossmapDiffuser:
             error("feature map is empty")
         self.tokenizer = CrossmapTokenizer(self.settings)
         self.encoder = CrossmapEncoder(self.feature_map, self.tokenizer)
+        self.num_passes = settings.diffusion.num_passes
 
     def _set_empty_counts(self, dataset):
         """set up empty co-occurance records for a dataset
@@ -184,7 +186,7 @@ class CrossmapDiffuser:
                 counts[k] += v*sign(d)
             self.db.update_counts(dataset, counts)
 
-    def diffuse(self, v, strength, weight=None, normalize=True, threshold=0):
+    def diffuse_old(self, v, strength, weight=None, normalize=True, threshold=0):
         """create a new vector by diffusing values
 
         :param v: csr vector
@@ -230,4 +232,62 @@ class CrossmapDiffuser:
             # but empirically the running time is much faster with "result=..."
             result = normalize_csr(result)
         return result
+
+    def diffuse(self, v, strength, weight=None):
+        """create a new vector by diffusing values
+
+        :param v: csr vector
+        :param strength: dict, diffusion strength from each dataset
+        :param weight: csr vector with weights for each feature for diffusion.
+            Algorithm uses v if weight is unspecified, but this can give too
+            much emphasis to features that represent overlapping kmers from
+            long words.
+        :param num_passes: integer, number of diffusion stages
+        :return: csr vector
+        """
+
+        v_dense = sparse_to_dense(v)
+        if weight is not None:
+            w_dense = sparse_to_dense(weight)
+        else:
+            w_dense = v_dense
+        result = sparse_to_dense(v)
+
+        # fetch counts data from db, then re-use in multiple passes
+        v_indexes = [int(_) for _ in v.indices]
+        counts = dict()
+        for corpus in strength.keys():
+            counts[corpus] = self.db.get_counts_arrays(corpus, v_indexes)
+
+        num_passes = self.num_passes
+        for pass_weight in _pass_weights(num_passes):
+            last_result = result.copy()
+            for corpus, value in strength.items():
+                diffusion_data = counts[corpus]
+                for di, ddata in diffusion_data.items():
+                    # ddata[2] contains a sum of all data entries in the vector
+                    # ddata[3] contains the maximal value
+                    row_norm = ddata[3]
+                    if row_norm == 0.0:
+                        continue
+                    data = ddata[0]
+                    multiplier = (w_dense[di]/v_dense[di]) * (value / row_norm)
+                    data *= pass_weight * multiplier * last_result[di]
+                    # add the diffusion parts (not to self)
+                    add_sparse(result, data, ddata[1], di)
+        return normalize_csr(csr_matrix(result))
+
+
+def _pass_weights(tot):
+    """compute a weight for a diffusion pass using 1/p!
+
+    :param tot: total number of passes
+    :return: real number
+    """
+
+    result = array([1.0]*tot)
+    for i in range(1, tot):
+        result[i] = (i+1)*result[i]
+    result = [1/_ for _ in result]
+    return result / sum(result)
 

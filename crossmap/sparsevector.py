@@ -32,6 +32,24 @@ class Sparsevector:
 
         return self.add(v.indices, v.data, multiplier)
 
+    def add_dense(self, v, multiplier=1.0):
+        """add a dense vector
+
+        :param v: array or list
+        :param multiplier: numeric, multiplier for values in v
+        :return: self to allow concatentating command
+        """
+
+        data = self.data
+        for i in range(len(v)):
+            d = v[i]
+            if d == 0.0:
+                continue
+            if i not in data:
+                data[i] = 0.0
+            data[i] += d*multiplier
+        return self
+
     def add(self, indices, values, multiplier=1.0):
         """add a small set of sparse data to this object
 

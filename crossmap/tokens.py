@@ -31,16 +31,18 @@ def token_counts(docs, components=("data", "aux_pos", "aux_neg")):
 class Kmerizer:
     """A tokenizer of documents that splits words into kmers"""
 
-    def __init__(self, k=5, case_sensitive=False, alphabet=None):
+    def __init__(self, k=5, case_sensitive=False, alphabet=None, k2=None):
         """configure a tokenizer
 
         :param k: integer, length of kmers (words will be split into
             overlapping kmers)
         :param case_sensitive: logical, if False, tokens will be lowercase
         :param alphabet: string with all possible characters
+        :param k2: integer, length of kmers used in overlap weighting
         """
 
         self.k = k
+        self.k2 = k2 if k2 is not None else 2*k
         self.case_sensitive = case_sensitive
         if alphabet is None:
             alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -87,6 +89,7 @@ class Kmerizer:
         """
 
         k = self.k
+        k2 = self.k2
         alphabet = self.alphabet
         if not self.case_sensitive:
             s = s.lower()
@@ -100,7 +103,7 @@ class Kmerizer:
             if word == "":
                 continue
             wlen = len(word)
-            weight = scale_fun(max(1.0, wlen/k) / max(1.0, wlen - k + 1))
+            weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k + 1))
             for _ in kmers(word, k):
                 result[_.strip()] += weight
         return result

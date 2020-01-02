@@ -6,7 +6,6 @@ import numba
 from math import sqrt
 from numpy import matmul
 from numpy.linalg import lstsq
-from scipy.sparse import csr_matrix
 
 
 @numba.jit
@@ -68,7 +67,6 @@ def add_three(a, b, c, wb, wc):
     :param wc: real number
     :return: vector a+ wb*b + wc*c
     """
-
     for i in range(len(a)):
         a[i] += wb*b[i] + wc*c[i]
     return a
@@ -99,7 +97,6 @@ def threshold_vec(v, threshold=0.001):
     :param threshold: threshold level
     :return: array with elements smaller than threshold set to zero
     """
-
     for i in range(len(v)):
         if abs(v[i]) < threshold:
             v[i] = 0
@@ -115,7 +112,6 @@ def vec_decomposition(v_t, b_t):
     :param b_t: a matrix with basis vector as rows, the transpose of B
     :return: a vector with coefficients
     """
-
     a = matmul(b_t, b_t.transpose())
     b = matmul(b_t, v_t.transpose())
     x, residuals, _, _ = lstsq(a, b, rcond=None)
@@ -125,4 +121,15 @@ def vec_decomposition(v_t, b_t):
 def sparse_to_dense(v):
     """convert a one-row sparse matrix into a dense ndarray"""
     return v.toarray()[0]
+
+
+def nonzero_indices(arr, max_number=1):
+    """get an array of indices that have nonzero value"""
+    result = []
+    for i in range(len(arr)):
+        if arr[i] != 0.0:
+            result.append((arr[i], i))
+    result = sorted(result, reverse=True)
+    n = min(max_number, len(result))
+    return [result[_][1] for _ in range(n)]
 

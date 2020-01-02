@@ -100,7 +100,8 @@ class CrossmapInfoTests(unittest.TestCase):
                 c_file = d["vector"]
         from_db = self.crossinfo.vectors(ids=["C"], diffusion=diff)
         c_db = from_db[0]["vector"]
-        self.assertListEqual(c_file, c_db)
+        for i in range(len(c_db)):
+            self.assertAlmostEqual(c_file[i], c_db[i])
 
     def test_info_distances_from_file(self):
         """compute distances between data items in a file and in db"""
@@ -135,7 +136,8 @@ class CrossmapInfoTests(unittest.TestCase):
             info_distances[_["id"]] = _["distance"]
         self.assertEqual(len(search_distances), len(info_distances))
         for id in search_targets:
-            self.assertAlmostEqual(search_distances[id], info_distances[id])
+            self.assertAlmostEqual(search_distances[id], info_distances[id],
+                                   places=5)
 
     def test_info_distances_match_search_w_diffusion(self):
         """info can reproduce distances reported via search"""
@@ -156,5 +158,6 @@ class CrossmapInfoTests(unittest.TestCase):
             info_distances[_["id"]] = _["distance"]
         self.assertEqual(len(search_distances), len(info_distances))
         for id in search_targets:
-            self.assertAlmostEqual(search_distances[id], info_distances[id])
+            self.assertAlmostEqual(search_distances[id], info_distances[id],
+                                   places=5)
 

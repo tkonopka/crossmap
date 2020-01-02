@@ -21,7 +21,7 @@ class CrossmapSettingsDiffusionTests(unittest.TestCase):
 
     def setUp(self):
         self.default = CrossmapDiffusionSettings()
-        self.custom = CrossmapDiffusionSettings({"threshold": 0.5})
+        self.custom = CrossmapDiffusionSettings({"threshold": 0.5, "passes": 4})
 
     def test_threshold(self):
         """file set nonzero diffusion threshold"""
@@ -29,10 +29,17 @@ class CrossmapSettingsDiffusionTests(unittest.TestCase):
         self.assertEqual(self.default.threshold, 0)
         self.assertGreater(self.custom.threshold, 0.0)
 
+    def test_passes(self):
+        """file set nonzero diffusion threshold"""
+
+        self.assertEqual(self.default.num_passes, 2)
+        self.assertEqual(self.custom.num_passes, 4)
+
     def test_str(self):
         """can construct a str representation"""
 
         self.assertTrue("diffusion" in str(self.default))
+        self.assertTrue("pass" in str(self.default))
 
 
 class CrossmapFeaturesSettingsTests(unittest.TestCase):

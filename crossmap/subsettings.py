@@ -69,15 +69,19 @@ class CrossmapDiffusionSettings:
 
     def __init__(self, config=None):
         self.threshold = 0.0
+        self.num_passes = 2
 
         if config is None:
             return
         for key, val in config.items():
             if key == "threshold":
                 self.threshold = float(val)
+            if key == "passes":
+                self.num_passes = int(val)
 
     def __str__(self):
-        result = dict(diffusion={"threshold": self.threshold})
+        result = dict(diffusion={"threshold": self.threshold,
+                                 "passes": self.num_passes})
         return dump(result)
 
 

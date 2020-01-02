@@ -257,9 +257,9 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
 
         # entry "A" should link to B before, but not after adding
         d0_A = crossmap.search(self.doc_A, "targets", n=2,
-                               diffusion=dict(documents=1))
+                               diffusion=dict(documents=0.5))
         d1_A = crossmap.search(self.doc_A, "targets", n=2,
-                               diffusion=dict(documents=1, neg=1))
+                               diffusion=dict(documents=0.5, neg=1))
         #print("querying A")
         #print(str(d0_A))
         #print(str(d1_A))
@@ -270,9 +270,9 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
 
         # entry "B" should link to A before, but not after adding
         d0_B = crossmap.search(self.doc_B, "targets", n=2,
-                               diffusion=dict(documents=1))
+                               diffusion=dict(documents=0.5))
         d1_B = crossmap.search(self.doc_B, "targets", n=2,
-                               diffusion=dict(documents=1, neg=1))
+                               diffusion=dict(documents=0.5, neg=1))
         #print("querying B")
         #print(str(d0_B))
         #print(str(d1_B))
@@ -281,3 +281,18 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
         self.assertTrue("A" in d0_B["targets"])
         self.assertFalse("A" in d1_B["targets"])
 
+    def test_add_diffuse_two_pass(self):
+        """adding documents with neg associations can remove links"""
+
+        # some new documents that link Alice to other tokens
+        crossmap = self.crossmap
+        crossmap.diffuser.num_passes = 1
+        A_1 = crossmap.search(self.doc_A, "targets", n=2,
+                              diffusion=dict(documents=0.1))
+        crossmap.diffuser.num_passes = 2
+        A_2 = crossmap.search(self.doc_A, "targets", n=2,
+                              diffusion=dict(documents=0.1))
+        self.assertEqual(A_1["targets"][0], "A")
+        self.assertEqual(A_2["targets"][0], "A")
+        self.assertNotEqual(A_1["distances"][0], A_2["distances"][0])
+        self.assertNotEqual(A_1["distances"][1], A_2["distances"][1])
