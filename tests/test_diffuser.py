@@ -238,9 +238,9 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         w = self.encoder.document(self.long_b, scale_fun="sq")
         v_dense = sparse_to_dense(v)
         # w_dense = sparse_to_dense(w)
-        vd = self.diffuser.diffuse(v, dict(targets=0.5))
+        vd = self.diffuser.diffuse(v, dict(targets=2))
         vd_dense = sparse_to_dense(vd)
-        vd2 = self.diffuser.diffuse(v, dict(targets=0.5), weight=w)
+        vd2 = self.diffuser.diffuse(v, dict(targets=2), weight=w)
         vd2_dense = sparse_to_dense(vd2)
         # distances from doc to targets before and after diffusion
         before, after, after2 = dict(), dict(), dict()
@@ -248,7 +248,7 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
             before[id] = euc_dist(target, v_dense)
             after[id] = euc_dist(target, vd_dense)
             after2[id] = euc_dist(target, vd2_dense)
-
+        
         # document should become closer to L1 than to L0
         # i.e. opposite relation compared to previous test
         d0 = euc_dist(vd2_dense, self.data["L0"])

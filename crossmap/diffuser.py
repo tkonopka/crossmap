@@ -15,7 +15,7 @@ from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, add_sparse
 from .sparsevector import Sparsevector
 from .vectors import threshold_vec, all_zero
-from .vectors import sparse_to_dense
+from .vectors import sparse_to_dense, normalize_vec
 
 
 def sign(x):
@@ -247,6 +247,7 @@ class CrossmapDiffuser:
         """
 
         v_dense = sparse_to_dense(v)
+
         if weight is not None:
             w_dense = sparse_to_dense(weight)
         else:
@@ -267,14 +268,15 @@ class CrossmapDiffuser:
                 for di, ddata in diffusion_data.items():
                     # ddata[2] contains a sum of all data entries in the vector
                     # ddata[3] contains the maximal value
-                    row_norm = ddata[3]
-                    if row_norm == 0.0:
+                    row_sum = ddata[2]
+                    row_max = ddata[3]
+                    if row_max == 0.0:
                         continue
                     data = ddata[0]
-                    multiplier = (w_dense[di]/v_dense[di]) * (value / row_norm)
-                    data *= pass_weight * multiplier * last_result[di]
+                    multiplier = min(1.0, (w_dense[di]/v_dense[di]))
+                    data *= pass_weight * value * multiplier * last_result[di] / row_sum
                     # add the diffusion parts (not to self)
-                    add_sparse(result, data, ddata[1], di)
+                    result = add_sparse(result, data, ddata[1], di)
         return normalize_csr(csr_matrix(result))
 
 
