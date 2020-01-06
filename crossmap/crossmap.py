@@ -132,7 +132,7 @@ class Crossmap:
         if "metadata" not in doc or type(doc["metadata"]) is not dict:
             doc["metadata"] = dict()
         if metadata is not None:
-            for k, v in metadata:
+            for k, v in metadata.items():
                 doc["metadata"][k] = v
         doc["metadata"]["timestamp"] = time()
         with open(self.settings.yaml_file(dataset), "at") as f:
