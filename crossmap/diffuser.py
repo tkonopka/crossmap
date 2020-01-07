@@ -8,20 +8,13 @@ the diffusion spreads is controlled via connections store in a db.
 
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
-from numpy import zeros, array
+from numpy import array
 from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, add_sparse
 from .sparsevector import Sparsevector
-from .vectors import threshold_vec, all_zero
-from .vectors import sparse_to_dense, normalize_vec
-
-
-def sign(x):
-    """get the sign of a number"""
-    result = 1 if x >= 0 else -1
-    return result
+from .vectors import sparse_to_dense
 
 
 class CrossmapDiffuser:
@@ -92,63 +85,13 @@ class CrossmapDiffuser:
                 v = threshold_csr(v, threshold)
             total += 1
             for i, d in zip(v.indices, v.data):
-                result[i].add_csr(v, sign(d))
+                result[i].add_csr(v, _sign(d))
             if total % progress == 0:
                 info("Progress: " + str(total))
         # replace dictionaries by csr_matrix (in place to save memory)
         for _ in range(nf):
             result[_] = result[_].to_csr(nf)
         self.db.set_counts(dataset, result)
-
-    def _build_counts_from_scratch(self, dataset="", filepath=None):
-        """construct co-occurrence records for one dataset
-
-        :param dataset: string, identifier for dataset in db
-        :param filepath: string path to disk file
-        """
-
-        # check existing state of counts table
-        num_rows = self.db.count_rows(dataset, "counts")
-        if num_rows > 0:
-            msg = "Skipping build of diffusion index for " + dataset
-            warning(msg + " - already exists")
-            return
-
-        info("Building diffusion index for " + dataset)
-        threshold = self.threshold
-        progress = self.settings.logging.progress
-        fm = self.feature_map
-        nf = len(fm)
-        result = [Sparsevector() for _ in range(nf)]
-        total = 0
-        encoder = self.encoder
-        # TO DO - if this uses encoding using sqrt,
-        # then this  might as well use _build_counts_db
-        for v, _id, _title in encoder.documents([filepath], "sqrt"):
-            if all_zero(v.toarray()[0]):
-                warning("Skipping item id: " + str(_id))
-                continue
-            if threshold > 0:
-                v = threshold_csr(v, threshold)
-            total += 1
-            for i, d in zip(v.indices, v.data):
-                result[i].add_csr(v, sign(d))
-            if total % progress == 0:
-                info("Progress: " + str(total))
-        # replace dictionaries by csr_matrix (in place to save memory)
-        for _ in range(nf):
-            result[_] = result[_].to_csr(nf)
-        self.db.set_counts(dataset, result)
-
-    def build_db(self):
-        """populate count tables based on all data files"""
-
-        settings = self.settings
-        for label in settings.data_files.keys():
-            if label not in self.db.datasets:
-                self.db.register_dataset(label)
-        for label, filepath in settings.data_files.items():
-            self._build_counts(label, filepath)
 
     def build(self):
         """populate count tables based on all data files"""
@@ -183,55 +126,8 @@ class CrossmapDiffuser:
             counts = self.db.get_counts(dataset, v_indices)
             for k in list(counts.keys()):
                 d = v_dict[k]
-                counts[k] += v*sign(d)
+                counts[k] += v * _sign(d)
             self.db.update_counts(dataset, counts)
-
-    def diffuse_old(self, v, strength, weight=None, normalize=True, threshold=0):
-        """create a new vector by diffusing values
-
-        :param v: csr vector
-        :param strength: dict, diffusion strength from each dataset
-        :param weight: csr vector with weights for each feature for diffusion.
-            Algorithm uses v if weight is unspecified, but this can give too
-            much emphasis to features that represent overlapping kmers from
-            long words.
-        :param normalize: logical, ensures final vector has unit norm
-        :param threshold: numerical, when >0, weak items in diffused
-            vector will be hard-set to exactly zero
-        :return: csr vector
-        """
-
-        result = v.copy()
-        v_indexes = [int(_) for _ in v.indices]
-
-        # v_dict keeps track of how much each feature should be weighted
-        # during diffusion
-        if weight is None:
-            w_dict = Sparsevector(v).data
-        else:
-            w_dict = Sparsevector(weight).data
-
-        for corpus, value in strength.items():
-            corpus_vector = zeros(len(self.feature_map))
-            diffusion_data = self.db.get_counts_arrays(corpus, v_indexes)
-            for di, ddata in diffusion_data.items():
-                # ddata[2] contains a sum of all data entries in the vector
-                # ddata[3] contains the maximal value
-                row_norm = ddata[3]
-                if row_norm == 0.0:
-                    continue
-                data = ddata[0]
-                if threshold > 0:
-                    data = threshold_vec(data, threshold*row_norm)
-                data *= w_dict[di]/row_norm
-                # add the diffusion parts (not to self)
-                corpus_vector = add_sparse(corpus_vector, data, ddata[1], di)
-            result += value*normalize_csr(csr_matrix(corpus_vector))
-        if normalize:
-            # this command can be written as just "normalize_csr(result)"
-            # but empirically the running time is much faster with "result=..."
-            result = normalize_csr(result)
-        return result
 
     def diffuse(self, v, strength, weight=None):
         """create a new vector by diffusing values
@@ -242,7 +138,6 @@ class CrossmapDiffuser:
             Algorithm uses v if weight is unspecified, but this can give too
             much emphasis to features that represent overlapping kmers from
             long words.
-        :param num_passes: integer, number of diffusion stages
         :return: csr vector
         """
 
@@ -292,4 +187,9 @@ def _pass_weights(tot):
         result[i] = (i+1)*result[i]
     result = [1/_ for _ in result]
     return result / sum(result)
+
+
+def _sign(x):
+    """get the sign of a number"""
+    return 1 if x >= 0 else -1
 
