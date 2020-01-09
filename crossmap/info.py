@@ -28,9 +28,7 @@ class CrossmapInfo(Crossmap):
 
         # set up a conversion from indexes into feature strings
         self.feature_map = self.indexer.feature_map
-        self.inv_feature_map = ['']*len(self.feature_map)
-        for k,v in self.feature_map.items():
-            self.inv_feature_map[v[0]] = k
+        self.inv_feature_map = self.indexer.encoder.inv_feature_map
 
     def diffuse(self, doc, diffusion=None):
         """provide an explanation for diffusion in terms of original features

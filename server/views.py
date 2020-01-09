@@ -25,9 +25,14 @@ def access_http_response(f):
     """decorator, ensures output of a function is turned into an HttpResponse"""
 
     @wraps(f)
-    def wrapped(*args, **kw):
-        raw = f(*args, **kw)
-        result = HttpResponse(dumps(raw))
+    def wrapped(request, *args, **kw):
+        if request.method == "OPTIONS":
+            raw = ""
+        elif request.method != "POST":
+            raw = "Use POST. For curl, set --request POST\n"
+        else:
+            raw = dumps(f(request, *args, **kw))
+        result = HttpResponse(raw)
         result["Access-Control-Allow-Origin"] = "*"
         result["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
         result["Access-Control-Max-Age"] = "1000"
@@ -71,12 +76,9 @@ def parse_add_request(request):
     return result
 
 
-def process_request(request, process_function):
-    """abstract process function that handles search and decomposition"""
-    if request.method == "OPTIONS":
-        return ""
-    if request.method != "POST":
-        return "Use POST. For curl, set --request POST\n"
+def process_search_decompose(request, process_function):
+    """handle search and decomposition"""
+
     doc = parse_request(request)
     dataset = doc["dataset"]
     result = process_function(doc, dataset=dataset, n=doc["n"],
@@ -87,17 +89,49 @@ def process_request(request, process_function):
     return result
 
 
-def process_add_request(request):
-    """handle calculations to add a new document into the db
+@access_http_response
+def search(request):
+    """process an http request to map a document onto nearest targets"""
+    return process_search_decompose(request, crossmap.search)
+
+
+@access_http_response
+def decompose(request):
+    """process an http request to decompose a document into basis"""
+    return process_search_decompose(request, crossmap.decompose)
+
+
+@access_http_response
+def diffuse(request):
+    """process an http request to find features a document diffuses into"""
+
+    doc = parse_request(request)
+    return crossmap.diffuse(doc, diffusion=doc["diffusion"])
+
+
+@access_http_response
+def datasets(request):
+    """extract summary of available datasets and their sizes
+
+    :param request: this is passed, but is not used
+    :return: http response listing all available datasets
+    """
+
+    result = []
+    size = crossmap.db.dataset_size
+    for dataset in crossmap.db.datasets:
+        result.append(dict(label=dataset, size=size(dataset)))
+    return dict(datasets=result)
+
+
+@access_http_response
+def add(request):
+    """add a new data item into the db
 
     :param request:
     :return: dictionary with success status of add
     """
 
-    if request.method == "OPTIONS":
-        return ""
-    if request.method != "POST":
-        return "Use POST. For curl, set --request POST\n"
     doc = parse_add_request(request)
     dataset = str(doc.pop("dataset"))
     id = doc.pop("id")
@@ -112,34 +146,4 @@ def process_add_request(request):
         return dict(dataset=dataset, idx=[])
     idx = crossmap.add(dataset, doc, id, metadata=metadata)
     return dict(dataset=dataset, idx=idx)
-
-
-@access_http_response
-def search(request):
-    """process an http request to map a document onto nearest targets"""
-    return process_request(request, crossmap.search)
-
-
-@access_http_response
-def decompose(request):
-    """process an http request to decompose a document into basis"""
-    return process_request(request, crossmap.decompose)
-
-
-@access_http_response
-def datasets(request):
-    """extract summary of available datasets and their sizes"""
-
-    result = []
-    size = crossmap.db.dataset_size
-    for dataset in crossmap.db.datasets:
-        result.append(dict(label=dataset, size=size(dataset)))
-    return dict(datasets=result)
-
-
-@access_http_response
-def add(request):
-    """add a new data item into the db"""
-
-    return process_add_request(request)
 

@@ -15,20 +15,20 @@ from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
-def search_result(ids, distances, name):
+def _search_result(ids, distances, name):
     """structure an object describing a nearest-neighbor search
 
     :param ids: list of string identifiers
     :param distances: list of numeric values
     :param name: query name included in the output dictionary
-    :return: dicionary, contain lists with ids and distances,
+    :return: dictionary, contain lists with ids and distances,
       ordered by distance from smallest to largerst
     """
 
     return dict(query=name, targets=ids, distances=distances)
 
 
-def decomposition_result(ids, weights, name):
+def _decomposition_result(ids, weights, name):
     """structure an object descripting a greedy-nearest-decomposition"""
     return dict(query=name, targets=ids, coefficients=weights)
 
@@ -168,6 +168,26 @@ class Crossmap:
         w = self.encoder.document(doc, scale_fun="sq")
         return v, self.diffuser.diffuse(v, diffusion, weight=w)
 
+    def diffuse(self, doc, diffusion=None, query_name="", **kwdargs):
+        """provide an explanation for diffusion of a document into features
+
+        :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
+        :param diffusion: dict, map assigning diffusion weights
+        :param query_name: character, a name for the document
+        :param kwdargs: other keyword arguments, ignored
+            (This is included for consistency with search() and decompose())
+        :return: a dictionary containing an id, and feature weights
+        """
+
+        inv_feature_map = self.encoder.inv_feature_map
+        raw, diffused = self._prep_vector(doc, diffusion)
+        data = []
+        for i, d in zip(diffused.indices, diffused.data):
+            data.append([abs(d), round(d, 6), inv_feature_map[i]])
+        data = sorted(data, reverse=True)
+        data = [{"feature": v[2], "value": v[1]} for i, v in enumerate(data)]
+        return dict(query=query_name, features=data)
+
     def search(self, doc, dataset, n=3, diffusion=None, query_name="query"):
         """identify targets that are close to the input query
 
@@ -182,13 +202,13 @@ class Crossmap:
 
         raw, diffused = self._prep_vector(doc, diffusion)
         if sum(raw.data) == 0:
-            return search_result([], [], query_name)
+            return _search_result([], [], query_name)
         suggest = self.indexer.suggest
 
         # search for neighbors based on diffused vector
         targets, distances = suggest(diffused, dataset, n)
         if diffusion is None or self.fast_search:
-            return search_result(targets, distances, query_name)
+            return _search_result(targets, distances, query_name)
 
         # for a more thorough search, get additional candidates
         new_targets = []
@@ -213,7 +233,7 @@ class Crossmap:
             # the asterisk in *sorted provides the outer zip with two lists
             distances, targets = zip(*sorted(zip(distances, targets)))
 
-        return search_result(targets[:n], distances[:n], query_name)
+        return _search_result(targets[:n], distances[:n], query_name)
 
     def decompose(self, doc, dataset, n=3, diffusion=None, query_name="query"):
         """decompose of a query document in terms of targets
@@ -262,7 +282,7 @@ class Crossmap:
             coefficients = decompose(q_dense, basis.toarray())
             coefficients, ids = _ranked_decomposition(coefficients, ids)
 
-        return decomposition_result(ids, coefficients, query_name)
+        return _decomposition_result(ids, coefficients, query_name)
 
     def search_file(self, filepath, dataset, n, diffusion=None):
         """find nearest targets for all documents in a file

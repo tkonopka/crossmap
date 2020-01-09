@@ -86,14 +86,13 @@ class Controller extends React.Component {
         }
         const action = this.state.action;
         let result = null;
-        if (action === "search" || action === "decompose") {
+        if (["search", "decompose", "diffuse"].includes(action)) {
             result = makeQueryPayload(this.state, this.props.datasets);
         } else if (action === "add") {
             result = makeTrainPayload(this.state)
         } else {
             return null;
         }
-        //console.log("composed: "+JSON.stringify(result));
         this.props.send(result, action)
     };
 
@@ -130,6 +129,7 @@ class Controller extends React.Component {
                            fullWidth margin="normal">
                     <MenuItem value="search">Search</MenuItem>
                     <MenuItem value="decompose">Decompose</MenuItem>
+                    <MenuItem value="diffuse">Diffuse</MenuItem>
                     <MenuItem value="add">Train</MenuItem>
                 </TextField>
                 <Box m={1}>

@@ -8,6 +8,7 @@ import TableBody from "@material-ui/core/TableBody";
 import TableRow from "@material-ui/core/TableRow";
 import TableHead from '@material-ui/core/TableHead';
 import TableCell from "@material-ui/core/TableCell";
+import TablePagination from '@material-ui/core/TablePagination';
 import Table from "@material-ui/core/Table";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
@@ -70,7 +71,7 @@ class HitsMessage extends ChatMessage {
                 <Box visibility={this.state.mouseover ? "visible": "hidden"}>
                 <Grid container direction="row" justify="flex-end" alignItems="flex-end">
                     <Button onClick={this.handleClipboard}>
-                        <img src="icons/clipboard.svg" alt="toggle small/extended search view"
+                        <img src="icons/clipboard.svg" alt="copy results to clipboard"
                              className="chat-icon"/>
                     </Button>
                 </Grid>
@@ -116,6 +117,61 @@ class AddMessage extends ChatMessage {
 }
 
 
+/** Box showing features and values in a table with pagination **/
+class DiffusionMessage extends ChatMessage {
+    constructor(props) {
+        super(props);
+        this.handleChangePage = this.handleChangePage.bind(this);
+        this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
+        this.state = {page: 0, rowsPerPage: 10}
+    }
+
+    handleChangePage(event, newPage) {
+        this.setState({page: newPage})
+    };
+
+    handleChangeRowsPerPage(event) {
+        this.setState({page: 0, rowsPerPage: parseInt(event.target.value, 10)});
+    };
+
+    render() {
+        let rows = this.props.data["features"];
+        let header = <TableRow>
+            <TableCell>Feature</TableCell>
+            <TableCell>Value</TableCell>
+        </TableRow>;
+        let page = this.state.page;
+        let rowsPerPage = this.state.rowsPerPage;
+        let content = rows.slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage)
+            .map(function(x, i) {
+            return (<TableRow key={x["feature"]}>
+                <TableCell><Typography color={"secondary"}>{x["feature"]}</Typography></TableCell>
+                <TableCell className="chat-td-numeric">
+                    <Typography color={"secondary"}>{x["value"].toPrecision(4)}</Typography>
+                </TableCell>
+            </TableRow>)
+        });
+        return (
+            <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+                <Typography variant={"h6"}>Diffusion</Typography>
+                <Table size={"small"}>
+                    <TableHead>{header}</TableHead>
+                    <TableBody>{content}</TableBody>
+                </Table>
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={rows.length}
+                    rowsPerPage={this.state.rowsPerPage}
+                    page={this.state.page}
+                    onChangePage={this.handleChangePage}
+                    onChangeRowsPerPage={this.handleChangeRowsPerPage}
+                />
+            </div>)
+    }
+}
+
+
 /** Class to display server responses **/
 class ChatServerMessage extends React.Component {
     render() {
@@ -124,7 +180,9 @@ class ChatServerMessage extends React.Component {
         if (type === "datasets") {
             content = <DatasetsMessage data={this.props.data} />
         } else if (type === "search" || type === "decompose") {
-            content = <HitsMessage data={this.props.data} />
+            content = <HitsMessage data={this.props.data}/>
+        } else if (type === "diffuse") {
+            content = <DiffusionMessage data={this.props.data}/>
         } else if (type==="add") {
             content = <AddMessage data={this.props.data} />
         }

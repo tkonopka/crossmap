@@ -158,7 +158,7 @@ class ChatUserMessage extends React.Component {
     render() {
         let action = this.props.data["action"];
         console.log("action is "+action);
-        if (action === "search" || action === "decompose") {
+        if (["search", "decompose", "diffuse"].includes(action)) {
             return (<UserQueryMessage data={this.props.data} clone={this.props.clone} />);
         } else if (action === "add") {
             return (<UserAddMessage data={this.props.data} />);

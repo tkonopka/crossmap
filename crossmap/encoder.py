@@ -25,6 +25,9 @@ class CrossmapEncoder:
         self.feature_map = feature_map
         self.tokenizer = tokenizer
         self.aux_weight = aux_weight
+        self.inv_feature_map = ['']*len(self.feature_map)
+        for k, v in feature_map.items():
+            self.inv_feature_map[v[0]] = k
 
     def documents(self, filepaths, scale_fun="sqrt"):
         """generator to parsing data from disk files

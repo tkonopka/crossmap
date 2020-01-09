@@ -7,8 +7,9 @@ from . import views
 
 
 urlpatterns = [
-    path('search/', views.search, name='search'),
-    path('decompose/', views.decompose, name='decompose'),
-    path('datasets/', views.datasets, name='datasets'),
     path('add/', views.add, name='add'),
+    path('datasets/', views.datasets, name='datasets'),
+    path('decompose/', views.decompose, name='decompose'),
+    path('diffuse/', views.diffuse, name='diffuse'),
+    path('search/', views.search, name='search'),
 ]
