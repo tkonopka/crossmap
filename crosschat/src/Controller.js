@@ -106,6 +106,7 @@ class Controller extends React.Component {
         if (view === "search") {
             middlebox.push(<ControllerQueryForm key={0}
                                                 data={this.state.data}
+                                                aux_pos={this.state.aux_pos}
                                                 aux_neg={this.state.aux_neg}
                                                 extended={this.state.extended}
                                                 update={this.handleStateUpdate}

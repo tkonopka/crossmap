@@ -30,6 +30,11 @@ class ControllerQueryForm extends React.Component {
                                onInput={(e) => this.props.update("data", e.target.value)}
                                label="Query" margin="normal"/>
                     <Box display={this.props.extended ? "block": "none"}>
+                        <TextField id="query-aux-pos" fullWidth multiline rowsMax={8}
+                                   value={this.props.aux_pos}
+                                   onKeyPress={(e) => this.handleKeyPress(e) }
+                                   onInput={(e) => this.props.update("aux_pos", e.target.value)}
+                                   label="Auxiliary data (positive weight)" margin="normal"/>
                         <TextField id="query-aux-neg" fullWidth multiline rowsMax={8}
                                    value={this.props.aux_neg}
                                    onKeyPress={(e) => this.handleKeyPress(e) }
