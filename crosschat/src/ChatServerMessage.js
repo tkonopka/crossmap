@@ -3,6 +3,9 @@ import Box from '@material-ui/core/Box';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
 import TableBody from "@material-ui/core/TableBody";
 import TableRow from "@material-ui/core/TableRow";
@@ -27,7 +30,8 @@ class HitsMessage extends ChatMessage {
             value_column = "coefficients";
             value_header = "Coefficient";
         }
-        this.state = {header: header, value_column: value_column, value_header: value_header};
+        props.setHeader(header + " result");
+        this.state = {value_column: value_column, value_header: value_header};
     }
 
     handleClipboard() {
@@ -63,7 +67,6 @@ class HitsMessage extends ChatMessage {
         });
         return (
             <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-                <Typography variant={"h6"}>{this.state.header}</Typography>
                 <Table size={"small"}>
                     <TableHead>{header}</TableHead>
                     <TableBody>{content}</TableBody>
@@ -83,6 +86,10 @@ class HitsMessage extends ChatMessage {
 
 /** Box showing a list of datasets **/
 class DatasetsMessage extends ChatMessage {
+    constructor(props) {
+        super(props);
+        props.setHeader("Available datasets");
+    }
     render() {
         let datasets = this.props.data["datasets"].map((x, i) => {
             return(
@@ -92,7 +99,6 @@ class DatasetsMessage extends ChatMessage {
             )
         });
         return(<div xs={8}>
-            <Typography variant="h6">Available Datasets</Typography>
             <List dense>{datasets}</List>
         </div>);
     }
@@ -101,6 +107,10 @@ class DatasetsMessage extends ChatMessage {
 
 /** Box success/failure adding a new item into db**/
 class AddMessage extends ChatMessage {
+    constructor(props) {
+        super(props);
+        props.setHeader("Add");
+    }
     render() {
         let dataset = this.props.data["dataset"];
         let idx = parseInt(this.props.data["idx"]);
@@ -112,7 +122,7 @@ class AddMessage extends ChatMessage {
         } else {
             content = <p>Something went wrong.</p>
         }
-        return(<div xs={8}><Typography variant="h6">Add</Typography>{content}</div>);
+        return(<div xs={8}>{content}</div>);
     }
 }
 
@@ -121,6 +131,7 @@ class AddMessage extends ChatMessage {
 class DiffusionMessage extends ChatMessage {
     constructor(props) {
         super(props);
+        props.setHeader("Diffusion result");
         this.handleChangePage = this.handleChangePage.bind(this);
         this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
         this.state = {page: 0, rowsPerPage: 10}
@@ -153,7 +164,6 @@ class DiffusionMessage extends ChatMessage {
         });
         return (
             <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-                <Typography variant={"h6"}>Diffusion</Typography>
                 <Table size={"small"}>
                     <TableHead>{header}</TableHead>
                     <TableBody>{content}</TableBody>
@@ -174,21 +184,48 @@ class DiffusionMessage extends ChatMessage {
 
 /** Class to display server responses **/
 class ChatServerMessage extends React.Component {
+    constructor(props) {
+        super(props);
+        this.toggleOpen = this.toggleOpen.bind(this);
+        this.setHeader = this.setHeader.bind(this);
+        this.state = {open: true, header: ""};
+    }
+
+    toggleOpen = function() {
+        this.setState((prevstate) => ({ open: !prevstate.open}));
+    };
+    setHeader = function(x) {
+        this.setState({header: x})
+    }
+
     render() {
         let type = this.props.data["_type"];
         let content = <div></div>
         if (type === "datasets") {
-            content = <DatasetsMessage data={this.props.data} />
+            content = <DatasetsMessage data={this.props.data} setHeader={this.setHeader}/>
         } else if (type === "search" || type === "decompose") {
-            content = <HitsMessage data={this.props.data}/>
+            content = <HitsMessage data={this.props.data} setHeader={this.setHeader}/>
         } else if (type === "diffuse") {
-            content = <DiffusionMessage data={this.props.data}/>
+            content = <DiffusionMessage data={this.props.data} setHeader={this.setHeader}/>
         } else if (type==="add") {
-            content = <AddMessage data={this.props.data} />
+            content = <AddMessage data={this.props.data} setHeader={this.setHeader}/>
         }
-        return (<div className="chat-response">{content}</div>)
+        return(<div className="chat-response">
+            <List component="nav">
+                <ListItem button onClick={this.toggleOpen} className="chat-response-toggle">
+                    <ListItemText className="chat-response-header">{this.state.header}</ListItemText>
+                    { this.state.open ? <ExpandLess/> : <ExpandMore/>}
+                </ListItem>
+                <Collapse in={this.state.open} timeout="auto" unmountOnExit>
+                    {content}
+                </Collapse>
+            </List>
+            </div>
+        )
     }
 }
+
+// <Typography variant={"h6"}>{this.state.header}</Typography>
 
 
 export default ChatServerMessage;

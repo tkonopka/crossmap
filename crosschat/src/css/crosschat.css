@@ -79,6 +79,13 @@ td.column-dataset {
   min-width: 20%;
   float: left;
 }
+.chat-response-toggle {
+  background-color: #ffffff;
+  justify-content: space-between;
+}
+.chat-response-header {
+  font-weight: 600;
+}
 .chat-end {
   clear: both;
 }

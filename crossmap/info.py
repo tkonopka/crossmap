@@ -47,7 +47,7 @@ class CrossmapInfo(Crossmap):
         result = []
         inv_feature_map = self.inv_feature_map
         for i, d in zip(v.indices, v.data):
-            result.append([abs(d), round(d, 6), inv_feature_map[i]])
+            result.append([abs(d), _r(d, 6), inv_feature_map[i]])
         result = sorted(result, reverse=True)
         return [{"feature": v[2], "value": v[1]} for i, v in enumerate(result)]
 
@@ -109,10 +109,14 @@ class CrossmapInfo(Crossmap):
                 if len(x_data) > 0:
                     x_vector = x_data[0]["data"]
                     x_dist = distance(v_diffused, x_vector) / sqrt2
-                    x_result = dict(query=query_name, dataset=label,
-                                    id=x, distance=x_dist)
+                    x_details = _distance_details(v_diffused, x_vector,
+                                                  self.inv_feature_map)
+                    x_result = dict(query=query_name,
+                                    dataset=label,
+                                    id=x,
+                                    distance=x_dist,
+                                    details=x_details)
                     result.append(x_result)
-
         return result
 
     def distance_file(self, filepath, ids=[], diffusion=None):
@@ -127,7 +131,8 @@ class CrossmapInfo(Crossmap):
         result = []
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
-                result.extend(self.distance(doc, ids, diffusion, query_name=id))
+                result.extend(self.distance(doc, ids, diffusion,
+                                            query_name=id))
         return result
 
     def vectors(self, filepath=None, ids=[], diffusion=None):
@@ -204,8 +209,6 @@ class CrossmapInfo(Crossmap):
         """prepare an ad-hoc summary of the contents of the configuration"""
 
         def stats(x):
-            #if len(x) == 0:
-            #    return {"min": 0, "mean": 0, "max": 0}
             temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
             return {k: round(v, digits) for k, v in temp.items()}
 
@@ -223,4 +226,30 @@ class CrossmapInfo(Crossmap):
                     dir=self.settings.dir,
                     features=len(self.indexer.feature_map),
                     datasets=datasets)
+
+
+def _distance_details(a, b, features):
+    """prepare details for the distance between two items
+
+    :param a: csr vector
+    :param b: csr vector
+    :param features: vector with string representations of features
+    :return: array, each element is a dictionary holding feature name
+        and a squared-distance value
+    """
+
+    a_dense = sparse_to_dense(a)
+    b_dense = sparse_to_dense(b)
+    result = []
+    for i in range(len(a_dense)):
+        i_d = a_dense[i]-b_dense[i]
+        if abs(i_d) > 0:
+            result.append((i_d*i_d, i_d, i))
+    result = sorted(result, reverse=True)
+    return [{"feature": features[k], "value": _r(v)} for v2, v, k in result]
+
+
+def _r(x, digits=6):
+    """round a number"""
+    return round(x, ndigits=digits)
 

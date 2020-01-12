@@ -161,3 +161,12 @@ class CrossmapInfoTests(unittest.TestCase):
             self.assertAlmostEqual(search_distances[id], info_distances[id],
                                    places=5)
 
+    def test_info_distances_details(self):
+        """compute details for distances"""
+
+        doc= {"data": "alpha A"}
+        result = self.crossinfo.distance(doc, ids=["A", "B"])
+        self.assertEqual(len(result), 2)
+        self.assertTrue("details" in result[0])
+        self.assertTrue("details" in result[1])
+
