@@ -86,6 +86,9 @@ class Controller extends React.Component {
         }
         const action = this.state.action;
         let result = null;
+        if (!hasPayload(this.state)) {
+            return null;
+        }
         if (["search", "decompose", "diffuse"].includes(action)) {
             result = makeQueryPayload(this.state, this.props.datasets);
         } else if (action === "add") {
@@ -94,6 +97,7 @@ class Controller extends React.Component {
             return null;
         }
         this.props.send(result, action)
+        this.setState({"data": "", "aux_pos": "", "aux_neg": ""})
     };
 
     componentDidUpdate() {
@@ -177,6 +181,14 @@ class Controller extends React.Component {
  */
 let JSONcopy = function(x) {
     return JSON.parse(JSON.stringify(x));
+};
+
+
+/** Helper determins if query boxes have some nonempty values **/
+let hasPayload = function(state) {
+    if (state["data"].trim() !== "") return true;
+    if (state["aux_pos"].trim() !== "") return true;
+    return false;
 };
 
 /**

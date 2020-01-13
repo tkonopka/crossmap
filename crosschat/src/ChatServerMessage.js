@@ -225,7 +225,5 @@ class ChatServerMessage extends React.Component {
     }
 }
 
-// <Typography variant={"h6"}>{this.state.header}</Typography>
-
 
 export default ChatServerMessage;
