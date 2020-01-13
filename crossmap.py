@@ -163,7 +163,7 @@ if action == "counts":
     print_pretty(result, config.pretty)
 
 if action in set(["features", "summary"]):
-    crossmap = Crossmap(settings)
+    crossmap = CrossmapInfo(settings)
     crossmap.load()
     action_fun = crossmap.summary
     if config.action == "features":
