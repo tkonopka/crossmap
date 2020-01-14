@@ -8,7 +8,7 @@ from scipy.sparse import csr_matrix
 from crossmap.csr import bytes_to_csr, csr_to_bytes
 from crossmap.csr import normalize_csr, threshold_csr
 from crossmap.csr import sign_csr, dimcollapse_csr
-from crossmap.csr import add_sparse, multiply_sparse
+from crossmap.csr import add_sparse, harmonic_multiply_sparse
 from crossmap.vectors import sparse_to_dense
 
 
@@ -124,16 +124,25 @@ class CsrAddTests(unittest.TestCase):
         self.assertListEqual(list(arr), expected)
 
 
-class CsrMultiplyTests(unittest.TestCase):
+class CsrHarmonicMultiplyTests(unittest.TestCase):
     """Multiply a dense array and a sparse array"""
 
-    def test_simple(self):
-        """simple multiplying"""
+    def test_simple_without_harmonic(self):
+        """simple multiplying, without a harmonic factor"""
 
         arr = array([1.0, 2.0, 3.0, 4.0, 5.0])
         a = csr_matrix([0.5, 0.0, 0.5, 0.0, 1.0])
-        result = multiply_sparse(arr, a.data, a.indices)
+        result = harmonic_multiply_sparse(arr, a.data, a.indices)
         expected = [0.5, 1.5, 5.0]
+        self.assertListEqual(list(result), expected)
+
+    def test_simple_harmonic(self):
+        """simple multiplying, using harmonic"""
+
+        arr = array([1.0, 2.0, 3.0, 4.0, 5.0])
+        a = csr_matrix([0.5, 0.0, 0.5, 0.0, 1.0])
+        result = harmonic_multiply_sparse(arr, a.data, a.indices, 2.0)
+        expected = [0.5*(2/3), 0.5*(6/5), 1.0*(10/7)]
         self.assertListEqual(list(result), expected)
 
 

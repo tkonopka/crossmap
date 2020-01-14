@@ -238,9 +238,9 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         w = self.encoder.document(self.long_b, scale_fun="sq")
         v_dense = sparse_to_dense(v)
         # w_dense = sparse_to_dense(w)
-        vd = self.diffuser.diffuse(v, dict(targets=2))
+        vd = self.diffuser.diffuse(v, dict(targets=5))
         vd_dense = sparse_to_dense(vd)
-        vd2 = self.diffuser.diffuse(v, dict(targets=2), weight=w)
+        vd2 = self.diffuser.diffuse(v, dict(targets=5), weight=w)
         vd2_dense = sparse_to_dense(vd2)
         # distances from doc to targets before and after diffusion
         before, after, after2 = dict(), dict(), dict()

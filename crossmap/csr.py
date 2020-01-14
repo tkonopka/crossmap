@@ -135,16 +135,26 @@ def add_sparse(arr, data, indices, skip_index=-1):
 
 
 @numba.jit
-def multiply_sparse(arr, data, indices):
+def harmonic_multiply_sparse(factors, data, indices, harmonic_factor=None):
     """multiply sparse data
 
-    :param arr: dense array of floats
+    :param factors: dense array of floats
     :param data: array of floats (from a sparse vector)
     :param indices: array of integers (from a sparse vector)
-    :return: array consisting of arr*data in sparse format
+    :param harmonic_factor: float, factor for use with harmonic
+        multiplication.
+    :return: array consisting of factors*data in sparse format.
+        When a harmonic factor is present, the multiplication is by
+        (factors*harmonic_factor)/(factors+harmonic_factor)
     """
 
-    for i in range(len(indices)):
-        data[i] *= arr[indices[i]]
+    if harmonic_factor is None:
+        for i in range(len(indices)):
+            data[i] *= factors[indices[i]]
+    else:
+        hf = harmonic_factor
+        for i in range(len(indices)):
+            fi = factors[indices[i]]
+            data[i] *= (fi * hf / (fi + hf))
     return data
 
