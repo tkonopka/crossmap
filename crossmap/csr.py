@@ -76,6 +76,27 @@ def threshold_csr(v, threshold=0.001):
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
 
 
+def _sign(x):
+    """get +1 or -1 value"""
+    return +1 if x>0 else -1
+
+
+def sign_csr(v, normalize=True):
+    """set elements in v to +1 or -1 integers
+
+    :param v: csr vector
+    :param normalize: logical, if True, output is normalized
+    :return: modified csr vector with elements set to integers
+    """
+
+    if normalize and len(v.data):
+        invlen = 1/len(v.data)
+        v.data = array([_sign(_)*invlen for _ in v.data])
+    else:
+        v.data = array([_sign(_) for _ in v.data])
+    return v
+
+
 def dimcollapse_csr(v, indexes=(), normalize=True):
     """dimensional collapse of a vector
 
@@ -105,10 +126,25 @@ def add_sparse(arr, data, indices, skip_index=-1):
     :param data: array of floats
     :param indices: array of integers
     :param skip_index: integer, skip adding this index
-    :return: array consisting of x+data
+    :return: array consisting of arr+data
     """
     for i in range(len(indices)):
         if indices[i] != skip_index:
             arr[indices[i]] += data[i]
     return arr
+
+
+@numba.jit
+def multiply_sparse(arr, data, indices):
+    """multiply sparse data
+
+    :param arr: dense array of floats
+    :param data: array of floats (from a sparse vector)
+    :param indices: array of integers (from a sparse vector)
+    :return: array consisting of arr*data in sparse format
+    """
+
+    for i in range(len(indices)):
+        data[i] *= arr[indices[i]]
+    return data
 

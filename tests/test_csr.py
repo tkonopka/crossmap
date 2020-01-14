@@ -7,7 +7,8 @@ from numpy import array
 from scipy.sparse import csr_matrix
 from crossmap.csr import bytes_to_csr, csr_to_bytes
 from crossmap.csr import normalize_csr, threshold_csr
-from crossmap.csr import dimcollapse_csr
+from crossmap.csr import sign_csr, dimcollapse_csr
+from crossmap.csr import add_sparse, multiply_sparse
 from crossmap.vectors import sparse_to_dense
 
 
@@ -78,6 +79,62 @@ class CsrThresholdingTests(unittest.TestCase):
         result = threshold_csr(x, 2)
         self.assertEqual(sum(sparse_to_dense(result)), 0)
         self.assertEqual(result.shape, (1, 8))
+
+
+class CsrSignTests(unittest.TestCase):
+    """Converting csr into +1/-1 values"""
+
+    def test_sign_normalize_false(self):
+        """simple conversion, without normalization"""
+
+        a = csr_matrix([1.2, 0.0, -0.2, 0.2, 0, 0, 4.2])
+        expected = csr_matrix([1, 0, -1, 1, 0, 1])
+        result = sign_csr(a, normalize=False)
+        self.assertListEqual(list(result.data), list(expected.data))
+
+    def test_sign_normalize_true(self):
+        """simple conversion, with normalization"""
+
+        a = csr_matrix([1.2, 0.0, -0.2, 0.2, 0, 0, 4.2])
+        expected = csr_matrix([0.25, 0, -0.25, 0.25, 0, 0.25])
+        result = sign_csr(a)
+        self.assertListEqual(list(result.data), list(expected.data))
+
+    def test_sign_empty_array(self):
+        """simple conversion with empty input"""
+
+        a = csr_matrix([0.0, 0.0, 0.0])
+        result_raw = sign_csr(a, normalize=False)
+        self.assertEqual(len(result_raw.data), 0)
+        result_norm = sign_csr(a, normalize=True)
+        self.assertEqual(len(result_norm.data), 0)
+
+
+class CsrAddTests(unittest.TestCase):
+    """Adding a dense array and a sparse array"""
+
+    def test_simple(self):
+        """simple adding"""
+
+        arr = array([1.0, 1.0, 1.0, 1.0, 1.0])
+        a = csr_matrix([0.5, 0.0, -0.5, 0.0, 2.5])
+        result = add_sparse(arr, a.data, a.indices)
+        expected = [1.5, 1.0, 0.5, 1.0, 3.5]
+        self.assertListEqual(list(result), expected)
+        self.assertListEqual(list(arr), expected)
+
+
+class CsrMultiplyTests(unittest.TestCase):
+    """Multiply a dense array and a sparse array"""
+
+    def test_simple(self):
+        """simple multiplying"""
+
+        arr = array([1.0, 2.0, 3.0, 4.0, 5.0])
+        a = csr_matrix([0.5, 0.0, 0.5, 0.0, 1.0])
+        result = multiply_sparse(arr, a.data, a.indices)
+        expected = [0.5, 1.5, 5.0]
+        self.assertListEqual(list(result), expected)
 
 
 class CsrDimensionalCollapseTests(unittest.TestCase):

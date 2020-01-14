@@ -12,13 +12,12 @@ from numpy import array
 from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
-from .csr import normalize_csr, threshold_csr, sign_csr
-from .csr import add_sparse, multiply_sparse
+from .csr import normalize_csr, threshold_csr, add_sparse
 from .sparsevector import Sparsevector
 from .vectors import sparse_to_dense
 
 
-class CrossmapDiffuser:
+class CrossmapDiffuserOld:
     """Vector diffusion for crossmap"""
 
     def __init__(self, settings, db=None):
@@ -38,10 +37,6 @@ class CrossmapDiffuser:
         self.feature_map = self.db.get_feature_map()
         if len(self.feature_map) == 0:
             error("feature map is empty")
-        weights = array([0.0]*len(self.feature_map))
-        for _, v in self.feature_map.items():
-            weights[v[0]] = v[1]
-        self.feature_weights = weights / weights.mean()
         self.tokenizer = CrossmapTokenizer(self.settings)
         self.encoder = CrossmapEncoder(self.feature_map, self.tokenizer)
         self.num_passes = settings.diffusion.num_passes
@@ -88,7 +83,6 @@ class CrossmapDiffuser:
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            v = sign_csr(v, normalize=True)
             total += 1
             for i, d in zip(v.indices, v.data):
                 result[i].add_csr(v, _sign(d))
@@ -124,7 +118,6 @@ class CrossmapDiffuser:
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            v = sign_csr(v, normalize=True)
             v_indices = [int(_) for _ in v.indices]
             if len(v.indices) == 0:
                 continue
@@ -163,24 +156,21 @@ class CrossmapDiffuser:
             counts[corpus] = self.db.get_counts_arrays(corpus, v_indexes)
 
         num_passes = self.num_passes
-        f_weights = self.feature_weights
         for pass_weight in _pass_weights(num_passes):
             last_result = result.copy()
             for corpus, value in strength.items():
                 diffusion_data = counts[corpus]
                 for di, ddata in diffusion_data.items():
-                    # ddata[0] contains values from a sparse vector
-                    # ddata[1] contains indexes matched to the values in ddata[0]
                     # ddata[2] contains a sum of all data entries in the vector
                     # ddata[3] contains the maximal value
-                    if ddata[3] == 0.0:
-                        continue
                     row_sum = ddata[2]
-                    data = multiply_sparse(f_weights, ddata[0], ddata[1])
+                    row_max = ddata[3]
+                    if row_max == 0.0:
+                        continue
+                    data = ddata[0]
                     multiplier = min(1.0, (w_dense[di]/v_dense[di]))
-                    multiplier *= last_result[di] / row_sum
-                    data *= pass_weight * value * multiplier
-                    # add the diffusion parts (but not to self)
+                    data *= pass_weight * value * multiplier * last_result[di] / row_sum
+                    # add the diffusion parts (not to self)
                     result = add_sparse(result, data, ddata[1], di)
         return normalize_csr(csr_matrix(result))
 
@@ -194,7 +184,7 @@ def _pass_weights(tot):
 
     result = array([1.0]*tot)
     for i in range(1, tot):
-        result[i] = (i + 1) * result[i]
+        result[i] = (i+1)*result[i]
     result = [1/_ for _ in result]
     return result / sum(result)
 
