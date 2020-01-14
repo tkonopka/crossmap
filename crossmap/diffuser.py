@@ -173,12 +173,13 @@ class CrossmapDiffuser:
                     # ddata[1] contains indexes matched to the values in ddata[0]
                     # ddata[2] contains a sum of all data entries in the vector
                     # ddata[3] contains the maximal value
-                    if ddata[3] == 0.0:
+                    row_max = ddata[3]
+                    if row_max == 0.0:
                         continue
-                    row_sum = ddata[2]
+                    #row_sum = ddata[2]
                     data = hms(f_weights, ddata[0], ddata[1], f_weights[di])
                     multiplier = min(1.0, (w_dense[di]/v_dense[di]))
-                    multiplier *= last_result[di] / row_sum
+                    multiplier *= last_result[di] / row_max
                     data *= pass_weight * value * multiplier
                     # add the diffusion parts (but not to self)
                     result = add_sparse(result, data, ddata[1], di)
