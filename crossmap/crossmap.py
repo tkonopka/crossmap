@@ -134,7 +134,8 @@ class Crossmap:
         if metadata is not None:
             for k, v in metadata.items():
                 doc["metadata"][k] = v
-        doc["metadata"]["timestamp"] = time()
+        if "timestamp" not in doc["metadata"]:
+            doc["metadata"]["timestamp"] = time()
         with open(self.settings.yaml_file(dataset), "at") as f:
             f.write(dump({id: doc}))
         return idx
