@@ -255,6 +255,21 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         d1 = euc_dist(vd2_dense, self.data["L1"])
         self.assertLess(d1, d0)
 
+    def test_diffusion_keeps_original_feature_strong(self):
+        """diffusing from one feature should mantain that feature strong"""
+
+        doc = dict(data="C")
+        c_index = self.feature_map["c"][0]
+        v = self.encoder.document(doc)
+        # diffuse at different strengths
+        # all should maintain feature "C" as the most important feature
+        for w in [1, 2, 4, 8, 20]:
+            result = self.diffuser.diffuse(v, dict(targets=w))
+            result_dense = sparse_to_dense(result)
+            result_C = result_dense[c_index]
+            result_max = max(result_dense)
+            self.assertEqual(result_max, result_C)
+
 
 class CrossmapDiffuserMultistep(unittest.TestCase):
     """diffusion through multiple passes"""

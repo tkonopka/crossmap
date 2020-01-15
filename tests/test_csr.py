@@ -8,7 +8,7 @@ from scipy.sparse import csr_matrix
 from crossmap.csr import bytes_to_csr, csr_to_bytes
 from crossmap.csr import normalize_csr, threshold_csr
 from crossmap.csr import sign_csr, dimcollapse_csr
-from crossmap.csr import add_sparse, harmonic_multiply_sparse
+from crossmap.csr import add_sparse_skip, harmonic_multiply_sparse
 from crossmap.vectors import sparse_to_dense
 
 
@@ -118,7 +118,7 @@ class CsrAddTests(unittest.TestCase):
 
         arr = array([1.0, 1.0, 1.0, 1.0, 1.0])
         a = csr_matrix([0.5, 0.0, -0.5, 0.0, 2.5])
-        result = add_sparse(arr, a.data, a.indices)
+        result = add_sparse_skip(arr, a.data, a.indices)
         expected = [1.5, 1.0, 0.5, 1.0, 3.5]
         self.assertListEqual(list(result), expected)
         self.assertListEqual(list(arr), expected)

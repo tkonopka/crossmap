@@ -176,13 +176,13 @@ class CrossmapDiffuser:
                     row_max = ddata[3]
                     if row_max == 0.0:
                         continue
-                    #row_sum = ddata[2]
+                    # row_sum = ddata[2]
                     data = hms(f_weights, ddata[0], ddata[1], f_weights[di])
                     multiplier = min(1.0, (w_dense[di]/v_dense[di]))
                     multiplier *= last_result[di] / row_max
                     data *= pass_weight * value * multiplier
                     # add the diffusion parts (but not to self)
-                    result = add_sparse(result, data, ddata[1], di)
+                    result = add_sparse(result, data, ddata[1])
         return normalize_csr(csr_matrix(result))
 
 
