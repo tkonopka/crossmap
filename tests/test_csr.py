@@ -7,6 +7,7 @@ from numpy import array
 from scipy.sparse import csr_matrix
 from crossmap.csr import bytes_to_csr, csr_to_bytes
 from crossmap.csr import normalize_csr, threshold_csr
+from crossmap.csr import pos_threshold_csr
 from crossmap.csr import sign_csr, dimcollapse_csr
 from crossmap.csr import add_sparse_skip, harmonic_multiply_sparse
 from crossmap.vectors import sparse_to_dense
@@ -78,6 +79,15 @@ class CsrThresholdingTests(unittest.TestCase):
                         0.2, 0.0, -0.8, 0.1])
         result = threshold_csr(x, 2)
         self.assertEqual(sum(sparse_to_dense(result)), 0)
+        self.assertEqual(result.shape, (1, 8))
+
+    def test_positive_threshold_simple(self):
+        """threshold to positive definitive values"""
+
+        x = csr_matrix([0.0, 0.0, 0.0, 0.4,
+                        0.2, 0.0, -0.8, 0.1])
+        result = pos_threshold_csr(x)
+        self.assertEqual(sum(result.data), 0.4 + 0.2 + 0.1)
         self.assertEqual(result.shape, (1, 8))
 
 

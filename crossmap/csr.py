@@ -70,7 +70,25 @@ def threshold_csr(v, threshold=0.001):
     data = []
     indices = []
     for d, i in zip(v.data, v.indices):
-        if abs(d) >= threshold:
+        if abs(d) > threshold:
+            data.append(d)
+            indices.append(i)
+    return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
+
+
+def pos_threshold_csr(v, threshold=0.0):
+    """set elements in v to positive definitive values
+
+    :param v: csr vector
+    :param threshold: threshold level
+    :return: new csr vector with some elements set to zero
+    """
+
+    data = []
+    indices = []
+    threshold = max(0, threshold)
+    for d, i in zip(v.data, v.indices):
+        if d > threshold:
             data.append(d)
             indices.append(i)
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
@@ -152,7 +170,7 @@ def add_sparse_skip(arr, data, indices, skip_index=-1):
 
 @numba.jit
 def harmonic_multiply_sparse(factors, data, indices, harmonic_factor=None):
-    """multiply sparse data
+    """multiply sparse data by a harmonic-mean-scaled factor
 
     :param factors: dense array of floats
     :param data: array of floats (from a sparse vector)
@@ -174,3 +192,25 @@ def harmonic_multiply_sparse(factors, data, indices, harmonic_factor=None):
             data[i] *= (fi * hf / (fi + hf))
     return data
 
+
+@numba.jit
+def max_multiply_sparse(factors, data, indices, max_factor=None):
+    """multiply sparse data by a factor with upper bound
+
+    :param factors: dense array of floats
+    :param data: array of floats (from a sparse vector)
+    :param indices: array of integers (from a sparse vector)
+    :param max_factor: float, maximal factor forfor use with harmonic
+        multiplication.
+    :return: array consisting of factors*data in sparse format.
+        When max_factor is present, the factors are at most
+        equal to the max_factor float
+    """
+
+    if max_factor is None:
+        for i in range(len(indices)):
+            data[i] *= factors[indices[i]]
+    else:
+        for i in range(len(indices)):
+            data[i] *= min(max_factor, factors[indices[i]])
+    return data

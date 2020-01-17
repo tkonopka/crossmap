@@ -10,8 +10,9 @@ from scipy.sparse import csr_matrix, vstack
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
-from .vectors import csr_residual, vec_decomposition, sparse_to_dense
-from .csr import dimcollapse_csr
+from .vectors import csr_residual, vec_decomposition
+from .csr import dimcollapse_csr, normalize_csr
+from .csr import pos_threshold_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -207,36 +208,43 @@ class Crossmap:
         suggest = self.indexer.suggest
 
         # search for neighbors based on diffused vector
-        targets, distances = suggest(diffused, dataset, n)
+        targets, distances = suggest(diffused, dataset, 2*n)
         if diffusion is None or self.fast_search:
-            return _search_result(targets, distances, query_name)
+            return _search_result(targets[:n], distances[:n], query_name)
 
         # for a more thorough search, get additional candidates
-        new_targets = []
+        new_targets = set()
         # attempt to find using document without diffusion
         if diffusion is not None:
-            targets_raw, _ = suggest(raw, dataset, n)
-            new_targets.extend([_ for _ in targets_raw if _ not in targets])
-        # attempt to find without aux fields
+            targets_raw, _ = suggest(raw, dataset, 2*n)
+            new_targets.update(targets_raw)
+        # attempt search without using aux fields
         if "data" in doc and len(doc["data"]) > 0:
             small_doc = dict(data=doc["data"])
             _, small_diffused = self._prep_vector(small_doc, diffusion)
             if len(small_diffused.data):
-                small_targets, _ = suggest(small_diffused, dataset, n)
-                new_targets.extend([_ for _ in small_targets if _ not in targets])
+                small_targets, _ = suggest(small_diffused, dataset, 2*n)
+                new_targets.update(small_targets)
+        # attempt to search using only positive features
+        pos = pos_threshold_csr(diffused)
+        if len(pos.data) and len(pos.data) != len(diffused.data):
+            pos_targets, _ = suggest(normalize_csr(pos), dataset, 2*n)
+            new_targets.update(pos_targets)
 
         # compute distances from diffused document to all the candidates
+        new_targets = new_targets.difference(targets)
         if len(new_targets):
-            new_distances, new_ids = self.indexer.distances(diffused, dataset,
-                                                            ids=set(new_targets))
+            dists = self.indexer.distances
+            new_d, new_ids = dists(diffused, dataset, ids=new_targets)
             targets.extend(new_ids)
-            distances.extend(new_distances)
+            distances.extend(new_d)
             # the asterisk in *sorted provides the outer zip with two lists
             distances, targets = zip(*sorted(zip(distances, targets)))
 
         return _search_result(targets[:n], distances[:n], query_name)
 
-    def decompose(self, doc, dataset, n=3, diffusion=None, query_name="query"):
+    def decompose(self, doc, dataset, n=3, diffusion=None,
+                  query_name="query"):
         """decompose of a query document in terms of targets
 
         :param doc: dict-like object with "data", "aux_pos" and "aux_neg"

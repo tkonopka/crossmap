@@ -13,7 +13,7 @@ from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, sign_csr
-from .csr import add_sparse, harmonic_multiply_sparse
+from .csr import add_sparse, harmonic_multiply_sparse, max_multiply_sparse
 from .sparsevector import Sparsevector
 from .vectors import sparse_to_dense
 
@@ -163,7 +163,8 @@ class CrossmapDiffuser:
 
         num_passes = self.num_passes
         f_weights = self.feature_weights
-        hms = harmonic_multiply_sparse
+        #hms = harmonic_multiply_sparse
+        mms = max_multiply_sparse
         for pass_weight in _pass_weights(num_passes):
             last_result = result.copy()
             for corpus, value in strength.items():
@@ -177,7 +178,7 @@ class CrossmapDiffuser:
                     if row_max == 0.0:
                         continue
                     # row_sum = ddata[2]
-                    data = hms(f_weights, ddata[0], ddata[1], f_weights[di])
+                    data = mms(f_weights, ddata[0], ddata[1], f_weights[di])
                     multiplier = min(1.0, (w_dense[di]/v_dense[di]))
                     multiplier *= last_result[di] / row_max
                     data *= pass_weight * value * multiplier
