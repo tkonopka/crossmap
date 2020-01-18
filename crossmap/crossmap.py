@@ -226,10 +226,10 @@ class Crossmap:
                 small_targets, _ = suggest(small_diffused, dataset, 2*n)
                 new_targets.update(small_targets)
         # attempt to search using only positive features
-        pos = pos_threshold_csr(diffused)
-        if len(pos.data) and len(pos.data) != len(diffused.data):
-            pos_targets, _ = suggest(normalize_csr(pos), dataset, 2*n)
-            new_targets.update(pos_targets)
+        #pos = pos_threshold_csr(diffused)
+        #if len(pos.data) and len(pos.data) != len(diffused.data):
+        #    pos_targets, _ = suggest(normalize_csr(pos), dataset, 2*n)
+        #    new_targets.update(pos_targets)
 
         # compute distances from diffused document to all the candidates
         new_targets = new_targets.difference(targets)

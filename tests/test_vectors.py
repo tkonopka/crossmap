@@ -7,10 +7,17 @@ import unittest
 from numpy import array
 from math import sqrt
 from scipy.sparse import csr_matrix, vstack
-from crossmap.vectors import csr_residual, vec_decomposition
-from crossmap.vectors import num_nonzero, all_zero
-from crossmap.vectors import vec_norm, normalize_vec, threshold_vec
-from crossmap.vectors import nonzero_indices, absmax2
+from crossmap.vectors import \
+    csr_residual, \
+    vec_decomposition, \
+    num_nonzero, \
+    all_zero, \
+    vec_norm, \
+    normalize_vec, \
+    threshold_vec, \
+    ceiling_vec, \
+    nonzero_indices, \
+    absmax2
 
 
 class VecNormTests(unittest.TestCase):
@@ -144,6 +151,13 @@ class VectorThresholdingTests(unittest.TestCase):
         a = array([0.4, -2.0, 0.5, 3.5])
         result = threshold_vec(a, 1.0)
         self.assertEqual(sum(result), 1.5)
+
+    def test_ceiling_vector(self):
+        """capping values at a ceiling"""
+
+        a = array([0.5, 1.2, 0.2, -2.4, 1.8, 0.8])
+        result = ceiling_vec(a, 1.0)
+        self.assertEqual(sum(result), 0.5 + 1.0 + 0.2 - 2.4 + 1.0 + 0.8)
 
 
 class VecDecompositionTests(unittest.TestCase):

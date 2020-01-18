@@ -15,7 +15,7 @@ from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, sign_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
-from .vectors import sparse_to_dense
+from .vectors import sparse_to_dense, ceiling_vec
 
 
 class CrossmapDiffuser:
@@ -178,7 +178,8 @@ class CrossmapDiffuser:
                     if row_normalization == 0.0:
                         continue
                     # cap by row_normalization to avoid diffusing into self too much
-                    data = array([min(_, row_normalization) for _ in ddata[0]])
+                    data = ceiling_vec(ddata[0].copy(), row_normalization)
+                    #data = array([min(_, row_normalization) for _ in ddata[0]])
                     # avoid diffusion from important feature to inflate value
                     # of an unimportant feature
                     data = hms(f_weights, data, ddata[1], f_weights[di])

@@ -55,6 +55,23 @@ def normalize_vec(a):
 
 
 @numba.jit
+def ceiling_vec(a, c):
+    """ensure that values in a vector are below a ceiling
+
+    Note this performs an operation in-place, i.e.
+    the original vector will change
+
+    :param a: vector, as an array or list
+    :return: vector with some modified values
+    """
+
+    for i in range(len(a)):
+        if a[i] > c:
+            a[i] = c
+    return a
+
+
+@numba.jit
 def add_three(a, b, c, wb, wc):
     """add three vectors with weights
 
