@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix, vstack
 from crossmap.vectors import csr_residual, vec_decomposition
 from crossmap.vectors import num_nonzero, all_zero
 from crossmap.vectors import vec_norm, normalize_vec, threshold_vec
-from crossmap.vectors import nonzero_indices
+from crossmap.vectors import nonzero_indices, absmax2
 
 
 class VecNormTests(unittest.TestCase):
@@ -231,4 +231,57 @@ class VecIndicesTests(unittest.TestCase):
 
         result = nonzero_indices(self.v, 10)
         self.assertEqual(len(result), 3)
+
+
+class VecAbsMax2Tests(unittest.TestCase):
+    """Searching for values in a vector"""
+
+    def test_absmax2_1a(self):
+        """best and runner up in tiny array"""
+
+        result = absmax2(array([2.5]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 2.5)
+        self.assertEqual(result[0], 2.5)
+
+    def test_absmax2_1b(self):
+        """best and runner up in tiny array"""
+
+        result = absmax2(array([-0.5]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 0.5)
+        self.assertEqual(result[0], 0.5)
+
+    def test_absmax2_short(self):
+        """best and runner up, with positive and negative elements"""
+
+        result = absmax2(array([-2.5, 1.5]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 2.5)
+        self.assertEqual(result[1], 1.5)
+
+    def test_absmax2_long(self):
+        """best and runner up, with long input"""
+
+        result = absmax2(array([-2.5, 1.5, 0.2, 3.5, 0.5]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 3.5)
+        self.assertEqual(result[1], 2.5)
+
+    def test_absmax2_long2(self):
+        """best and runner up, another long input"""
+
+        result = absmax2(array([2.5, 1.5, 0.2, 3.5, 0.5, 4.5]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 4.5)
+        self.assertEqual(result[1], 3.5)
+
+    def test_absmax2_ties(self):
+        """best and runner up, with ties"""
+
+        result = absmax2(array([2.0, 2.0, 2.0, 3.0, 3.0,
+                                4.0, 3.0, 4.0, 2.0, 1.0]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 4.0)
+        self.assertEqual(result[1], 4.0)
 

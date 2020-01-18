@@ -6,7 +6,7 @@ import numba
 from numpy import array
 from pickle import loads, dumps
 from scipy.sparse import csr_matrix
-from .vectors import normalize_vec
+from .vectors import normalize_vec, absmax2
 
 
 def csr_to_bytes(x):
@@ -36,13 +36,19 @@ def bytes_to_arrays(x):
     :param x: bytes object
     :return: arrays with data, indices, and a sum of the data
         Note the first two elements are ready to use with csr_matrix.
-        The sum and max of the data are ad-hoc extras.
+        The abs max and abs-runner-up are ad-hoc extras.
     """
     raw = loads(x)
-    abs_data = [abs(_) for _ in raw[0]]
-    data_sum = sum(abs_data)
-    data_max = 0.0 if len(abs_data) == 0 else max(abs_data)
-    return array(raw[0]), array(raw[1]), data_sum, data_max
+    data_max, data_runnerup = 0.0, 0.0
+    values, indices = array(raw[0]), array(raw[1])
+    if len(raw[0]):
+        data_max, data_runnerup = absmax2(values)
+    return values, indices, data_max, data_runnerup
+
+    #abs_data = [abs(_) for _ in raw[0]]
+    #data_sum = sum(abs_data)
+    #data_max = 0.0 if len(abs_data) == 0 else max(abs_data)
+    #return array(raw[0]), array(raw[1]), data_sum, data_max
 
 
 def normalize_csr(v):
@@ -169,7 +175,7 @@ def add_sparse_skip(arr, data, indices, skip_index=-1):
 
 
 @numba.jit
-def harmonic_multiply_sparse(factors, data, indices, harmonic_factor=None):
+def harmonic_multiply_sparse(factors, data, indices, harmonic_factor):
     """multiply sparse data by a harmonic-mean-scaled factor
 
     :param factors: dense array of floats
@@ -182,19 +188,14 @@ def harmonic_multiply_sparse(factors, data, indices, harmonic_factor=None):
         (factors*harmonic_factor)/(factors+harmonic_factor)
     """
 
-    if harmonic_factor is None:
-        for i in range(len(indices)):
-            data[i] *= factors[indices[i]]
-    else:
-        hf = harmonic_factor
-        for i in range(len(indices)):
-            fi = factors[indices[i]]
-            data[i] *= (fi * hf / (fi + hf))
+    for i in range(len(indices)):
+        fi = factors[indices[i]]
+        data[i] *= (fi * harmonic_factor / (fi + harmonic_factor))
     return data
 
 
 @numba.jit
-def max_multiply_sparse(factors, data, indices, max_factor=None):
+def max_multiply_sparse(factors, data, indices, max_factor):
     """multiply sparse data by a factor with upper bound
 
     :param factors: dense array of floats
@@ -207,10 +208,7 @@ def max_multiply_sparse(factors, data, indices, max_factor=None):
         equal to the max_factor float
     """
 
-    if max_factor is None:
-        for i in range(len(indices)):
-            data[i] *= factors[indices[i]]
-    else:
-        for i in range(len(indices)):
-            data[i] *= min(max_factor, factors[indices[i]])
-    return data
+    result = array([0.0]*len(data))
+    for i in range(len(indices)):
+        result[i] = data[i] * min(max_factor, factors[indices[i]])
+    return result

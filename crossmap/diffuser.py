@@ -13,7 +13,7 @@ from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, sign_csr
-from .csr import add_sparse, harmonic_multiply_sparse, max_multiply_sparse
+from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
 from .vectors import sparse_to_dense
 
@@ -148,6 +148,7 @@ class CrossmapDiffuser:
         :return: csr vector
         """
 
+        strength = _nonzero_strength(strength)
         v_dense = sparse_to_dense(v)
         if weight is not None:
             w_dense = sparse_to_dense(weight)
@@ -163,8 +164,7 @@ class CrossmapDiffuser:
 
         num_passes = self.num_passes
         f_weights = self.feature_weights
-        #hms = harmonic_multiply_sparse
-        mms = max_multiply_sparse
+        hms = harmonic_multiply_sparse
         for pass_weight in _pass_weights(num_passes):
             last_result = result.copy()
             for corpus, value in strength.items():
@@ -172,17 +172,21 @@ class CrossmapDiffuser:
                 for di, ddata in diffusion_data.items():
                     # ddata[0] contains values from a sparse vector
                     # ddata[1] contains indexes matched to the values in ddata[0]
-                    # ddata[2] contains a sum of all data entries in the vector
-                    # ddata[3] contains the maximal value
-                    row_max = ddata[3]
-                    if row_max == 0.0:
+                    # ddata[2] contains a maximal value in values
+                    # ddata[3] contains a runner-up
+                    row_normalization = ddata[3]
+                    if row_normalization == 0.0:
                         continue
-                    # row_sum = ddata[2]
-                    data = mms(f_weights, ddata[0], ddata[1], f_weights[di])
+                    # cap by row_normalization to avoid diffusing into self too much
+                    data = array([min(_, row_normalization) for _ in ddata[0]])
+                    # avoid diffusion from important feature to inflate value
+                    # of an unimportant feature
+                    data = hms(f_weights, data, ddata[1], f_weights[di])
+                    # penalize diffusion from overlapping tokens
                     multiplier = min(1.0, (w_dense[di]/v_dense[di]))
-                    multiplier *= last_result[di] / row_max
+                    multiplier *= last_result[di] / row_normalization
                     data *= pass_weight * value * multiplier
-                    # add the diffusion parts (but not to self)
+                    # add the diffusion parts
                     result = add_sparse(result, data, ddata[1])
         return normalize_csr(csr_matrix(result))
 
@@ -204,4 +208,13 @@ def _pass_weights(tot):
 def _sign(x):
     """get the sign of a number"""
     return 1 if x >= 0 else -1
+
+
+def _nonzero_strength(x):
+    """make sure a dictionary has only nonzero values"""
+
+    for k in list(x.keys()):
+        if x[k] == 0:
+            x.pop(k)
+    return x
 
