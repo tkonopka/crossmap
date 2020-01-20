@@ -89,8 +89,11 @@ class DatasetsMessage extends ChatMessage {
     constructor(props) {
         super(props);
         props.setHeader("Available datasets");
+        this.handleChangePage = this.handleChangePage.bind(this);
+        this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
+        this.state = {page: 0, rowsPerPage: 10}
     }
-    render() {
+    render_old() {
         let datasets = this.props.data["datasets"].map((x, i) => {
             return(
                 <ListItem key={i}>
@@ -101,6 +104,53 @@ class DatasetsMessage extends ChatMessage {
         return(<div xs={8}>
             <List dense>{datasets}</List>
         </div>);
+    }
+
+    handleChangePage(event, newPage) {
+        this.setState({page: newPage})
+    };
+
+    handleChangeRowsPerPage(event) {
+        this.setState({page: 0, rowsPerPage: parseInt(event.target.value, 10)});
+    };
+
+    render() {
+        let rows = this.props.data["datasets"];
+        let header = <TableRow>
+            <TableCell>Dataset</TableCell>
+            <TableCell>Size</TableCell>
+        </TableRow>;
+        let page = this.state.page;
+        let rowsPerPage = this.state.rowsPerPage;
+        let content = rows.slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage)
+            .map(function (x, i) {
+                return (<TableRow key={x["label"]}>
+                    <TableCell><Typography color={"primary"}>{x["label"]}</Typography></TableCell>
+                    <TableCell className="chat-td-numeric">
+                        <Typography color={"secondary"}>{x["size"]}</Typography>
+                    </TableCell>
+                </TableRow>)
+            });
+        let pagination = null;
+        if (rows.length>10) {
+            pagination = <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={rows.length}
+                rowsPerPage={this.state.rowsPerPage}
+                page={this.state.page}
+                onChangePage={this.handleChangePage}
+                onChangeRowsPerPage={this.handleChangeRowsPerPage}
+            />;
+        }
+        return (
+            <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+                <Table size={"small"}>
+                    <TableHead>{header}</TableHead>
+                    <TableBody>{content}</TableBody>
+                </Table>
+                {pagination}
+            </div>)
     }
 }
 

@@ -109,13 +109,10 @@ class CrossmapInfo(Crossmap):
                 if len(x_data) > 0:
                     x_vector = x_data[0]["data"]
                     x_dist = distance(v_diffused, x_vector) / sqrt2
-                    x_details = _distance_details(v_diffused, x_vector,
-                                                  self.inv_feature_map)
                     x_result = dict(query=query_name,
                                     dataset=label,
                                     id=x,
-                                    distance=x_dist,
-                                    details=x_details)
+                                    distance=x_dist)
                     result.append(x_result)
         return result
 
@@ -135,8 +132,24 @@ class CrossmapInfo(Crossmap):
                                             query_name=id))
         return result
 
+    def compare_file(self, filepath, ids=[], diffusion=None):
+        """compute representations from items in a file to specific items in db
+
+        :param filepath: string, path to a data file
+        :param ids: list of string ids
+        :param diffusion: dict, map of diffusion strengths
+        :return: list
+        """
+
+        result = []
+        with open_file(filepath, "rt") as f:
+            for id, doc in yaml_document(f):
+                result.extend(self.distance(doc, ids, diffusion,
+                                            query_name=id))
+        return result
+
     def vectors(self, filepath=None, ids=[], diffusion=None):
-        """extraction of data vectors
+        """extract of data vectors for db items or disk items
 
         :param filepath: string, path to a data file
         :param ids: list of string ids
@@ -152,8 +165,6 @@ class CrossmapInfo(Crossmap):
                 x_data = db.get_data(label, ids=[x])
                 if len(x_data) > 0:
                     v = x_data[0]["data"]
-                    if diffusion is not None:
-                        v = self.diffuser.diffuse(v, diffusion)
                     v = list(sparse_to_dense(v))
                     x_result = dict(dataset=label, id=x, vector=v)
                     result.append(x_result)
@@ -161,7 +172,7 @@ class CrossmapInfo(Crossmap):
         if filepath is None:
             return result
 
-        # convert from-file items into vectors
+        # convert items from file into vectors
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 v = self.indexer.encode_document(doc)
@@ -169,6 +180,37 @@ class CrossmapInfo(Crossmap):
                     v = self.diffuser.diffuse(v, diffusion)
                 v = list(sparse_to_dense(v))
                 result.append(dict(dataset="_file_", id=id, vector=v))
+        return result
+
+    def matrix(self, filepath=None, ids=[], diffusion=None):
+        """extract data for db items or disk items, output as a matrix
+
+        This is similar to vectors, but result is output in a matrix form
+
+        :param filepath: string, path to a data file
+        :param ids: list of string ids
+        :param diffusion: dict, map of diffusion strengths
+        :return: list
+        """
+
+        # collect information in vectors
+        vectors = self.vectors(filepath, ids, diffusion)
+
+        # format the vectors into a matrix with non-zero features
+        inv_feature_map = self.inv_feature_map
+        result = []
+        vec_ids = [_["id"] for _ in vectors]
+        num_ids = len(vec_ids)
+        for i in range(len(inv_feature_map)):
+            i_data = [_["vector"][i] for _ in vectors]
+            if sum(i_data) == 0:
+                continue
+            i_result = dict(_feature=inv_feature_map[i],
+                            _max=_r(max(i_data)),
+                            _min=_r(min(i_data)))
+            for j in range(num_ids):
+                i_result[vec_ids[j]] = i_data[j]
+            result.append(i_result)
         return result
 
     def counts(self, label, features=[], digits=6):

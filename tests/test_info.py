@@ -77,6 +77,7 @@ class CrossmapInfoTests(unittest.TestCase):
         num_nonzero = sum([_ > 0 for _ in vectors_docs[0]["vector"]])
         self.assertEqual(num_nonzero, 4)
 
+    @unittest.skip
     def test_info_vectors_diffusion(self):
         """info can return diffused vectors"""
 
@@ -88,7 +89,7 @@ class CrossmapInfoTests(unittest.TestCase):
     def test_info_vectors_from_file(self):
         """info can make vectors from file data items"""
 
-        diff = {"targets": 0.5}
+        diff = {"targets": 0.0}
         # vectors can scan data files
         from_file = self.crossinfo.vectors(dataset_file, diffusion=diff)
         self.assertGreater(len(from_file), 3)
@@ -161,12 +162,11 @@ class CrossmapInfoTests(unittest.TestCase):
             self.assertAlmostEqual(search_distances[id], info_distances[id],
                                    places=5)
 
-    def test_info_distances_details(self):
+    def test_info_matrix_details(self):
         """compute details for distances"""
 
-        doc= {"data": "alpha A"}
-        result = self.crossinfo.distance(doc, ids=["A", "B"])
-        self.assertEqual(len(result), 2)
-        self.assertTrue("details" in result[0])
-        self.assertTrue("details" in result[1])
+        result = self.crossinfo.matrix(ids=["A", "B"])
+        self.assertGreater(len(result), 2)
+        self.assertTrue("A" in result[0])
+        self.assertTrue("B" in result[0])
 

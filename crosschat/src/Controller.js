@@ -36,6 +36,7 @@ class Controller extends React.Component {
             action: "search", view: "search", extended: 0,
             dataset: dataset, n: 1,
             data: "", aux_neg: "", aux_pos: "",
+            id: "", title: "", metadata: "",
             diffusion: diffusion,
             train_dataset: train_dataset
         }
@@ -96,8 +97,9 @@ class Controller extends React.Component {
         } else {
             return null;
         }
-        this.props.send(result, action)
-        this.setState({"data": "", "aux_pos": "", "aux_neg": ""})
+        this.props.send(result, action);
+        this.setState({"data": "", "aux_pos": "", "aux_neg": "",
+                       "id": "", "title": "", "metadata": ""})
     };
 
     componentDidUpdate() {

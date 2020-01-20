@@ -23,8 +23,8 @@ parser.add_argument("action", action="store",
                     help="Name of utility",
                     choices=["build", "search", "decompose", "add",
                              "server", "gui",
-                             "distances", "vectors", "counts", "diffuse",
-                             "features", "summary"])
+                             "distances", "vectors", "matrix", "counts",
+                             "diffuse", "features", "summary"])
 parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
@@ -147,11 +147,13 @@ if action == "diffuse":
                                            diffusion=config.diffusion))
     print_pretty(result, config.pretty)
 
-if action in set(["distances", "vectors"]):
+if action in set(["distances", "vectors", "matrix"]):
     crossmap = CrossmapInfo(settings)
     action_fun = crossmap.distance_file
     if action == "vectors":
         action_fun = crossmap.vectors
+    elif action == "matrix":
+        action_fun = crossmap.matrix
     result = action_fun(config.data, ids=config.ids.split(","),
                         diffusion=config.diffusion)
     print_pretty(result, config.pretty)

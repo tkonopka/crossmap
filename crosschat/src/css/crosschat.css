@@ -103,3 +103,9 @@ td.column-dataset {
 .add-title {
   margin-top: 1em;
 }
+
+
+/** Message boxes in chat history **/
+.chat-response td {
+  padding: 2px 18px 2px 18px;
+}

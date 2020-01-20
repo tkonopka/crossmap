@@ -15,19 +15,19 @@ class ControllerAddForm extends React.Component {
     }
 
     toggleMode() {
-        console.log("toggling mode with current mode "+this.state.mode);
         this.setState((prevState) => ({
             "mode": (prevState.mode === "selecting") ? "typing" : "selecting"
         }));
     }
 
     render() {
-        let dataset_items = this.props.datasets.map((x, i) => {
-            return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
-        });
         let settings = this.props.settings;
+        let update = this.props.update;
         let dataset_choice = null, dataset_toggle=null;
         if (this.state.mode === "selecting") {
+            let dataset_items = this.props.datasets.map((x, i) => {
+                return (<MenuItem key={i} value={x["label"]}>{x["label"]}</MenuItem>);
+            });
             dataset_choice = <Grid item xs={6} lg={3}>
                                 <TextField select fullWidth
                                            id="dataset" label="Dataset"
@@ -44,12 +44,11 @@ class ControllerAddForm extends React.Component {
                                 <TextField fullWidth required id="dataset" label="Dataset"
                                            value={this.props.dataset}
                                            onChange={(e) => this.props.update("train_dataset", e.target.value)} />
-                             </Grid>
+                             </Grid>;
             dataset_toggle = <Grid item xs={3}><Button variant="contained" onClick={this.toggleMode}>
                                 Choose existing dataset
-                             </Button></Grid>
+                             </Button></Grid>;
         }
-
         return(<form autoComplete="off">
             <Grid container alignItems="center" justify="flex-start" spacing={2}>
                 {dataset_choice}
@@ -59,38 +58,44 @@ class ControllerAddForm extends React.Component {
                 <Grid item xs={6} lg={3}>
                     <TextField fullWidth
                                id="id"
-                               onInput={(e) => this.props.update("id", e.target.value)}
-                               label="Identifier" defaultValue=""/>
+                               value={settings.id}
+                               onInput={(e) => update("id", e.target.value)}
+                               label="Identifier"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth
                                id="title"
-                               onInput={(e) => this.props.update("title", e.target.value)}
-                               label="Title" defaultValue=""/>
+                               value={settings.title}
+                               onInput={(e) => update("title", e.target.value)}
+                               label="Title"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline
                                id="data" rowsMax="12"
-                               onInput={(e) => this.props.update("data", e.target.value)}
-                               label="Data" defaultValue=""/>
+                               value={settings.data}
+                               onInput={(e) => update("data", e.target.value)}
+                               label="Data"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline
                                id="aux_pos" rowsMax="12"
-                               onInput={(e) => this.props.update("aux_pos", e.target.value)}
-                               label="Auxiliary data (positive weight)" defaultValue=""/>
+                               value={settings.aux_pos}
+                               onInput={(e) => update("aux_pos", e.target.value)}
+                               label="Auxiliary data (positive weight)"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline
                                id="aux_neg" rowsMax="12"
-                               onInput={(e) => this.props.update("aux_neg", e.target.value)}
-                               label="Auxiliary data (negative weight)" defaultValue=""/>
+                               value={settings.aux_neg}
+                               onInput={(e) => update("aux_neg", e.target.value)}
+                               label="Auxiliary data (negative weight)"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline
                                id="metadata" rowsMax="4"
-                               onInput={(e) => this.props.update("metadata", e.target.value)}
-                               label="Comment" defaultValue=""/>
+                               value={settings.metadata}
+                               onInput={(e) => update("metadata", e.target.value)}
+                               label="Comment"/>
                 </Grid>
             </Grid>
         </form>)
