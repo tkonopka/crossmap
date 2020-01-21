@@ -79,7 +79,7 @@ class KmerizerTests(unittest.TestCase):
         result = tokens["C"]
         self.assertTrue("aux_neg" in result)
         self.assertTrue("bob" in result["aux_neg"])
-        self.assertEqual(result["aux_neg"]["bob"], 1)
+        self.assertEqual(result["aux_neg"].data["bob"], 1)
 
     def test_tokenize_documents(self):
         """obtain tokens from documents"""
@@ -94,9 +94,9 @@ class KmerizerTests(unittest.TestCase):
         self.assertTrue("danie" in result["data"])
         # aux_pos component will have other items
         self.assertTrue("with" in result["aux_pos"])
-        self.assertEqual(result["aux_pos"]["with"], 1)
-        self.assertLess(result["aux_pos"]["danie"], 1.0)
-        self.assertLess(result["aux_pos"]["aniel"], 1.0)
+        self.assertEqual(result["aux_pos"].data["with"], 1)
+        self.assertLess(result["aux_pos"].data["danie"], 1.0)
+        self.assertLess(result["aux_pos"].data["aniel"], 1.0)
 
     def test_tokenize_case_sensitive(self):
         """obtain tokens in case sensitive manner"""
@@ -107,7 +107,7 @@ class KmerizerTests(unittest.TestCase):
             tokens[id] = data
         result = tokens["U"]["data"]
         self.assertTrue("ABCDEFG" in result)
-        self.assertEqual(result["ABCDEFG"], 1)
+        self.assertEqual(result.data["ABCDEFG"], 1)
 
     def test_tokenize_case_insensitive(self):
         """obtain tokens, all in lowercase"""
@@ -119,7 +119,7 @@ class KmerizerTests(unittest.TestCase):
         result = tokens["U"]["data"]
         self.assertFalse("ABCDEFG" in result)
         self.assertTrue("abcdefg" in result)
-        self.assertEqual(result["abcdefg"], 1)
+        self.assertEqual(result.data["abcdefg"], 1)
 
     def test_count_all_tokens(self):
         """obtain summary of tokens in all documents"""
@@ -130,8 +130,8 @@ class KmerizerTests(unittest.TestCase):
             tokens[id] = data
         result = token_counts(tokens)
         self.assertTrue("data" in result)
-        self.assertGreater(result["with"], 1)
-        self.assertEqual(result["abcdefg"], 1)
+        self.assertGreater(result.data["with"], 1)
+        self.assertEqual(result.data["abcdefg"], 1)
 
     def test_tokenize_with_nondefault_alphanet(self):
         """tokenizing with alphabet with missing letters introduces spaces"""
@@ -141,8 +141,8 @@ class KmerizerTests(unittest.TestCase):
         for id, data in tokenizer.tokenize_path(dataset_file):
             tokens[id] = data
         # item Alice - has a word just with letter A
-        dataA = tokens["A"]["data"]
-        auxA = tokens["A"]["aux_pos"]
+        dataA = tokens["A"]["data"].data
+        auxA = tokens["A"]["aux_pos"].data
         # letter "A" can turn into " " and reduce to ""
         # avoid tokens that are empty
         self.assertFalse("a" in dataA)
@@ -150,7 +150,7 @@ class KmerizerTests(unittest.TestCase):
         for k in keysA:
             self.assertNotEqual(k, "")
         # item Daniel - has letter a on a boundary of k=5
-        keysD = list(tokens["D"]["data"].keys())
+        keysD = list(tokens["D"]["data"].data.keys())
         # "Daniel" can create "D niel" which can kmerize to " niel"
         # avoid tokens that start with a space
         self.assertEqual(keysD, [_.strip() for _ in keysD])

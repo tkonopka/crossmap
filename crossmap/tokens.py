@@ -6,6 +6,7 @@ Tokenizer for crossmap datasets
 import gzip
 from math import sqrt
 from collections import Counter
+from .tokencounter import TokenCounter
 from .tools import yaml_document
 
 
@@ -20,7 +21,7 @@ def kmers(s, k):
 def token_counts(docs, components=("data", "aux_pos", "aux_neg")):
     """summarize token counts over all documents"""
 
-    result = Counter()
+    result = TokenCounter()
     for k, v in docs.items():
         for comp in components:
             if comp in v:
@@ -93,7 +94,7 @@ class Kmerizer:
         alphabet = self.alphabet
         if not self.case_sensitive:
             s = s.lower()
-        result = Counter()
+        result = TokenCounter()
         for word in s.split():
             if not all([_ in alphabet for _ in word]):
                 for i in range(len(word)):
@@ -105,7 +106,7 @@ class Kmerizer:
             wlen = len(word)
             weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k + 1))
             for _ in kmers(word, k):
-                result[_.strip()] += weight
+                result.add(_.strip(), weight)
         return result
 
 

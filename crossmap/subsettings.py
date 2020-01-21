@@ -26,7 +26,7 @@ class CrossmapTokenSettings():
                     self.alphabet = val
 
     def __str__(self):
-        result = dict(tokens = {"k": self.k, "alphabet": self.alphabet})
+        result = dict(tokens={"k": self.k, "alphabet": self.alphabet})
         return dump(result)
 
 
@@ -58,9 +58,9 @@ class CrossmapFeatureSettings:
                 self.map_file = map_file
 
     def __str__(self):
-        result = dict(features= {"max_number": self.max_number,
-                                 "weighting": self.weighting,
-                                 "aux": self.aux})
+        result = dict(features={"max_number": self.max_number,
+                                "weighting": self.weighting,
+                                "aux": self.aux})
         return dump(result)
 
 
@@ -123,7 +123,7 @@ class CrossmapServerSettings:
 
     def __str__(self):
         result = dict(server={"api_port": self.api_port,
-                             "ui_port": self.ui_port})
+                              "ui_port": self.ui_port})
         return dump(result)
 
 

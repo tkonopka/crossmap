@@ -3,6 +3,7 @@ Encoding documents into feature vectors
 """
 
 import gzip
+from math import log2
 from numpy import zeros
 from .vectors import normalize_vec, add_three
 from scipy.sparse import csr_matrix
@@ -75,14 +76,26 @@ class CrossmapEncoder:
 
 
 def _to_vec(tokens, component, feature_map):
-    """helper to transfer from a dict/counter into a vector"""
+    """helper to transfer from a TokenCounter into a vector
+
+    :param tokens: a dict of TokenCounters
+    :param component: a key in the tokens dict
+    :param feature_map: dictionary mapping from keys to an index and weight
+    :return: an array with dense vector
+    """
     vec = zeros(len(feature_map), dtype=float)
     if component not in tokens:
         return vec
-    for k, v in tokens[component].items():
+    component_data = tokens[component]
+    for k, v in component_data.data.items():
+        c = component_data.count[k]
         if k not in feature_map:
             continue
         fm = feature_map[k]
-        vec[fm[0]] += fm[1]*v
+        if c == 1:
+            vec[fm[0]] = fm[1] * v
+        else:
+            vec[fm[0]] = fm[1] * (v/c) * (1 + log2(c))
+
     return vec
 

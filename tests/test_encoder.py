@@ -3,6 +3,7 @@ Tests for encoding documents into numeric vectors
 """
 
 import unittest
+from math import sqrt
 from os.path import join
 from crossmap.tokens import Kmerizer
 from crossmap.encoder import CrossmapEncoder
@@ -22,7 +23,7 @@ class CrossmapEncoderTests(unittest.TestCase):
         self.builder = CrossmapEncoder(test_map, Kmerizer(k=4))
 
     def test_encode_single_document(self):
-        """process a single string into a feature matrix"""
+        """process a document with a single string in data"""
 
         result = self.builder.document({"data": "abcdef"})
         arr = result.toarray()[0]
@@ -71,3 +72,21 @@ class CrossmapEncoderTests(unittest.TestCase):
         self.assertGreater(sum(r_u), 0,
                            "item U has word ABCDEFG which matches features")
 
+    def test_encode_document_w_repeated_otkens(self):
+        """process a single document that contains a token twice"""
+
+        result1 = self.builder.document({"data": "abcd fghi"})
+        result2 = self.builder.document({"data": "abcd abcd abcd abcd fghi"})
+        arr1 = result1.toarray()[0]
+        arr2 = result2.toarray()[0]
+        # index of token for abcd
+        abcd = test_map["abcd"][0]
+        self.assertGreater(arr1[abcd], 0)
+        # the second vector should have more weight on abcd that first vector
+        # because 'abcde' is repeated
+        self.assertGreater(arr2[abcd], arr1[abcd])
+        # under proportional scaling, second vector should have 4/5 of
+        # total weight assigned to abcd
+        # but the encoder should be log-penalizing repeat tokens.
+        naive_arr = [4.0/sqrt(17), 1.0/sqrt(17)]
+        self.assertLess(arr2[abcd], naive_arr[0])
