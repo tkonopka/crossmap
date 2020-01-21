@@ -104,7 +104,7 @@ def build_wiktionary_item(page_text):
         elif child.tag == "revision":
             for subchild in child:
                 if subchild.tag == "text":
-                    data["aux_pos"] = parse_def(subchild.text)
+                    data["data"] += "; " + parse_def(subchild.text)
     return "WIKTIONARY:"+str(id), data
 
 
@@ -129,11 +129,11 @@ def build_wiktionary_dataset(config):
         for page_str in wiktionary_page(wiktionary_file):
             id, data = build_wiktionary_item(page_str)
             title = data["title"]
-            if data["aux_pos"] == "":
+            if data["data"] == title:
                 continue
             if title == title.upper():
                 continue
-            if len(data["aux_pos"]) < len_ratio * len(data["data"]):
+            if len(data["data"]) < len_ratio * len(data["title"]):
                 continue
             item = dict()
             item[id] = data

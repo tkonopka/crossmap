@@ -35,7 +35,7 @@ class Controller extends React.Component {
         this.state = {
             action: "search", view: "search", extended: 0,
             dataset: dataset, n: 1,
-            data: "", aux_neg: "", aux_pos: "",
+            data_pos: "", data_neg: "",
             id: "", title: "", metadata: "",
             diffusion: diffusion,
             train_dataset: train_dataset
@@ -98,7 +98,7 @@ class Controller extends React.Component {
             return null;
         }
         this.props.send(result, action);
-        this.setState({"data": "", "aux_pos": "", "aux_neg": "",
+        this.setState({"data_pos": "", "data_neg": "",
                        "id": "", "title": "", "metadata": ""})
     };
 
@@ -111,9 +111,8 @@ class Controller extends React.Component {
         const view = this.state.view;
         if (view === "search") {
             middlebox.push(<ControllerQueryForm key={0}
-                                                data={this.state.data}
-                                                aux_pos={this.state.aux_pos}
-                                                aux_neg={this.state.aux_neg}
+                                                data_pos={this.state.data_pos}
+                                                data_neg={this.state.data_neg}
                                                 extended={this.state.extended}
                                                 update={this.handleStateUpdate}
                                                 send={this.composeAndSend}/>)
@@ -188,9 +187,7 @@ let JSONcopy = function(x) {
 
 /** Helper determins if query boxes have some nonempty values **/
 let hasPayload = function(state) {
-    if (state["data"].trim() !== "") return true;
-    if (state["aux_pos"].trim() !== "") return true;
-    return false;
+    return (state["data_pos"].trim() !== "");
 };
 
 /**
@@ -206,8 +203,7 @@ let makeQueryPayload = function(state, datasets) {
     }
     let result = {};
     let fields = ["action", "dataset", "n",
-                  "data", "aux_pos", "aux_neg",
-                  "diffusion"];
+                  "data_pos", "data_neg", "diffusion"];
     fields.forEach((x)=> { result[x] = JSONcopy(state[x])});
     return result
 };
@@ -217,7 +213,7 @@ let makeQueryPayload = function(state, datasets) {
  */
 let makeTrainPayload = function(state) {
     let result = { action: "add", dataset: state.train_dataset};
-    ["id", "title", "data", "aux_pos", "aux_neg", "metadata"].forEach((x) => {
+    ["id", "title", "data_pos", "data_neg", "metadata"].forEach((x) => {
         if (state[x] !== undefined) {
             result[x] = JSONcopy(state[x])
         } else {

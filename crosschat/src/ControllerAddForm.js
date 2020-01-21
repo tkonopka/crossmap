@@ -71,24 +71,17 @@ class ControllerAddForm extends React.Component {
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline
-                               id="data" rowsMax="12"
-                               value={settings.data}
-                               onInput={(e) => update("data", e.target.value)}
-                               label="Data"/>
+                               id="data_pos" rowsMax="12"
+                               value={settings.data_pos}
+                               onInput={(e) => update("data_pos", e.target.value)}
+                               label="Data (positive weight)"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline
-                               id="aux_pos" rowsMax="12"
-                               value={settings.aux_pos}
-                               onInput={(e) => update("aux_pos", e.target.value)}
-                               label="Auxiliary data (positive weight)"/>
-                </Grid>
-                <Grid item xs={12}>
-                    <TextField fullWidth multiline
-                               id="aux_neg" rowsMax="12"
-                               value={settings.aux_neg}
-                               onInput={(e) => update("aux_neg", e.target.value)}
-                               label="Auxiliary data (negative weight)"/>
+                               id="data_neg" rowsMax="12"
+                               value={settings.data_neg}
+                               onInput={(e) => update("data_neg", e.target.value)}
+                               label="Data (negative weight)"/>
                 </Grid>
                 <Grid item xs={12}>
                     <TextField fullWidth multiline

@@ -1,17 +1,20 @@
 alpha:
-  data: "alpha \u03B1"
-  aux_pos: A
+  data: "alpha \u03B1 A"
 beta:
-  data: "beta \u03B2"
-  aux_pos: B
+  data: "beta \u03B2 B"
 multiline:
   data: content on
 
     multiple lines
-  aux_pos: this formatting is allowed in yaml
+    This formatting is allowed in yaml
 array_without_quotes:
-  data: without quotes
-  aux_pos: [abcdef, ghijkl, mnopqr]
+  data: [abcdef, ghijkl, mnopqr]
 array_with_quotes:
-  data: with quotes
-  aux_pos: ["abc123", "abc456", "abc789"]
+  data: ["abc123", "abc456", "abc789"]
+dictionary:
+  data:
+    short: a
+    long: alpha
+  metadata: Here data is itself a dictionary
+slashes:
+  data: A/B/C

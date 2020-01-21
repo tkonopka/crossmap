@@ -79,9 +79,9 @@ class CrossmapSearchTests(unittest.TestCase):
     def test_search_misc_doc(self):
         """similar to dataset:documents should map to dataset:targets"""
 
-        doc = {"data": "Catherine C",
-               "aux_pos": "Alice alpha A",
-               "aux_neg": "B"}
+        # document overlapping with C and A, with a slight bias toward C
+        doc = {"data_pos": "Catherine C C. Alice alpha A",
+               "data_neg": "B"}
         result = self.crossmap.search(doc, "targets", n=2)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 2)
@@ -91,7 +91,7 @@ class CrossmapSearchTests(unittest.TestCase):
     def test_search_from_docs(self):
         """can map onto the documents dataset instead of dataset:targets"""
 
-        doc = {"data": "Bob B Alice A"}
+        doc = {"data_pos": "Bob B Alice A"}
         result = self.crossmap.search(doc, "documents", n=2)
         # targets should match this document to C and A
         self.assertEqual(len(result["targets"]), 2)

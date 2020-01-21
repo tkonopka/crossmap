@@ -5,20 +5,43 @@ Build a dataset of crossmap using obo files.
 from .obo import Obo
 
 
-def comment(term):
+def comments(term):
     """helper to get a string with the comment string for an obo term"""
-
     if term.data is None or "comment" not in term.data:
-        return ""
-    return ", ".join(term.data["comment"])
+        return []
+    return term.data["comment"]
 
 
 def synonyms(term):
     """helper to extract synonyms"""
-
     if term.data is None or len(term.synonyms) == 0:
-        return ""
-    return ", ".join(term.synonyms)
+        return []
+    return list(term.synonyms)
+
+
+def tops(id, obo, root_ids):
+    """helper to extract top term names"""
+    result = []
+    for ancestor in obo.ancestors(id):
+        if ancestor in root_ids:
+            result.append(obo.terms[ancestor].name)
+    return result
+
+
+def siblings(id, obo):
+    """helper to extract an array of sibling names"""
+    result = []
+    for sibling in obo.siblings(id):
+        result.append(obo.terms[sibling].name)
+    return result
+
+
+def children(id, obo):
+    """helper to extract an array of children names"""
+    result = []
+    for child in obo.children(id):
+        result.append(obo.terms[child].name)
+    return result
 
 
 class OboBuilder:
@@ -50,7 +73,7 @@ class OboBuilder:
     def content(self, term, extras=True):
         """helper to get a single string to describe a term"""
 
-        result = term.name
+        result = dict(name=term.name)
         if term.data is None:
             return result
         if "def" in term.data:
@@ -58,13 +81,13 @@ class OboBuilder:
             defstr = (defstr.split("["))[0].strip()
             if defstr.startswith('"') and defstr.endswith('"'):
                 defstr = defstr[1:-1]
-            result += self.sep + defstr
+            result["def"] = defstr
         if extras:
             if self.aux_comments:
-                result += self.sep + comment(term)
+                result["comments"] = comments(term)
             if self.aux_synonyms:
-                result += self.sep + synonyms(term)
-        return result.strip()
+                result["synonyms"] = synonyms(term)
+        return result
 
     def build(self):
         """transfer data from obo into a dictionary"""
@@ -83,49 +106,51 @@ class OboBuilder:
             if id not in hits:
                 continue
             term = obo.terms[id]
-            data = self.content(term, extras=False)
-            data_pos = []
-            data_neg = []
+            data_pos = self.content(term, extras=False)
+            data_neg = dict()
             metadata = dict()
             if aux_comments:
-                data_pos.append(comment(term))
+                data_pos["comments"] = comments(term)
             if aux_synonyms:
-                data_pos.append(synonyms(term))
+                data_pos["synonyms"] = synonyms(term)
             if aux_top:
-                for ancestor in obo.ancestors(id):
-                    if ancestor in self.top:
-                        data_pos.append(obo.terms[ancestor].name)
+                data_pos["top"] = tops(id, obo, self.top)
             if aux_ancestors:
                 metadata["ancestors"] = []
+                data_pos["ancestors"] = []
                 for ancestor in obo.ancestors(id):
                     metadata["ancestors"].append(ancestor)
-                    data_pos.append(content(obo.terms[ancestor]))
+                    data_pos["ancestors"].append(content(obo.terms[ancestor]))
             elif aux_parents:
                 metadata["parents"] = []
+                data_pos["parents"] = []
                 for parent in obo.parents(id):
                     metadata["parents"].append(parent)
-                    data_pos.append(content(obo.terms[parent]))
+                    parent_content = content(obo.terms[parent])
+                    for v in parent_content.values():
+                        v_str = str(v)
+                        if v_str == '' or v_str == '[]':
+                            continue
+                        data_pos["parents"].append(v_str)
             if aux_parents and (term.data is None or "def" not in term.data):
                 grandparents = set()
+                data_pos["grandparents"] = []
                 for parent in obo.parents(id):
                     grandparents.update(obo.parents(parent))
-                for grandparent in grandparents:
-                    data_pos.append(content(obo.terms[grandparent]))
+                for grandpar in grandparents:
+                    grandpar_content = content(obo.terms[grandpar])
+                    data_pos["grandparents"].append(grandpar_content)
             if aux_siblings:
-                for sibling in obo.siblings(id):
-                    data_neg.append(obo.terms[sibling].name)
+                data_neg["siblings"] = siblings(id, obo)
             if aux_children:
-                for child in obo.children(id):
-                    data_neg.append(obo.terms[child].name)
+                data_neg["children"] = children(id, obo)
 
             # clean up and create object
-            data_pos = [_ for _ in data_pos if _ != ""]
-            data_neg = [_ for _ in data_neg if _ != ""]
-            result[id] = dict(title=term.name,
-                              data=data,
-                              aux_pos="; ".join(data_pos),
-                              aux_neg="; ".join(data_neg),
-                              metadata=metadata)
+            obj = dict(title=term.name, data_pos=data_pos)
+            if len(data_neg):
+                obj["data_neg"] = data_neg
+            obj["metadata"] = metadata
+            result[id] =obj
         return result
 
 

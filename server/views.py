@@ -50,7 +50,7 @@ def parse_request(request):
     """
     data = loads(request.body)
     doc = dict()
-    for k in ["dataset", "data", "aux_pos", "aux_neg"]:
+    for k in ["dataset", "data_pos", "data_neg"]:
         doc[k] = data[k] if k in data else []
     doc["n"] = get_or_default(data, "n", 1)
     doc["diffusion"] = get_or_default(data, "diffusion", None)
@@ -67,7 +67,7 @@ def parse_add_request(request):
     data = loads(request.body)
     result = dict()
     for k in ["dataset", "id", "title",
-              "data", "aux_pos", "aux_neg", "metadata"]:
+              "data_pos", "data_neg", "metadata"]:
         result[k] = data[k] if k in data else []
     if len(result["metadata"]) == 0:
         result["metadata"] = None
@@ -142,7 +142,7 @@ def add(request):
             id = dataset + ":" + str(crossmap.db.dataset_size(dataset))
     if doc["title"] == "":
         doc["title"] = id
-    if doc["data"] == "" and doc["aux_pos"] == "":
+    if doc["data_pos"] == "":
         return dict(dataset=dataset, idx=[])
     idx = crossmap.add(dataset, doc, id, metadata=metadata)
     return dict(dataset=dataset, idx=idx)

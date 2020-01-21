@@ -31,8 +31,8 @@ class UserQueryMessage extends ChatMessage {
 
     render() {
         let data = this.props.data;
-        console.log("rendering user message with data: "+JSON.stringify(data));
-        let rows = ["data", "aux_pos", "aux_neg"].map((x) => {
+        // console.log("rendering user message with data: "+JSON.stringify(data));
+        let rows = ["data_pos", "data_neg"].map((x) => {
             if (data[x]===undefined) {
                 return null;
             }
@@ -126,8 +126,7 @@ class UserAddMessage extends ChatMessage {
 
     render() {
         let data = this.props.data;
-        //console.log("rendering user message with data: "+JSON.stringify(data));
-        let rows = ["title", "data", "aux_pos", "aux_neg"].map((x) => {
+        let rows = ["title", "data_pos", "data_neg"].map((x) => {
             if (data[x]===undefined) {
                 return null;
             }
@@ -162,7 +161,6 @@ class ChatUserMessage extends React.Component {
         } else if (action === "add") {
             return (<UserAddMessage data={this.props.data} />);
         }
-
     }
 }
 

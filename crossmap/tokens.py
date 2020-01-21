@@ -40,6 +40,8 @@ class Kmerizer:
         :param case_sensitive: logical, if False, tokens will be lowercase
         :param alphabet: string with all possible characters
         :param k2: integer, length of kmers used in overlap weighting
+            This can be different to k to give less immportance
+            to long words
         """
 
         self.k = k
@@ -78,6 +80,8 @@ class Kmerizer:
         parse = self.parse
         result = dict()
         for k, data in doc.items():
+            if type(data) is dict:
+                data = [str(v) for v in data.values()]
             result[k] = parse(str(data), scale_fun)
         return result
 
@@ -103,10 +107,11 @@ class Kmerizer:
             word = word.strip()
             if word == "":
                 continue
-            wlen = len(word)
-            weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k + 1))
-            for _ in kmers(word, k):
-                result.add(_.strip(), weight)
+            for subword in word.split():
+                wlen = len(subword)
+                weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k + 1))
+                for _ in kmers(subword, k):
+                    result.add(_.strip(), weight)
         return result
 
 

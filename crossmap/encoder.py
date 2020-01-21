@@ -26,7 +26,7 @@ class CrossmapEncoder:
         self.feature_map = feature_map
         self.tokenizer = tokenizer
         self.aux_weight = aux_weight
-        self.inv_feature_map = ['']*len(self.feature_map)
+        self.inv_feature_map = [''] * len(self.feature_map)
         for k, v in feature_map.items():
             self.inv_feature_map[v[0]] = k
 
@@ -67,11 +67,12 @@ class CrossmapEncoder:
         """
 
         feature_map = self.feature_map
-        data = _to_vec(tokens, "data", feature_map)
-        aux_pos = _to_vec(tokens, "aux_pos", feature_map)
-        aux_neg = _to_vec(tokens, "aux_neg", feature_map)
-        w0, w1 = self.aux_weight[0], self.aux_weight[1]
-        data = add_three(data, aux_pos, aux_neg, w0, -w1)
+        data = _to_vec(tokens, "data_pos", feature_map)
+        if "data_pos" not in tokens:
+            if "data" in tokens:
+                data = _to_vec(tokens, "data", feature_map)
+        if "data_neg" in tokens:
+            data -= _to_vec(tokens, "data_neg", feature_map)
         return csr_matrix(normalize_vec(data))
 
 
@@ -83,6 +84,7 @@ def _to_vec(tokens, component, feature_map):
     :param feature_map: dictionary mapping from keys to an index and weight
     :return: an array with dense vector
     """
+
     vec = zeros(len(feature_map), dtype=float)
     if component not in tokens:
         return vec

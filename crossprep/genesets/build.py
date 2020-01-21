@@ -29,6 +29,7 @@ def build_gmt_dataset(filepath, min_size=0, max_size=100):
             id, name, symbols = gmt(data)
             if len(symbols) < min_size or len(symbols) > max_size:
                 continue
-            result[id] = dict(title=name, data=name, aux_pos=symbols)
+            result[id] = dict(title=name,
+                              data={"name": name, "symbols": symbols})
     return result
 

@@ -152,7 +152,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         """find nearest neighbors among targets, B"""
 
         # this doc should be close to B, A, U
-        doc = {"data": "Bob Bob Alice", "aux_pos": "Alice unique"}
+        doc = {"data_pos": "Bob Bob Bob Alice Alice unique"}
         v = self.indexer.encode_document(doc)
         nns, distances = self.indexer.nearest(v, "targets", 3)
         self.assertEqual(nns[0], "B")
@@ -173,7 +173,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         """target suggestion, direct hits possible"""
 
         # this doc should be close to first two items in target dataset
-        doc = {"data": "Alice", "aux_pos": "A B", "aux_neg": "unique token"}
+        doc = {"data": "Alice A B", "data_neg": "unique token"}
         v = self.indexer.encode_document(doc)
         nns, distances = self.indexer.suggest(v, "targets", 2)
         self.assertEqual(nns[0], "A")
@@ -184,7 +184,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
 
         # this doc should be close to items in documents dataset
         # but no overlap with targets
-        doc = {"data": "alpha", "aux_pos": "bravo"}
+        doc = {"data": "alpha bravo"}
         v = self.indexer.encode_document(doc)
         nns, distances = self.indexer.suggest(v, "targets", 2)
         # without any help from the documents, there should be no hits
@@ -219,7 +219,7 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
         """target suggestion"""
 
         # this doc should be close to first two items in target dataset
-        doc = {"data": "Alice", "aux_pos": "A Bob"}
+        doc = {"data": "Alice A Bob"}
         doc_vector = self.indexer.encode_document(doc)
         nns, distances = self.indexer.suggest(doc_vector, "targets", 2)
         self.assertEqual(nns[0], "A")

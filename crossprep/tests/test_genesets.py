@@ -9,7 +9,6 @@ from crossprep.genesets.build import build_gmt_dataset
 
 
 data_dir = join("crossprep", "tests", "testdata")
-tsv_file = join(data_dir, "geneset.tsv")
 gmt_file = join(data_dir, "geneset.gmt")
 
 
@@ -22,12 +21,12 @@ class BuildGenesetDatasetTests(unittest.TestCase):
         result = build_gmt_dataset(gmt_file)
         self.assertEqual(len(result), 3)
         self.assertTrue("S:01" in str(list(result.keys())))
-        self.assertTrue("small" in result["S:01"]["data"])
-        self.assertTrue("medium" in result["S:02"]["data"])
+        self.assertTrue("small" in result["S:01"]["data"]["name"])
+        self.assertTrue("medium" in result["S:02"]["data"]["name"])
         self.assertEqual("small", result["S:01"]["title"])
         self.assertEqual("medium", result["S:02"]["title"])
-        self.assertTrue("A1" in result["S:02"]["aux_pos"])
-        self.assertTrue("A5" in result["S:02"]["aux_pos"])
+        self.assertTrue("A1" in result["S:02"]["data"]["symbols"])
+        self.assertTrue("A5" in result["S:02"]["data"]["symbols"])
 
     def test_gmt_skip_small(self):
         """dataset has three genesets"""

@@ -24,22 +24,17 @@ class ControllerQueryForm extends React.Component {
         return(<form autoComplete="off">
             <Grid container spacing={1}>
                 <Grid item xs={12}>
-                    <TextField id="query-data" autoFocus fullWidth multiline rowsMax={8}
+                    <TextField id="query-data-pos" autoFocus fullWidth multiline rowsMax={8}
                                onKeyPress={(e) => this.handleKeyPress(e) }
-                               value={this.props.data}
-                               onInput={(e) => this.props.update("data", e.target.value)}
+                               value={this.props.data_pos}
+                               onInput={(e) => this.props.update("data_pos", e.target.value)}
                                label="Query" margin="normal"/>
                     <Box display={this.props.extended ? "block": "none"}>
-                        <TextField id="query-aux-pos" fullWidth multiline rowsMax={8}
-                                   value={this.props.aux_pos}
-                                   onKeyPress={(e) => this.handleKeyPress(e) }
-                                   onInput={(e) => this.props.update("aux_pos", e.target.value)}
-                                   label="Auxiliary data (positive weight)" margin="normal"/>
-                        <TextField id="query-aux-neg" fullWidth multiline rowsMax={8}
+                        <TextField id="query-data-neg" fullWidth multiline rowsMax={8}
                                    value={this.props.aux_neg}
                                    onKeyPress={(e) => this.handleKeyPress(e) }
-                                   onInput={(e) => this.props.update("aux_neg", e.target.value)}
-                                   label="Auxiliary data (negative weight)" margin="normal"/>
+                                   onInput={(e) => this.props.update("data_neg", e.target.value)}
+                                   label="Query (negative weight)" margin="normal"/>
                     </Box>
                 </Grid>
             </Grid>

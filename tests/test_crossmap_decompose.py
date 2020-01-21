@@ -30,7 +30,7 @@ class CrossmapDecomposeTests(unittest.TestCase):
     def test_decompose_BD(self):
         """object matching against B and D"""
 
-        doc = dict(data="Bob Bravo Delta David", aux_pos="Bob Bravo Bernard")
+        doc = dict(data="Bob Bravo Delta David. Bob Bravo Bernard")
         # standard nearest neighbors should return two Bs
         prediction = self.crossmap.search(doc, "targets", n=2)
         self.assertTrue("B1" in prediction["targets"])
@@ -45,7 +45,7 @@ class CrossmapDecomposeTests(unittest.TestCase):
     def test_decompose_CC(self):
         """object matching against Cs"""
 
-        doc = dict(data="Charlie Christine Camilla", aux_pos="Bob Charlie Charlie")
+        doc = dict(data="Charlie Christine Camilla. Bob Charlie Charlie")
         # standard nearest neighbors should return two Cs
         prediction = self.crossmap.search(doc, "targets", n=2)
         self.assertTrue("C1" in prediction["targets"])

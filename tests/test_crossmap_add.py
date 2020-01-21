@@ -33,7 +33,7 @@ class CrossmapAddTests(unittest.TestCase):
     def test_add_to_targets(self):
         """cannot add new data to file-derived datasets"""
 
-        doc = dict(data="Alice and Bob", aux_pos="Alpha and Bravo")
+        doc = dict(data="Alice and Bob, Alpha and Bravo")
         size_before = self.crossmap.indexer.db.count_rows("targets", "data")
         # attempt to add to dataset
         with self.assertRaises(Exception):
@@ -59,7 +59,7 @@ class CrossmapAddTests(unittest.TestCase):
     def test_add_simple_item(self):
         """add new object into data table"""
 
-        doc = {"data": "Alice and Bob", "aux_pos": "Alpha and Bravo"}
+        doc = {"data": "Alice and Bob, Alpha and Bravo"}
         self.crossmap.add("manual", doc, id="T0")
         # the new record should exist in the database
         db = self.crossmap.indexer.db
@@ -71,6 +71,8 @@ class CrossmapAddTests(unittest.TestCase):
         alice_idx = fm["alice"][0]
         self.assertEqual(doc_data["data"].shape[1], len(fm))
         self.assertGreater(doc_data["data"][0, alice_idx], 0)
+        bravo_idx = fm["bravo"][0]
+        self.assertGreater(doc_data["data"][0, bravo_idx], 0)
 
     def test_add_repeat_id(self):
         """cannot add two elements with same id"""
@@ -136,14 +138,14 @@ class CrossmapAddTests(unittest.TestCase):
         """add new object into data table"""
 
         # first add some element
-        doc = {"data": "Alice and Bob", "aux_pos": "Alpha and Bravo"}
+        doc = {"data": "Alice and Bob, Alpha and Bravo"}
         self.crossmap.add("manual", doc, id="I0")
         # look at how diffusion works in the current state
         v = self.crossmap.encoder.document({"data": "Alice"})
         before = self.crossmap.diffuser.diffuse(v, dict(manual=1))
         self.assertGreater(len(before.data), len(v.data))
         # add a second element
-        doc2 = {"data": "Alice and Catherine", "aux_pos": "Charlie and Delta"}
+        doc2 = {"data": "Alice and Catherine, Charlie and Delta"}
         self.crossmap.add("manual", doc2, id="I1")
         after = self.crossmap.diffuser.diffuse(v, dict(manual=1))
         self.assertGreater(len(after.data), len(before.data))
@@ -246,8 +248,8 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
         """adding documents with neg associations can remove links"""
 
         # some new documents that link Alice to other tokens
-        neg_docs = [dict(aux_pos="A", aux_neg="B"),
-                    dict(aux_pos="Alice", aux_neg="Bob")]
+        neg_docs = [dict(data_pos="A", data_neg="B"),
+                    dict(data_pos="Alice", data_neg="Bob")]
         docs_indexes = list(range(len(neg_docs)))
         docs_indexes.reverse()
         crossmap = self.crossmap

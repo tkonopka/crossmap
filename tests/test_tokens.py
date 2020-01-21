@@ -65,9 +65,8 @@ class KmerizerTests(unittest.TestCase):
             tokens[id] = data
         result = tokens["A"]
         self.assertTrue("data" in result)
-        self.assertTrue("aux_pos" in result)
-        # aux_neg is not in the result because the dataset does not define aux_neg
-        self.assertFalse("aux_neg" in result)
+        # data_neg is not in the result because the dataset does not define data_neg
+        self.assertFalse("data_neg" in result)
 
     def test_tokenize_entry_structure_aux_neg(self):
         """obtain tokens also from aux_neg fields"""
@@ -89,14 +88,16 @@ class KmerizerTests(unittest.TestCase):
         for id, data in tokenizer.tokenize_path(dataset_file):
             tokens[id] = data
         result = tokens["D"]
-        # data component should only be based on "Daniel"
-        self.assertEqual(len(result["data"]), 2)
+        # data component should only be based on:
+        #  Daniel (2 tokens), starts (2 tokens), with D
+        self.assertEqual(len(result["data"]), 6)
         self.assertTrue("danie" in result["data"])
-        # aux_pos component will have other items
-        self.assertTrue("with" in result["aux_pos"])
-        self.assertEqual(result["aux_pos"].data["with"], 1)
-        self.assertLess(result["aux_pos"].data["danie"], 1.0)
-        self.assertLess(result["aux_pos"].data["aniel"], 1.0)
+        self.assertTrue("with" in result["data"])
+        # weights of short tokens should have value 1,
+        # parts of longer word should have lower values
+        self.assertEqual(result["data"].data["with"], 1.0)
+        self.assertLess(result["data"].data["start"], 1.0)
+        self.assertLess(result["data"].data["tarts"], 1.0)
 
     def test_tokenize_case_sensitive(self):
         """obtain tokens in case sensitive manner"""
@@ -136,20 +137,20 @@ class KmerizerTests(unittest.TestCase):
     def test_tokenize_with_nondefault_alphanet(self):
         """tokenizing with alphabet with missing letters introduces spaces"""
 
+        # custom tokenizer that does not allow the letter "a"
         tokenizer = Kmerizer(k=5, alphabet="bcdefghijklmnopqrstuvwxyz")
         tokens = dict()
         for id, data in tokenizer.tokenize_path(dataset_file):
             tokens[id] = data
         # item Alice - has a word just with letter A
         dataA = tokens["A"]["data"].data
-        auxA = tokens["A"]["aux_pos"].data
         # letter "A" can turn into " " and reduce to ""
         # avoid tokens that are empty
         self.assertFalse("a" in dataA)
-        keysA = list(auxA.keys())
+        keysA = list(dataA.keys())
         for k in keysA:
             self.assertNotEqual(k, "")
-        # item Daniel - has letter a on a boundary of k=5
+        # item Daniel - has letter "a" on a boundary of k=5
         keysD = list(tokens["D"]["data"].data.keys())
         # "Daniel" can create "D niel" which can kmerize to " niel"
         # avoid tokens that start with a space
@@ -171,14 +172,14 @@ class KmerizerSpecialCasesTests(unittest.TestCase):
     def test_tokenize_arrays_without_quotes(self):
         """tokenize when yaml array does not have quotes"""
 
-        result = self.tokens["array_without_quotes"]["aux_pos"]
+        result = self.tokens["array_without_quotes"]["data"]
         self.assertTrue("abcdef" in result)
         self.assertTrue("mnopqr" in result)
 
     def test_tokenize_arrays_with_quotes(self):
         """tokenize when yaml array has quote around each item"""
 
-        result = self.tokens["array_with_quotes"]["aux_pos"]
+        result = self.tokens["array_with_quotes"]["data"]
         self.assertTrue("abc123" in result)
         self.assertTrue("abc789" in result)
 
@@ -194,3 +195,21 @@ class KmerizerSpecialCasesTests(unittest.TestCase):
         result = self.tokens["multiline"]
         self.assertTrue("multiple" in result["data"])
 
+    def test_tokenize_data_dictionaries(self):
+        """tokenize when data is itself a dictionary"""
+
+        result = self.tokens["dictionary"]
+        # content of dictionary should be tokenized
+        self.assertTrue("alpha" in result["data"])
+        # keys to the dictionary should not be tokenized
+        self.assertFalse("short" in result["data"])
+        self.assertFalse("long" in result["data"])
+
+    def test_tokenize_data_with_slashes(self):
+        """tokenize when data has slashes"""
+
+        result = self.tokens["slashes"]
+        self.assertEqual(len(result["data"]), 3)
+        self.assertTrue("a" in result["data"])
+        self.assertTrue("b" in result["data"])
+        self.assertTrue("c" in result["data"])
