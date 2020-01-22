@@ -37,7 +37,6 @@ class CrossmapFeatureSettings:
         self.max_number = 0
         self.min_count = 1
         self.weighting = [1, 0]
-        self.aux = (0.5, 0.5)
         self.map_file = None
 
         if config is None:
@@ -49,8 +48,6 @@ class CrossmapFeatureSettings:
                 self.min_count = int(val)
             elif key == "weighting":
                 self.weighting = [float(_) for _ in val]
-            elif key == "aux":
-                self.aux = [float(_) for _ in val]
             elif key == "map":
                 map_file = val
                 if data_dir is not None:
@@ -59,8 +56,9 @@ class CrossmapFeatureSettings:
 
     def __str__(self):
         result = dict(features={"max_number": self.max_number,
+                                "min_count": self.min_count,
                                 "weighting": self.weighting,
-                                "aux": self.aux})
+                                "map_file": self.map_file})
         return dump(result)
 
 

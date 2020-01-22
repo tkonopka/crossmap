@@ -58,7 +58,7 @@ def _count_tokens(tokenizer, files, progress_interval=10000):
             if num_items % progress_interval == 0:
                 info("Progress: "+str(num_items))
             tokens = set()
-            for component in ("data", "aux_pos", "aux_neg"):
+            for component in ("data", "data_pos", "data_neg"):
                 if component in doc:
                     tokens.update(doc[component].keys())
             counts.update(tokens)

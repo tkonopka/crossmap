@@ -79,7 +79,7 @@ class CrossmapIndexer:
         """augment an existing dataset with a new item
 
         :param dataset: string, dataset identifier
-        :param doc: dict with item data, aux_pos, aux_neg, etc
+        :param doc: dict with item data_pos, data_neg, etc
         :param id: string, identifier for the new item
         :param rebuild: boolean, True to rebuild index structures, False to skip
         :return: integer index for the new data item

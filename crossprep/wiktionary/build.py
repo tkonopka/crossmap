@@ -93,19 +93,19 @@ def parse_def(definition_text):
 def build_wiktionary_item(page_text):
     """create an id and a crossmap item from an xml string"""
 
-    id, data = None, dict()
+    id, term, definition = "", "", ""
     root = ET.fromstring(page_text.strip())
     for child in root:
         if child.tag == "title":
-            data["title"] = child.text
-            data["data"] = child.text
+            term = child.text
         elif child.tag == "id":
             id = child.text
         elif child.tag == "revision":
             for subchild in child:
                 if subchild.tag == "text":
-                    data["data"] += "; " + parse_def(subchild.text)
-    return "WIKTIONARY:"+str(id), data
+                    definition += parse_def(subchild.text) + "; "
+    result = dict(term=term, definition=definition)
+    return "WIKTIONARY:"+str(id), dict(title=term, data=result)
 
 
 def build_wiktionary_dataset(config):
@@ -128,12 +128,13 @@ def build_wiktionary_dataset(config):
     with gzip.open(out_file, "wt") as f:
         for page_str in wiktionary_page(wiktionary_file):
             id, data = build_wiktionary_item(page_str)
+            definition = data["data"]["definition"]
             title = data["title"]
-            if data["data"] == title:
+            if definition == "":
                 continue
             if title == title.upper():
                 continue
-            if len(data["data"]) < len_ratio * len(data["title"]):
+            if len(definition) < len_ratio * len(title):
                 continue
             item = dict()
             item[id] = data

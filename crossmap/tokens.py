@@ -5,7 +5,6 @@ Tokenizer for crossmap datasets
 
 import gzip
 from math import sqrt
-from collections import Counter
 from .tokencounter import TokenCounter
 from .tools import yaml_document
 
@@ -18,7 +17,7 @@ def kmers(s, k):
     return [s[i:(i+k)] for i in range(len(s)-k+1)]
 
 
-def token_counts(docs, components=("data", "aux_pos", "aux_neg")):
+def token_counts(docs, components=("data", "data_pos", "data_neg")):
     """summarize token counts over all documents"""
 
     result = TokenCounter()

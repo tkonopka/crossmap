@@ -126,25 +126,27 @@ def combine_phenotypes_genes(phen_data, gene_data):
     all_ids = list(phen_data.keys())
     all_ids.extend(gene_data.keys())
     for id in all_ids:
-        result["ORPHA:"+str(id)] = dict(title="", data="",
-                                        aux_pos=[], metadata=dict())
+        orpha_id = "ORPHA:" + str(id)
+        result[orpha_id] = dict(title="",
+                                data=dict(title="", genes=[], phenotypes=[]),
+                                metadata=dict())
 
     # transfer information about phenotypes and genes
     for disorder in phen_data.values():
         terms = [_[1] for _ in disorder.phenotypes]
         ids = [_[0] for _ in disorder.phenotypes]
         data = result["ORPHA:" + str(disorder.id)]
-        data["title"] = data["data"] = disorder.name
-        data["aux_pos"].extend(terms)
+        data["title"] = data["data"]["title"] = disorder.name
+        data["data"]["phenotypes"].extend(terms)
         data["metadata"]["phenotype_ids"] = ids
     for disorder in gene_data.values():
         genes = [_[0] + " - " + _[1] for _ in disorder.genes]
         data = result["ORPHA:" + str(disorder.id)]
-        if data["data"] == "":
-            data["title"] = data["data"] = disorder.name
-        data["aux_pos"].extend(genes)
-        data["metadata"]["hgnc"] = disorder.hgnc
-        data["metadata"]["ensembl"] = disorder.ensembl
+        if data["title"] == "":
+            data["title"] = data["data"]["title"] = disorder.name
+        data["data"]["genes"].extend(genes)
+        data["metadata"]["hgnc_ids"] = disorder.hgnc
+        data["metadata"]["ensembl_ids"] = disorder.ensembl
     return result
 
 

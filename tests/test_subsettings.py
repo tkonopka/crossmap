@@ -72,14 +72,6 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
         self.assertEqual(self.default.weighting[0], 1)
         self.assertEqual(self.custom.weighting[1], 0.5)
 
-    def test_aux(self):
-        """configure weights for aux_pos and aux_neg relative to data"""
-
-        self.assertEqual(self.default.aux[0], 0.5)
-        self.assertEqual(self.default.aux[1], 0.5)
-        self.assertEqual(self.custom.aux[0], 1)
-        self.assertEqual(self.custom.aux[1], 0.2)
-
     def test_str(self):
         """summarize settings in a string"""
 

@@ -160,7 +160,7 @@ class Crossmap:
     def _prep_vector(self, doc, diffusion=None):
         """prepare text document into sparse vectors
 
-        :param doc: dictionary with component data, aux_pos, etc.
+        :param doc: dictionary with component data, data_pos, etc.
         :param diffusion: dictionary with diffusion strengths
         :return: two csr vectors, a raw encoding and a diffused encoding
         """
@@ -173,7 +173,7 @@ class Crossmap:
     def diffuse(self, doc, diffusion=None, query_name="", **kwdargs):
         """provide an explanation for diffusion of a document into features
 
-        :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
+        :param doc: dict-like object with "data", "data_pos" and "data_neg"
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
         :param kwdargs: other keyword arguments, ignored
@@ -193,7 +193,7 @@ class Crossmap:
     def search(self, doc, dataset, n=3, diffusion=None, query_name="query"):
         """identify targets that are close to the input query
 
-        :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
+        :param doc: dict-like object with "data", "data_pos" and "data_neg"
         :param dataset: string, identifier for dataset to look for targets
         :param n: integer, number of target to report
         :param diffusion: dict, map assigning diffusion weights
@@ -218,13 +218,6 @@ class Crossmap:
         if diffusion is not None:
             targets_raw, _ = suggest(raw, dataset, 2*n)
             new_targets.update(targets_raw)
-        # attempt search without using aux fields
-        if "data" in doc and len(doc["data"]) > 0:
-            small_doc = dict(data=doc["data"])
-            _, small_diffused = self._prep_vector(small_doc, diffusion)
-            if len(small_diffused.data):
-                small_targets, _ = suggest(small_diffused, dataset, 2*n)
-                new_targets.update(small_targets)
         # attempt to search using only positive features
         #pos = pos_threshold_csr(diffused)
         #if len(pos.data) and len(pos.data) != len(diffused.data):
@@ -247,7 +240,7 @@ class Crossmap:
                   query_name="query"):
         """decompose of a query document in terms of targets
 
-        :param doc: dict-like object with "data", "aux_pos" and "aux_neg"
+        :param doc: dict-like object with "data", "data_pos" and "data_neg"
         :param dataset: string, identifier for dataset
         :param n: integer, number of target to report
         :param diffusion: dict, strength of diffusion on primary data

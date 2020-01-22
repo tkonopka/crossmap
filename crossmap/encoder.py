@@ -13,19 +13,17 @@ from .tools import yaml_document
 class CrossmapEncoder:
     """Processing of raw data objects into feature vectors"""
 
-    def __init__(self, feature_map, tokenizer, aux_weight=(0.5, 0.5)):
+    def __init__(self, feature_map, tokenizer):
         """intialize with a specific feature set and tokenization strategy
 
         Arguments:
             feature_map   dict mapping token strings to integers
             tokenizer     configured tokenizer object that will convert
                           documents into weighted sets of tokens
-            aux_weight    numeric, weight given to features in "aux" fields
         """
 
         self.feature_map = feature_map
         self.tokenizer = tokenizer
-        self.aux_weight = aux_weight
         self.inv_feature_map = [''] * len(self.feature_map)
         for k, v in feature_map.items():
             self.inv_feature_map[v[0]] = k
@@ -62,7 +60,7 @@ class CrossmapEncoder:
     def encode(self, tokens):
         """encode one document into a vector
 
-        :param tokens: dictionary with tokens for data, aux_pos, aux_neg
+        :param tokens: dictionary with tokens for data, data_pos, data_neg
         :return: array with a vector representation of the data
         """
 
