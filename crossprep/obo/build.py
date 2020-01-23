@@ -139,7 +139,11 @@ class OboBuilder:
                     grandparents.update(obo.parents(parent))
                 for grandpar in grandparents:
                     grandpar_content = content(obo.terms[grandpar])
-                    data_pos["grandparents"].append(grandpar_content)
+                    for v in grandpar_content.values():
+                        v_str = str(v)
+                        if v_str == '' or v_str == '[]':
+                            continue
+                        data_pos["grandparents"].append(v_str)
             if aux_siblings:
                 data_neg["siblings"] = siblings(id, obo)
             if aux_children:
