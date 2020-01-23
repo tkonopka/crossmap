@@ -89,6 +89,18 @@ class OboBuilder:
                 result["synonyms"] = synonyms(term)
         return result
 
+    def flat_content(self, term, extras=True):
+        """similar to helper, but returns a plain array of values"""
+
+        term_content = self.content(term, extras)
+        result = []
+        for v in term_content.values():
+            v_str = str(v)
+            if v_str == '' or v_str == '[]':
+                continue
+            result.append(v_str)
+        return result
+
     def build(self):
         """transfer data from obo into a dictionary"""
 
@@ -96,7 +108,7 @@ class OboBuilder:
 
         # shortcuts
         obo, hits = self.obo, self.hits
-        content = self.content
+        content, flat_content = self.content, self.flat_content
         aux_parents, aux_ancestors = self.aux_parents, self.aux_ancestors
         aux_synonyms, aux_children = self.aux_synonyms, self.aux_children
         aux_siblings = self.aux_siblings
@@ -120,30 +132,23 @@ class OboBuilder:
                 data_pos["ancestors"] = []
                 for ancestor in obo.ancestors(id):
                     metadata["ancestors"].append(ancestor)
-                    data_pos["ancestors"].append(content(obo.terms[ancestor]))
+                    ancestor_content = flat_content(obo.terms[ancestor])
+                    data_pos["ancestors"].append(ancestor_content)
             elif aux_parents:
                 metadata["parents"] = []
                 data_pos["parents"] = []
                 for parent in obo.parents(id):
                     metadata["parents"].append(parent)
-                    parent_content = content(obo.terms[parent])
-                    for v in parent_content.values():
-                        v_str = str(v)
-                        if v_str == '' or v_str == '[]':
-                            continue
-                        data_pos["parents"].append(v_str)
+                    parent_content = flat_content(obo.terms[parent])
+                    data_pos["parents"].append(parent_content)
             if aux_parents and (term.data is None or "def" not in term.data):
                 grandparents = set()
                 data_pos["grandparents"] = []
                 for parent in obo.parents(id):
                     grandparents.update(obo.parents(parent))
                 for grandpar in grandparents:
-                    grandpar_content = content(obo.terms[grandpar])
-                    for v in grandpar_content.values():
-                        v_str = str(v)
-                        if v_str == '' or v_str == '[]':
-                            continue
-                        data_pos["grandparents"].append(v_str)
+                    grandpar_content = flat_content(obo.terms[grandpar])
+                    data_pos["grandparents"].append(grandpar_content)
             if aux_siblings:
                 data_neg["siblings"] = siblings(id, obo)
             if aux_children:
