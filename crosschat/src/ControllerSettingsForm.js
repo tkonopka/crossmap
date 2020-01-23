@@ -1,6 +1,5 @@
 import React from 'react';
-import Grid from '@material-ui/core/Grid';
-import Slider from '@material-ui/core/Slider';
+import Grid from '@material-ui/core/Grid';import Slider from '@material-ui/core/Slider';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from "@material-ui/core/MenuItem";
@@ -17,9 +16,8 @@ function intValueText(value) {
 function floatValueText(value) {
     return `${value.toPrecision(4)}`;
 }
-
 /**
- * A Form with sliders allowing to set number of auxiliary documents, diffusion, etc.
+ * A Form with sliders allowing to set number of returned hits, diffusion, etc.
  * Used to fine-tune a search or decomposition query
  */
 class ControllerSettingsForm extends React.Component {

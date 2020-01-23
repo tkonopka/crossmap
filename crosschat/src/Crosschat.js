@@ -53,8 +53,6 @@ class Crosschat extends React.Component {
      */
     sendQuery(query, api) {
         // augment the query with settings
-        //console.log("Sending to api: "+ api);
-        //console.log("query: "+JSON.stringify(query));
         const chat = this;
         chat.addMessage(query, "user");
         let xhr = new XMLHttpRequest();
@@ -119,3 +117,4 @@ class Crosschat extends React.Component {
 
 
 export default Crosschat;
+

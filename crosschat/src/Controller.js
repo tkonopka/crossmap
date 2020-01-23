@@ -198,9 +198,8 @@ let makeQueryPayload = function(state, datasets) {
     if (dataset === "" && datasets.length>0) {
         dataset = datasets[0].label
     }
-    if (dataset === "" || (state.data === "" && state.aux_neg === "")) {
-        return null;
-    }
+    if (dataset === "") return null;
+    if (state.data_pos === "" && state.data_neg === "") return null;
     let result = {};
     let fields = ["action", "dataset", "n",
                   "data_pos", "data_neg", "diffusion"];

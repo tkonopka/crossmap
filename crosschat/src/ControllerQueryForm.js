@@ -5,7 +5,13 @@ import Box from '@material-ui/core/Box';
 
 
 /**
- * A Form to compose the content of a query (primary data and auxiliary fields).
+ * A Form to compose the content of a query
+ *
+ * The form can display in a basic and extended format.
+ * The basic format has only one text area.
+ * The extended format has an additional text area for negative-weight
+ * keywords
+ *
  */
 class ControllerQueryForm extends React.Component {
     constructor(props) {
@@ -31,7 +37,7 @@ class ControllerQueryForm extends React.Component {
                                label="Query" margin="normal"/>
                     <Box display={this.props.extended ? "block": "none"}>
                         <TextField id="query-data-neg" fullWidth multiline rowsMax={8}
-                                   value={this.props.aux_neg}
+                                   value={this.props.data_neg}
                                    onKeyPress={(e) => this.handleKeyPress(e) }
                                    onInput={(e) => this.props.update("data_neg", e.target.value)}
                                    label="Query (negative weight)" margin="normal"/>
