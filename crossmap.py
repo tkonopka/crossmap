@@ -108,7 +108,7 @@ if action == "build":
     crossmap = Crossmap(settings)
     crossmap.build()
 
-if action in set(["search", "decompose"]):
+if action in {"search", "decompose"}:
     logging.getLogger().setLevel(level=logging.ERROR)
     crossmap = Crossmap(settings)
     crossmap.fast_search = config.fast_search
@@ -147,7 +147,7 @@ if action == "diffuse":
                                            diffusion=config.diffusion))
     print_pretty(result, config.pretty)
 
-if action in set(["distances", "vectors", "matrix"]):
+if action in {"distances", "vectors", "matrix"}:
     crossmap = CrossmapInfo(settings)
     action_fun = crossmap.distance_file
     if action == "vectors":
@@ -164,7 +164,7 @@ if action == "counts":
     result = crossmap.counts(config.dataset, features=config.ids.split(","))
     print_pretty(result, config.pretty)
 
-if action in set(["features", "summary"]):
+if action in {"features", "summary"}:
     crossmap = CrossmapInfo(settings)
     crossmap.load()
     action_fun = crossmap.summary

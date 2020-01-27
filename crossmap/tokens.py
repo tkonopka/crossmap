@@ -104,12 +104,10 @@ class Kmerizer:
                     if word[i] not in alphabet:
                         word = word[:i] + " " + word[(i+1):]
             word = word.strip()
-            if word == "":
-                continue
-            for subword in word.split():
-                wlen = len(subword)
+            for sub_word in word.split():
+                wlen = len(sub_word)
                 weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k + 1))
-                for _ in kmers(subword, k):
+                for _ in kmers(sub_word, k):
                     result.add(_.strip(), weight)
         return result
 

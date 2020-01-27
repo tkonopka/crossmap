@@ -14,6 +14,7 @@ from crossmap.vectors import \
     all_zero, \
     vec_norm, \
     normalize_vec, \
+    sign_norm_vec, \
     threshold_vec, \
     ceiling_vec, \
     nonzero_indices, \
@@ -297,5 +298,50 @@ class VecAbsMax2Tests(unittest.TestCase):
                                 4.0, 3.0, 4.0, 2.0, 1.0]))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], 4.0)
-        self.assertEqual(result[1], 4.0)
+        self.assertEqual(result[1], 3.0)
+
+    def test_absmax2_ties_2(self):
+        """best and runner up, with ties, another example"""
+
+        result = absmax2(array([4.0, 4.0, 3.0, 2.0]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 4.0)
+        self.assertEqual(result[1], 3.0)
+
+    def test_absmax2_ties_only_max(self):
+        """best and runner up, but there is no runner up"""
+
+        result = absmax2(array([1.0, -1.0, -1.0]))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 1.0)
+        self.assertEqual(result[1], 1.0)
+
+
+class SignNormTests(unittest.TestCase):
+    """Normalization of vectors by sign and length"""
+
+    def test_sign_normalize_positive(self):
+        """simple conversion, with normalization of +ve values"""
+
+        a = csr_matrix([1.2, 0.0, 0.2, 0.2, 0, 0, 4.2])
+        expected = csr_matrix([0.25, 0, 0.25, 0.25, 0, 0.25])
+        a.data = sign_norm_vec(a.data)
+        self.assertListEqual(list(a.data), list(expected.data))
+
+    def test_sign_normalize_pos_neg(self):
+        """simple conversion, with normalization of +ve and -ve values"""
+
+        a = csr_matrix([2, 3, 0, -1.2, 0,
+                        0.2, 0.5, 0, 0, -4.2])
+        expected = csr_matrix([0.25, 0.25, 0, -0.5, 0,
+                               0.25, 0.25, 0, 0, -0.5])
+        a.data = sign_norm_vec(a.data)
+        self.assertListEqual(list(a.data), list(expected.data))
+
+    def test_sign_empty_array(self):
+        """simple conversion with empty input"""
+
+        a = csr_matrix([0.0, 0.0, 0.0])
+        a.data = sign_norm_vec(a.data)
+        self.assertEqual(len(a.data), 0)
 

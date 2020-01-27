@@ -55,6 +55,38 @@ def normalize_vec(a):
 
 
 @numba.jit
+def sign_norm_vec(a):
+    """custom normalization of a dense vector by sign and length
+
+    Note this performs a normalization in-place, i.e.
+    the original vector will change
+
+    :param a: dense vector, as an array or list
+    :return: modified vector with equalized elements.
+        In particular, positive elements are set all equal
+        and negative elements are set all equal. When length_norm
+        is activated, the sum of positives sum to 1 and the sum
+        of negatives sum to -1.
+    """
+    norm_pos, norm_neg = 0.0, 0.0
+    for _ in range(len(a)):
+        if a[_] > 0:
+            norm_pos += 1
+        elif a[_] < 0:
+            norm_neg += 1
+    if norm_pos > 0:
+        norm_pos = 1.0 / norm_pos
+    if norm_neg > 0:
+        norm_neg = -1.0 / norm_neg
+    for _ in range(len(a)):
+        if a[_] > 0:
+            a[_] = norm_pos
+        elif a[_] < 0:
+            a[_] = norm_neg
+    return a
+
+
+@numba.jit
 def ceiling_vec(a, c):
     """ensure that values in a vector are below a ceiling
 
@@ -97,22 +129,17 @@ def absmax2(a):
     :return: array of length 2, values of maximal and runner-up absolute values
     """
 
-    a0 = abs(a[0])
-    result = [a0, a0]
-    if len(a) == 2:
-        a1 = abs(a[1])
-        if a1 > a0:
-            result = [a1, a0]
-        else:
-            result = [a0, a1]
-    for i in range(2, len(a)):
+    result = [-1.0, -1.0]
+    for i in range(len(a)):
         v = abs(a[i])
         if v > result[0]:
             result[1] = result[0]
             result[0] = v
-        elif v > result[1]:
+        elif result[0] > v > result[1]:
             result[1] = v
-    return result[0], result[1]
+    if result[1] < 0:
+        result[1] = result[0]
+    return result
 
 
 def csr_residual(v_t, b_t, weights):

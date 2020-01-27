@@ -8,14 +8,14 @@ the diffusion spreads is controlled via connections store in a db.
 
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
-from numpy import array
+from numpy import array, sign
 from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr, sign_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
-from .vectors import sparse_to_dense, ceiling_vec
+from .vectors import sparse_to_dense, ceiling_vec, sign_norm_vec
 
 
 class CrossmapDiffuser:
@@ -88,10 +88,11 @@ class CrossmapDiffuser:
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            v = sign_csr(v, normalize=True)
+            # v = sign_csr(v, length_norm=True)
+            v.data = sign_norm_vec(v.data)
             total += 1
             for i, d in zip(v.indices, v.data):
-                result[i].add_csr(v, _sign(d))
+                result[i].add_csr(v, sign(d))
             if total % progress == 0:
                 info("Progress: " + str(total))
         # replace dictionaries by csr_matrix (in place to save memory)
@@ -119,21 +120,18 @@ class CrossmapDiffuser:
         if num_rows == 0:
             self._set_empty_counts(dataset)
 
-        threshold = self.threshold
         for row in self.db.get_data(dataset, idxs=data_idxs):
             v = row["data"]
-            if threshold > 0:
-                v = threshold_csr(v, threshold)
-            v = sign_csr(v, normalize=True)
+            # v = sign_csr(v, length_norm=True)
+            v.data = sign_norm_vec(v.data)
             v_indices = [int(_) for _ in v.indices]
             if len(v.indices) == 0:
                 continue
-
             v_dict = {i: d for i, d in zip(v_indices, v.data)}
             counts = self.db.get_counts(dataset, v_indices)
             for k in list(counts.keys()):
                 d = v_dict[k]
-                counts[k] += v * _sign(d)
+                counts[k] += v * sign(d)
             self.db.update_counts(dataset, counts)
 
     def diffuse(self, v, strength, weight=None):
@@ -170,24 +168,23 @@ class CrossmapDiffuser:
             for corpus, value in strength.items():
                 diffusion_data = counts[corpus]
                 for di, ddata in diffusion_data.items():
-                    # ddata[0] contains values from a sparse vector
-                    # ddata[1] contains indexes matched to the values in ddata[0]
-                    # ddata[2] contains a maximal value in values
-                    # ddata[3] contains a runner-up
-                    row_normalization = ddata[3]
-                    if row_normalization == 0.0:
+                    # ddata[0] - values from a sparse vector
+                    # ddata[1] - indexes matched to the values in ddata[0]
+                    # ddata[2] - a maximal value in values
+                    # ddata[3] - a runner-up
+                    row_norm = ddata[3]
+                    if row_norm == 0.0:
                         continue
-                    # cap by row_normalization to avoid diffusing into self too much
-                    data = ceiling_vec(ddata[0].copy(), row_normalization)
-                    #data = array([min(_, row_normalization) for _ in ddata[0]])
+                    # print(str(di) + " row_norm "+str(row_norm) + " "+str(ddata[2]))
+                    # cap by row_norm (avoids over-diffusing into self)
+                    data = ceiling_vec(ddata[0].copy(), row_norm)
                     # avoid diffusion from important feature to inflate value
                     # of an unimportant feature
                     data = hms(f_weights, data, ddata[1], f_weights[di])
                     # penalize diffusion from overlapping tokens
                     multiplier = min(1.0, (w_dense[di]/v_dense[di]))
-                    multiplier *= last_result[di] / row_normalization
+                    multiplier *= last_result[di] / row_norm
                     data *= pass_weight * value * multiplier
-                    # add the diffusion parts
                     result = add_sparse(result, data, ddata[1])
         return normalize_csr(csr_matrix(result))
 
@@ -204,11 +201,6 @@ def _pass_weights(tot):
         result[i] = (i + 1) * result[i]
     result = [1/_ for _ in result]
     return result / sum(result)
-
-
-def _sign(x):
-    """get the sign of a number"""
-    return 1 if x >= 0 else -1
 
 
 def _nonzero_strength(x):

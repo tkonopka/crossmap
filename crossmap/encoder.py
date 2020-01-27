@@ -89,13 +89,15 @@ def _to_vec(tokens, component, feature_map):
     component_data = tokens[component]
     for k, v in component_data.data.items():
         c = component_data.count[k]
-        if k not in feature_map:
+        try:
+            fm = feature_map[k]
+        except KeyError:
             continue
-        fm = feature_map[k]
+        # these two branches are equivalent, but the first branch is a shortcut
+        # for a common case
         if c == 1:
             vec[fm[0]] = fm[1] * v
         else:
             vec[fm[0]] = fm[1] * (v/c) * (1 + log2(c))
-
     return vec
 

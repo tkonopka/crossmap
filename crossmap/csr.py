@@ -45,11 +45,6 @@ def bytes_to_arrays(x):
         data_max, data_runnerup = absmax2(values)
     return values, indices, data_max, data_runnerup
 
-    #abs_data = [abs(_) for _ in raw[0]]
-    #data_sum = sum(abs_data)
-    #data_max = 0.0 if len(abs_data) == 0 else max(abs_data)
-    #return array(raw[0]), array(raw[1]), data_sum, data_max
-
 
 def normalize_csr(v):
     """normalize a csr vector
@@ -102,7 +97,8 @@ def pos_threshold_csr(v, threshold=0.0):
 
 def _sign(x):
     """get +1 or -1 value"""
-    return +1 if x>0 else -1
+    # DEPRECATE THIS
+    return +1 if x > 0 else -1
 
 
 def sign_csr(v, normalize=True):
@@ -112,7 +108,7 @@ def sign_csr(v, normalize=True):
     :param normalize: logical, if True, output is normalized
     :return: modified csr vector with elements set to integers
     """
-
+    # DEPRECATE THIS
     if normalize and len(v.data):
         invlen = 1/len(v.data)
         v.data = array([_sign(_)*invlen for _ in v.data])

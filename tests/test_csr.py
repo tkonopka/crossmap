@@ -108,11 +108,11 @@ class CsrSignTests(unittest.TestCase):
         result = sign_csr(a, normalize=False)
         self.assertListEqual(list(result.data), list(expected.data))
 
-    def test_sign_normalize_true(self):
-        """simple conversion, with normalization"""
+    def test_sign_normalize_positive(self):
+        """simple conversion, with normalization of +ve values"""
 
-        a = csr_matrix([1.2, 0.0, -0.2, 0.2, 0, 0, 4.2])
-        expected = csr_matrix([0.25, 0, -0.25, 0.25, 0, 0.25])
+        a = csr_matrix([1.2, 0.0, 0.2, 0.2, 0, 0, 4.2])
+        expected = csr_matrix([0.25, 0, 0.25, 0.25, 0, 0.25])
         result = sign_csr(a)
         self.assertListEqual(list(result.data), list(expected.data))
 
