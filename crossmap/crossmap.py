@@ -11,8 +11,7 @@ from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual, vec_decomposition
-from .csr import dimcollapse_csr, normalize_csr
-from .csr import threshold_csr, cap_csr
+from .csr import dimcollapse_csr, normalize_csr, threshold_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -30,7 +29,7 @@ def _search_result(ids, distances, name):
 
 
 def _decomposition_result(ids, weights, name):
-    """structure an object descripting a greedy-nearest-decomposition"""
+    """structure an object describing a greedy-nearest-decomposition"""
     return dict(query=name, targets=ids, coefficients=weights)
 
 
@@ -49,7 +48,7 @@ def _ranked_decomposition(coefficients, ids):
     if len(zeros) == 0:
         return coefficients, ids
     ids = [_ for i, _ in enumerate(ids) if i not in zeros]
-    coefficients = [_ for i,_ in enumerate(coefficients) if i not in zeros]
+    coefficients = [_ for i, _ in enumerate(coefficients) if i not in zeros]
     return coefficients, ids
 
 
@@ -83,6 +82,7 @@ class Crossmap:
     @property
     def valid(self):
         """get a boolean stating whether settings are valid"""
+
         if self.indexer is None:
             return False
         if not self.settings.valid:
@@ -102,6 +102,7 @@ class Crossmap:
 
     def load(self):
         """load indexes from prepared files"""
+
         self.indexer.load()
         self.diffuser = CrossmapDiffuser(self.settings, self.indexer.db)
 
@@ -164,6 +165,7 @@ class Crossmap:
         :param diffusion: dictionary with diffusion strengths
         :return: two csr vectors, a raw encoding and a diffused encoding
         """
+
         v = self.encoder.document(doc)
         if diffusion is None:
             return v, v
@@ -206,28 +208,28 @@ class Crossmap:
         if sum(raw.data) == 0:
             return _search_result([], [], query_name)
         suggest = self.indexer.suggest
-
+        ncsr = normalize_csr
         # search for neighbors based on diffused vector
         targets, distances = suggest(diffused, dataset, 2*n)
         if diffusion is None or self.fast_search:
             return _search_result(targets[:n], distances[:n], query_name)
 
         # for a more thorough search, get additional candidates
+        # - from document without diffusion
+        # - from diffused and raw documents, using only top features
         new_targets = set()
-        # attempt to find using document without diffusion
         if diffusion is not None:
             targets_raw, _ = suggest(raw, dataset, 2*n)
             new_targets.update(targets_raw)
-
-        # attempt to find more potential hits by mutating the vector
         max_val = max(diffused.data)
         mut_floor = threshold_csr(diffused, max_val/2)
-        # mut_ceiling = cap_csr(diffused, max_val/2)
+        raw_floor = threshold_csr(raw, max_val/2)
         if len(mut_floor.data) and len(mut_floor.data) != len(diffused.data):
-            floor_targets, _ = suggest(normalize_csr(mut_floor), dataset, n)
-            new_targets.update(floor_targets)
-        # ceiling_targets, _ = suggest(normalize_csr(mut_ceiling), dataset, 2*n)
-        # new_targets.update(ceiling_targets)
+            mut_floor_targets, _ = suggest(ncsr(mut_floor), dataset, n)
+            new_targets.update(mut_floor_targets)
+        if len(raw_floor.data) and len(raw_floor.data) != len(raw.data):
+            raw_floor_targets, _ = suggest(ncsr(raw_floor), dataset, n)
+            new_targets.update(raw_floor_targets)
 
         # compute distances from diffused document to all the candidates
         new_targets = new_targets.difference(targets)
