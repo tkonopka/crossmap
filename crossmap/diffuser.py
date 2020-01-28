@@ -12,7 +12,7 @@ from numpy import array, sign
 from .db import CrossmapDB
 from .encoder import CrossmapEncoder
 from .tokens import CrossmapTokenizer
-from .csr import normalize_csr, threshold_csr, sign_csr
+from .csr import normalize_csr, threshold_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
 from .vectors import sparse_to_dense, ceiling_vec, sign_norm_vec
@@ -88,7 +88,6 @@ class CrossmapDiffuser:
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            # v = sign_csr(v, length_norm=True)
             v.data = sign_norm_vec(v.data)
             total += 1
             for i, d in zip(v.indices, v.data):
@@ -122,7 +121,6 @@ class CrossmapDiffuser:
 
         for row in self.db.get_data(dataset, idxs=data_idxs):
             v = row["data"]
-            # v = sign_csr(v, length_norm=True)
             v.data = sign_norm_vec(v.data)
             v_indices = [int(_) for _ in v.indices]
             if len(v.indices) == 0:

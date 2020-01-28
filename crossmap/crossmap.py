@@ -12,7 +12,7 @@ from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual, vec_decomposition
 from .csr import dimcollapse_csr, normalize_csr
-from .csr import pos_threshold_csr
+from .csr import threshold_csr, cap_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -218,11 +218,16 @@ class Crossmap:
         if diffusion is not None:
             targets_raw, _ = suggest(raw, dataset, 2*n)
             new_targets.update(targets_raw)
-        # attempt to search using only positive features
-        #pos = pos_threshold_csr(diffused)
-        #if len(pos.data) and len(pos.data) != len(diffused.data):
-        #    pos_targets, _ = suggest(normalize_csr(pos), dataset, 2*n)
-        #    new_targets.update(pos_targets)
+
+        # attempt to find more potential hits by mutating the vector
+        max_val = max(diffused.data)
+        mut_floor = threshold_csr(diffused, max_val/2)
+        # mut_ceiling = cap_csr(diffused, max_val/2)
+        if len(mut_floor.data) and len(mut_floor.data) != len(diffused.data):
+            floor_targets, _ = suggest(normalize_csr(mut_floor), dataset, n)
+            new_targets.update(floor_targets)
+        # ceiling_targets, _ = suggest(normalize_csr(mut_ceiling), dataset, 2*n)
+        # new_targets.update(ceiling_targets)
 
         # compute distances from diffused document to all the candidates
         new_targets = new_targets.difference(targets)

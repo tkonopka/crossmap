@@ -119,6 +119,7 @@ class OboBuilder:
                 continue
             term = obo.terms[id]
             data_pos = self.content(term, extras=False)
+            data_pos["emphasis"] = term.name
             data_neg = dict()
             metadata = dict()
             if aux_comments:

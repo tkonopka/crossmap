@@ -10,8 +10,7 @@ from crossmap.csr import \
     csr_to_bytes, \
     normalize_csr, \
     threshold_csr, \
-    pos_threshold_csr, \
-    sign_csr, \
+    cap_csr, \
     dimcollapse_csr, \
     add_sparse_skip, \
     harmonic_multiply_sparse, \
@@ -53,8 +52,8 @@ class CsrNormTests(unittest.TestCase):
         self.assertListEqual(list(sparse_to_dense(vec)), [0.0, 1.0, 0.0])
 
 
-class CsrThresholdingTests(unittest.TestCase):
-    """csr vector thresholding"""
+class CsrThresholdTests(unittest.TestCase):
+    """Adjusting csr vectors via thresholds"""
 
     def test_threshold_positives(self):
         """using a simple vector with positive values"""
@@ -68,7 +67,7 @@ class CsrThresholdingTests(unittest.TestCase):
         self.assertEqual(result.shape, (1, 8))
 
     def test_threshold_w_negatives(self):
-        """thresholding preserves very negative values"""
+        """threshold preserves very negative values"""
 
         b = csr_matrix([0.0, 0.1, -0.5, 0.35,
                         0.9, -0.2, 0.0, -0.4])
@@ -87,43 +86,12 @@ class CsrThresholdingTests(unittest.TestCase):
         self.assertEqual(sum(sparse_to_dense(result)), 0)
         self.assertEqual(result.shape, (1, 8))
 
-    def test_positive_threshold_simple(self):
-        """threshold to positive definitive values"""
+    def test_cap(self):
+        """impose a ceiling on vector values, +ve and -ve"""
 
-        x = csr_matrix([0.0, 0.0, 0.0, 0.4,
-                        0.2, 0.0, -0.8, 0.1])
-        result = pos_threshold_csr(x)
-        self.assertEqual(sum(result.data), 0.4 + 0.2 + 0.1)
-        self.assertEqual(result.shape, (1, 8))
-
-
-class CsrSignTests(unittest.TestCase):
-    """Converting csr into +1/-1 values"""
-
-    def test_sign_normalize_false(self):
-        """simple conversion, without normalization"""
-
-        a = csr_matrix([1.2, 0.0, -0.2, 0.2, 0, 0, 4.2])
-        expected = csr_matrix([1, 0, -1, 1, 0, 1])
-        result = sign_csr(a, normalize=False)
-        self.assertListEqual(list(result.data), list(expected.data))
-
-    def test_sign_normalize_positive(self):
-        """simple conversion, with normalization of +ve values"""
-
-        a = csr_matrix([1.2, 0.0, 0.2, 0.2, 0, 0, 4.2])
-        expected = csr_matrix([0.25, 0, 0.25, 0.25, 0, 0.25])
-        result = sign_csr(a)
-        self.assertListEqual(list(result.data), list(expected.data))
-
-    def test_sign_empty_array(self):
-        """simple conversion with empty input"""
-
-        a = csr_matrix([0.0, 0.0, 0.0])
-        result_raw = sign_csr(a, normalize=False)
-        self.assertEqual(len(result_raw.data), 0)
-        result_norm = sign_csr(a, normalize=True)
-        self.assertEqual(len(result_norm.data), 0)
+        x = csr_matrix([0.0, 0.0, 0.4, 0.2, -0.4, 0.0])
+        result = cap_csr(x, 0.3)
+        self.assertListEqual(list(result.data), [0.3, 0.2, -0.3])
 
 
 class CsrAddTests(unittest.TestCase):

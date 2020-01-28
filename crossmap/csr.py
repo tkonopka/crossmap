@@ -77,44 +77,23 @@ def threshold_csr(v, threshold=0.001):
     return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
 
 
-def pos_threshold_csr(v, threshold=0.0):
-    """set elements in v to positive definitive values
+def cap_csr(v, cap=0.1):
+    """impose a cap (floor and ceiling) on all elements in v
 
     :param v: csr vector
-    :param threshold: threshold level
+    :param cap: threshold level
     :return: new csr vector with some elements set to zero
     """
 
     data = []
-    indices = []
-    threshold = max(0, threshold)
-    for d, i in zip(v.data, v.indices):
-        if d > threshold:
+    for d in v.data:
+        if d > cap:
+            data.append(cap)
+        elif d < (-cap):
+            data.append(-cap)
+        else:
             data.append(d)
-            indices.append(i)
-    return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
-
-
-def _sign(x):
-    """get +1 or -1 value"""
-    # DEPRECATE THIS
-    return +1 if x > 0 else -1
-
-
-def sign_csr(v, normalize=True):
-    """set elements in v to +1 or -1 integers
-
-    :param v: csr vector
-    :param normalize: logical, if True, output is normalized
-    :return: modified csr vector with elements set to integers
-    """
-    # DEPRECATE THIS
-    if normalize and len(v.data):
-        invlen = 1/len(v.data)
-        v.data = array([_sign(_)*invlen for _ in v.data])
-    else:
-        v.data = array([_sign(_) for _ in v.data])
-    return v
+    return csr_matrix((data, v.indices, [0, len(data)]), shape=v.shape)
 
 
 def dimcollapse_csr(v, indexes=(), normalize=True):
