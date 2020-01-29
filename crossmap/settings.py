@@ -7,9 +7,14 @@ from logging import error, warning
 from os import getcwd, mkdir
 from os.path import join, exists, dirname, basename, isdir
 from .tokens import Kmerizer
-from .subsettings import CrossmapLoggingSettings, CrossmapServerSettings
-from .subsettings import CrossmapFeatureSettings, CrossmapDiffusionSettings
-from .subsettings import CrossmapTokenSettings, CrossmapCacheSettings
+from .subsettings import \
+    CrossmapLoggingSettings, \
+    CrossmapServerSettings, \
+    CrossmapFeatureSettings, \
+    CrossmapIndexingSettings, \
+    CrossmapDiffusionSettings, \
+    CrossmapTokenSettings, \
+    CrossmapCacheSettings
 
 # a tokenizer with default parameters
 default_tokenizer = Kmerizer()
@@ -23,12 +28,12 @@ class CrossmapSettingsDefaults:
         self.dir = getcwd()
         self.prefix = join(self.dir, self.name)
         self.file = "crossmap.yaml"
-        # toggling quality of search
-        self.fast_search = False
         # paths to disk files
         self.data_files = dict()
         # settings for features (e.g. max number, or from file)
         self.features = CrossmapFeatureSettings()
+        # settings for indexing and search quality
+        self.indexing = CrossmapIndexingSettings()
         # setting for diffusion
         self.diffusion = CrossmapDiffusionSettings()
         # settings for tokens (e.g. kmer length)

@@ -10,6 +10,9 @@ features:
   max_number: 200
   weighting: [0.5, 1.0]
   map: featuremap.tsv
+indexing:
+  build_quality: 500
+  search_quality: 200
 diffusion:
   threshold: 0.05
 server:

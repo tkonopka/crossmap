@@ -8,12 +8,14 @@ classes start performing stronger validation)
 import unittest
 import yaml
 from os.path import join
-from crossmap.settings import CrossmapLoggingSettings
-from crossmap.settings import CrossmapFeatureSettings
-from crossmap.settings import CrossmapTokenSettings
-from crossmap.settings import CrossmapServerSettings
-from crossmap.settings import CrossmapDiffusionSettings
-from crossmap.settings import CrossmapCacheSettings
+from crossmap.subsettings import \
+    CrossmapLoggingSettings, \
+    CrossmapFeatureSettings, \
+    CrossmapTokenSettings, \
+    CrossmapIndexingSettings, \
+    CrossmapServerSettings, \
+    CrossmapDiffusionSettings, \
+    CrossmapCacheSettings
 
 
 class CrossmapSettingsDiffusionTests(unittest.TestCase):
@@ -111,6 +113,31 @@ class CrossmapTokenSettingsTests(unittest.TestCase):
         """summarize settings in a string"""
 
         self.assertTrue("abc" in str(self.custom))
+
+
+class CrossmapIndexingSettingsTests(unittest.TestCase):
+    """Settings related to quality of index build and kNN search"""
+
+    def setUp(self):
+        self.default = CrossmapIndexingSettings()
+        self.custom = CrossmapIndexingSettings({"build_quality": 50, "search_quality": 100})
+
+    def test_build_quality(self):
+        """parsing build quality"""
+
+        self.assertEqual(self.default.build_quality, 200)
+        self.assertEqual(self.custom.build_quality, 50)
+
+    def test_search_quality(self):
+        """parsing search quality"""
+
+        self.assertEqual(self.default.search_quality, 200)
+        self.assertEqual(self.custom.search_quality, 100)
+
+    def test_str(self):
+        """summarize settings in a string"""
+
+        self.assertTrue("quality" in str(self.custom))
 
 
 class CrossmapServerSettingsTests(unittest.TestCase):

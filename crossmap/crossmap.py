@@ -11,7 +11,7 @@ from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual, vec_decomposition
-from .csr import dimcollapse_csr, normalize_csr, threshold_csr
+from .csr import dimcollapse_csr, normalize_csr, threshold_csr, cap_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -64,7 +64,6 @@ class Crossmap:
         if type(settings) is str:
             settings = CrossmapSettings(settings)
         self.settings = settings
-        self.fast_search = settings.fast_search
         self.indexer = None
         self.db = None
         if not settings.valid:
@@ -208,10 +207,29 @@ class Crossmap:
         if sum(raw.data) == 0:
             return _search_result([], [], query_name)
         suggest = self.indexer.suggest
+        targets, distances = suggest(diffused, dataset, n)
+        return _search_result(targets, distances, query_name)
+
+    def search_old(self, doc, dataset, n=3, diffusion=None, query_name="query"):
+        """identify targets that are close to the input query
+
+        :param doc: dict-like object with "data", "data_pos" and "data_neg"
+        :param dataset: string, identifier for dataset to look for targets
+        :param n: integer, number of target to report
+        :param diffusion: dict, map assigning diffusion weights
+        :param query_name: character, a name for the document
+        :return: a dictionary containing an id, and lists to target ids and
+            distances
+        """
+
+        raw, diffused = self._prep_vector(doc, diffusion)
+        if sum(raw.data) == 0:
+            return _search_result([], [], query_name)
+        suggest = self.indexer.suggest
         ncsr = normalize_csr
         # search for neighbors based on diffused vector
-        targets, distances = suggest(diffused, dataset, 2*n)
-        if diffusion is None or self.fast_search:
+        targets, distances = suggest(diffused, dataset, n)
+        if diffusion is None:
             return _search_result(targets[:n], distances[:n], query_name)
 
         # for a more thorough search, get additional candidates
@@ -223,12 +241,12 @@ class Crossmap:
             new_targets.update(targets_raw)
         max_val = max(diffused.data)
         mut_floor = threshold_csr(diffused, max_val/2)
-        raw_floor = threshold_csr(raw, max_val/2)
+        mut_cap = cap_csr(raw, max_val/2)
         if len(mut_floor.data) and len(mut_floor.data) != len(diffused.data):
             mut_floor_targets, _ = suggest(ncsr(mut_floor), dataset, n)
             new_targets.update(mut_floor_targets)
-        if len(raw_floor.data) and len(raw_floor.data) != len(raw.data):
-            raw_floor_targets, _ = suggest(ncsr(raw_floor), dataset, n)
+        if len(mut_cap.data):
+            raw_floor_targets, _ = suggest(ncsr(mut_cap), dataset, n)
             new_targets.update(raw_floor_targets)
 
         # compute distances from diffused document to all the candidates

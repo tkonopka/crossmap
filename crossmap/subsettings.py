@@ -62,6 +62,27 @@ class CrossmapFeatureSettings:
         return dump(result)
 
 
+class CrossmapIndexingSettings:
+    """Container for settings indexing and search quality"""
+
+    def __init__(self, config=None):
+        self.build_quality = 200
+        self.search_quality = 200
+
+        if config is None:
+            return
+        for key, val in config.items():
+            if key == "build_quality":
+                self.build_quality = int(val)
+            elif key == "search_quality":
+                self.search_quality = int(val)
+
+    def __str__(self):
+        result = dict(indexing={"build_quality": self.build_quality,
+                                "search_quality": self.search_quality})
+        return dump(result)
+
+
 class CrossmapDiffusionSettings:
     """Settings for handling diffusion of feature values"""
 

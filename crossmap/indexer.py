@@ -165,7 +165,9 @@ class CrossmapIndexer:
         if len(items) > 0:
             result.addDataPointBatch(vstack(items), idxs)
 
-        result.createIndex(print_progress=False)
+        build_quality = self.settings.indexing.build_quality
+        result.createIndex(index_params={"efConstruction": build_quality},
+                           print_progress=False)
         self.indexes[dataset] = result
         self.index_files[dataset] = index_file
         result.saveIndex(index_file, save_data=True)
@@ -210,6 +212,8 @@ class CrossmapIndexer:
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         result.loadIndex(index_file, load_data=True)
+        search_quality = self.settings.indexing.search_quality
+        result.setQueryTimeParams({"efSearch": search_quality})
         self.indexes[dataset] = result
         self.index_files[dataset] = index_file
 
