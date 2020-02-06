@@ -111,7 +111,7 @@ class CrossmapIndexer:
             warning("Skipping data transfer: " + dataset)
             return
 
-        info("Transfering data: " + dataset)
+        info("Transferring data: " + dataset)
         batch_size = self.settings.logging.progress
 
         # internal helper to save a batch of data into the index and db
@@ -125,7 +125,7 @@ class CrossmapIndexer:
         items, ids, titles, offset = [], [], [], 0
         for _tokens, _id, _title in self.encoder.documents(files):
             if all_zero(_tokens.toarray()[0]):
-                warning("Skipping item id: " + str(_id))
+                warning("Skipping item: " + str(_id))
                 continue
             items.append(_tokens)
             ids.append(_id)
@@ -138,18 +138,18 @@ class CrossmapIndexer:
         offset += add_batch(items, ids, titles, offset)
 
         summary_fun = warning if offset == 0 else info
-        summary_fun("Total number of items: " + str(offset))
+        summary_fun("Number of items: " + str(offset))
 
     def _build_index(self, dataset):
         """builds an Annoy index using data from documents on disk"""
 
         index_file = self.settings.index_file(dataset)
         if exists(index_file):
-            warning("Skipping index build: " + dataset)
+            warning("Skipping search index build: " + dataset)
             self._load_index(dataset)
             return
 
-        info("Building data index: " + dataset)
+        info("Building search index: " + dataset)
         batch_size = self.settings.logging.progress
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
@@ -205,10 +205,10 @@ class CrossmapIndexer:
         """
         index_file = self.settings.index_file(dataset)
         if not exists(index_file):
-            error("Skipping loading index for " + dataset)
+            error("Skipping loading search index: " + dataset)
             return
 
-        info("Loading index for " + dataset)
+        info("Loading search index: " + dataset)
         result = nmslib.init(method="hnsw", space="l2_sparse",
                              data_type=nmslib.DataType.SPARSE_VECTOR)
         result.loadIndex(index_file, load_data=True)

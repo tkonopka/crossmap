@@ -11,14 +11,17 @@ body {
   overflow-y: hidden;
 }
 
+/** History list and controller **/
+#init-message {
+  min-width: 200px;
+  text-align: center;
+  padding-top: 2em;
+}
 
 /** History list and controller **/
 #root, #chat {
   height: 100%;
   position: relative;
-}
-#char {
-
 }
 #chat-history {
   overflow-y: auto;
@@ -108,4 +111,10 @@ td.column-dataset {
 /** Message boxes in chat history **/
 .chat-response td {
   padding: 2px 18px 2px 18px;
+}
+.chat-response .no-datasets {
+  color: #dd0000;
+  font-size: larger;
+  text-align: center;
+  padding: 1em;
 }

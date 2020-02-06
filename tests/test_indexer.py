@@ -102,7 +102,7 @@ class CrossmapIndexerSkippingTests(unittest.TestCase):
         indexer = CrossmapIndexer(settings, self.limited_features)
         with self.assertLogs(level="WARNING") as cm:
             indexer.build()
-        self.assertTrue("item id" in str(cm.output))
+        self.assertTrue("item" in str(cm.output))
 
 
 class CrossmapIndexerNeighborTests(unittest.TestCase):

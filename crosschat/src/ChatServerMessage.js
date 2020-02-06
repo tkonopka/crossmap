@@ -93,18 +93,6 @@ class DatasetsMessage extends ChatMessage {
         this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
         this.state = {page: 0, rowsPerPage: 10}
     }
-    render_old() {
-        let datasets = this.props.data["datasets"].map((x, i) => {
-            return(
-                <ListItem key={i}>
-                <ListItemText primary={x["label"]} secondary={x["size"] + " items"}/>
-                </ListItem>
-            )
-        });
-        return(<div xs={8}>
-            <List dense>{datasets}</List>
-        </div>);
-    }
 
     handleChangePage(event, newPage) {
         this.setState({page: newPage})
@@ -116,6 +104,9 @@ class DatasetsMessage extends ChatMessage {
 
     render() {
         let rows = this.props.data["datasets"];
+        if (rows.length === 0) {
+            return(<div className={"no-datasets"}><Typography>There are no datasets available</Typography></div>)
+        }
         let header = <TableRow>
             <TableCell>Dataset</TableCell>
             <TableCell>Size</TableCell>

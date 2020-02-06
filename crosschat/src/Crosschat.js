@@ -25,11 +25,12 @@ class Crosschat extends React.Component {
         let xhr = new XMLHttpRequest();
         xhr.onload = function() {
             let result = JSON.parse(xhr.response);
+            console.log("onload result: "+JSON.stringify(result));
             result["_type"] = "datasets";
             chat.addMessage(result, "server");
             chat.setState({history: [["server", result]],
-                           datasets: result["datasets"],
-                           query: { dataset: result["datasets"][0].label }})
+                           datasets: result["datasets"]})
+                           // query: { dataset: result["datasets"][0].label }})
         };
         xhr.open("POST", "http://127.0.0.1:8098/datasets/", true);
         xhr.setRequestHeader('Accept', 'application/json');
@@ -107,7 +108,7 @@ class Crosschat extends React.Component {
                     messages={this.state.history} />
                 <Controller
                     ref={(element) => this.controllerElement = element}
-                    key={JSON.stringify(this.state.query)}
+                    key={JSON.stringify(this.state.datasets)}
                     datasets={this.state.datasets}
                     onresize={this.onresize}
                     send={this.sendQuery}/>

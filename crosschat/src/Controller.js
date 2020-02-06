@@ -32,6 +32,8 @@ class Controller extends React.Component {
                 return null;
             })
         }
+        console.log(JSON.stringify(props.datasets));
+        console.log("Building controller with dataset: " + JSON.stringify(dataset));
         this.state = {
             action: "search", view: "search", extended: 0,
             dataset: dataset, n: 1,
