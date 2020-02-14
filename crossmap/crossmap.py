@@ -210,57 +210,6 @@ class Crossmap:
         targets, distances = suggest(diffused, dataset, n)
         return _search_result(targets, distances, query_name)
 
-    def search_old(self, doc, dataset, n=3, diffusion=None, query_name="query"):
-        """identify targets that are close to the input query
-
-        :param doc: dict-like object with "data", "data_pos" and "data_neg"
-        :param dataset: string, identifier for dataset to look for targets
-        :param n: integer, number of target to report
-        :param diffusion: dict, map assigning diffusion weights
-        :param query_name: character, a name for the document
-        :return: a dictionary containing an id, and lists to target ids and
-            distances
-        """
-
-        raw, diffused = self._prep_vector(doc, diffusion)
-        if sum(raw.data) == 0:
-            return _search_result([], [], query_name)
-        suggest = self.indexer.suggest
-        ncsr = normalize_csr
-        # search for neighbors based on diffused vector
-        targets, distances = suggest(diffused, dataset, n)
-        if diffusion is None:
-            return _search_result(targets[:n], distances[:n], query_name)
-
-        # for a more thorough search, get additional candidates
-        # - from document without diffusion
-        # - from diffused and raw documents, using only top features
-        new_targets = set()
-        if diffusion is not None:
-            targets_raw, _ = suggest(raw, dataset, 2*n)
-            new_targets.update(targets_raw)
-        max_val = max(diffused.data)
-        mut_floor = threshold_csr(diffused, max_val/2)
-        mut_cap = cap_csr(raw, max_val/2)
-        if len(mut_floor.data) and len(mut_floor.data) != len(diffused.data):
-            mut_floor_targets, _ = suggest(ncsr(mut_floor), dataset, n)
-            new_targets.update(mut_floor_targets)
-        if len(mut_cap.data):
-            raw_floor_targets, _ = suggest(ncsr(mut_cap), dataset, n)
-            new_targets.update(raw_floor_targets)
-
-        # compute distances from diffused document to all the candidates
-        new_targets = new_targets.difference(targets)
-        if len(new_targets):
-            dists = self.indexer.distances
-            new_d, new_ids = dists(diffused, dataset, ids=new_targets)
-            targets.extend(new_ids)
-            distances.extend(new_d)
-            # the asterisk in *sorted provides the outer zip with two lists
-            distances, targets = zip(*sorted(zip(distances, targets)))
-
-        return _search_result(targets[:n], distances[:n], query_name)
-
     def decompose(self, doc, dataset, n=3, diffusion=None,
                   query_name="query"):
         """decompose of a query document in terms of targets
@@ -373,6 +322,8 @@ def _action_file(action, filepath, **kw):
         return result
     with open_file(filepath, "rt") as f:
         for id, doc in yaml_document(f):
+            if type(doc) is not dict:
+                raise Exception("invalid document type: "+str(id))
             result.append(action(doc, **kw, query_name=id))
     return result
 

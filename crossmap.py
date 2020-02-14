@@ -16,7 +16,16 @@ from json import dumps, loads
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap, validate_dataset_label
 from crossmap.info import CrossmapInfo
+from crossmap.tools import concise_exception_handler
 
+# this is a command line utility
+if __name__ != "__main__":
+    exit()
+sys.excepthook = concise_exception_handler
+
+
+# ############################################################################
+# Arguments
 
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
@@ -58,24 +67,22 @@ parser.add_argument("--logging", action="store",
                     help="logging levels, use WARNING, INFO, or ERROR")
 
 
-if __name__ != "__main__":
-    sys.exit()
-
-
 # ############################################################################
 # Script below assumes running from command line
 
-
 config = parser.parse_args()
-if config.diffusion is not None:
-    config.diffusion = loads(config.diffusion)
-action = config.action
-
 logging.basicConfig(format='[%(asctime)s] %(levelname) -8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.INFO)
 if config.logging is not None:
     logging.getLogger().setLevel(config.logging)
+
+if config.diffusion is not None:
+    try:
+        config.diffusion = loads(config.diffusion)
+    except Exception as e:
+        raise Exception("Error parsing diffusion json: "+str(e))
+action = config.action
 
 
 settings = CrossmapSettings(config.config)

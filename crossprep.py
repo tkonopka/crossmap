@@ -10,6 +10,7 @@ import argparse
 import logging
 from os import getcwd
 from sys import exit
+from crossmap.tools import concise_exception_handler
 from crossprep.tools import save_dataset
 from crossprep.obo.build import build_obo_dataset
 from crossprep.orphanet.build import build_orphanet_dataset
@@ -24,6 +25,7 @@ from crossprep.wiktionary.build import build_wiktionary_dataset
 if __name__ != "__main__":
     exit()
 
+sys.excepthook = concise_exception_handler
 
 # ############################################################################
 # Arguments

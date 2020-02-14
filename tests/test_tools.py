@@ -16,7 +16,7 @@ from .tools import remove_cachefile
 data_dir = join("tests", "testdata")
 tsv_file = join(data_dir, "crossmap-testing-temp.tsv")
 good_yaml_file = join(data_dir, "dataset.yaml")
-bad_yaml_file = join(data_dir, "bad_data.yaml")
+bad_yaml_file = join(data_dir, "bad_data_yaml.yaml")
 
 
 class WriteCsvTests(unittest.TestCase):

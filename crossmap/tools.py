@@ -6,6 +6,7 @@ import csv
 import gzip
 import yaml
 import pickle
+from logging import error
 from yaml import CBaseLoader
 from contextlib import contextmanager
 from datetime import datetime
@@ -173,4 +174,17 @@ def time():
     """make a timestamp string"""
 
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+def concise_exception_handler(exception_type, exception, traceback):
+    """custom print function for exceptions, which avoid writing traceback
+
+    this is meant to be used to redefine sys.excepthook
+    """
+
+    # the function signature has three objects because that is what
+    # is used for sys.excepthook. This concise handler ignores
+    # the non-essential elements to log only a brief message.
+
+    error(exception)
 

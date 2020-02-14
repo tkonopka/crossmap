@@ -1,0 +1,4 @@
+title: This item is valid yaml
+data: But it does not satisfy formating expected from a crossmap
+  data collection. A valid collection should have item ids at the
+  root level. Field like 'title', 'data' should be one-level deep.
