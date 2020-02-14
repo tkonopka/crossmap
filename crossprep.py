@@ -8,8 +8,8 @@ Usage: python crossprep.py command
 
 import argparse
 import logging
+import sys
 from os import getcwd
-from sys import exit
 from crossmap.tools import concise_exception_handler
 from crossprep.tools import save_dataset
 from crossprep.obo.build import build_obo_dataset
@@ -23,7 +23,7 @@ from crossprep.wiktionary.build import build_wiktionary_dataset
 
 # this is a command line utility
 if __name__ != "__main__":
-    exit()
+    sys.exit()
 
 sys.excepthook = concise_exception_handler
 
@@ -149,7 +149,7 @@ if config.name is None or config.name == "":
 
 if config.action == "obo":
     if missing_arguments(["obo"]):
-        exit()
+        sys.exit()
     result = build_obo_dataset(config.obo, config.obo_root,
                                aux=config.obo_aux)
     save_dataset(result, config.outdir, config.name)
@@ -169,7 +169,7 @@ elif config.action == "wiktionary":
 
 elif config.action == "orphanet":
     if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):
-        exit()
+        sys.exit()
     result = build_orphanet_dataset(config.orphanet_phenotypes,
                                     config.orphanet_genes)
     save_dataset(result, config.outdir, config.name)
