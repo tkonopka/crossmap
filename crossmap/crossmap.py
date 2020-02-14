@@ -11,7 +11,7 @@ from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual, vec_decomposition
-from .csr import dimcollapse_csr, normalize_csr, threshold_csr, cap_csr
+from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -256,7 +256,10 @@ class Crossmap:
         if len(coefficients) > 0:
             # re-do decomposition using the entire q vector
             coefficients = decompose(q_dense, basis.toarray())
+            first_id = ids[0]
             coefficients, ids = _ranked_decomposition(coefficients, ids)
+            if len(ids) == 0:
+                coefficients, ids = [0.0], [first_id]
 
         return _decomposition_result(ids, coefficients, query_name)
 

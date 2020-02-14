@@ -42,7 +42,7 @@ class ControllerSettingsForm extends React.Component {
                         aria-labelledby="discrete-slider"
                         valueLabelDisplay="auto"
                         onChange={(e, value) => update(row.label, value, "diffusion")}
-                        step={0.01} min={0} max={10}
+                        step={0.01} min={0} max={4}
                     />
                 </TableCell>
             </TableRow>)
