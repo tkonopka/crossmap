@@ -39,8 +39,7 @@ class Kmerizer:
         :param case_sensitive: logical, if False, tokens will be lowercase
         :param alphabet: string with all possible characters
         :param k2: integer, length of kmers used in overlap weighting
-            This can be different to k to give less immportance
-            to long words
+            This can be different to k to give less importance to long words
         """
 
         self.k = k
@@ -67,18 +66,19 @@ class Kmerizer:
             for id, doc in yaml_document(f):
                 yield id, tokenize(doc)
 
-    def tokenize(self, doc, scale_overlap="sqrt"):
+    def tokenize(self, doc, scale_fun=sqrt, keys=None):
         """obtain token counts from a single document"""
 
-        scale_fun = _unit_fun
-        if scale_overlap == "sqrt":
-            scale_fun = sqrt
-        elif scale_overlap == "sq":
-            scale_fun = _sq_fun
-
+        if type(scale_fun) is str:
+            scale_fun = scale_overlap_fun(scale_fun)
         parse = self.parse
         result = dict()
-        for k, data in doc.items():
+        if keys is None:
+            keys = list(doc.keys())
+        for k in keys:
+            if k not in doc:
+                continue
+            data = doc[k]
             if type(data) is dict:
                 data = [str(v) for v in data.values()]
             result[k] = parse(str(data), scale_fun)
@@ -92,6 +92,8 @@ class Kmerizer:
         :return: Counter, map from tokens to a scaling-adjusted count
         """
 
+        if type(scale_fun) is str:
+            scale_fun = scale_overlap_fun(scale_fun)
         k = self.k
         k2 = self.k2
         alphabet = self.alphabet
@@ -134,3 +136,11 @@ def _sq_fun(x):
     """square function"""
     return x*x
 
+
+def scale_overlap_fun(scale_overlap="sqrt"):
+    result = _unit_fun
+    if scale_overlap == "sqrt":
+        result = sqrt
+    elif scale_overlap == "sq":
+        result = _sq_fun
+    return result
