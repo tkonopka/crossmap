@@ -5,13 +5,16 @@ Tests for decomposing documents into basis vectors
 import unittest
 from os.path import join
 from crossmap.crossmap import Crossmap
-from crossmap.tools import yaml_document
+from crossmap.tools import read_yaml_documents
 from .tools import remove_crossmap_cache
 
 
 data_dir = join("tests", "testdata")
 config_file= join(data_dir, "config-similars.yaml")
 dataset_file = join(data_dir, "dataset-similars.yaml")
+
+# read the docs from the dataset
+similars_docs = read_yaml_documents(dataset_file)
 
 
 class CrossmapDecomposeTests(unittest.TestCase):
@@ -64,6 +67,18 @@ class CrossmapDecomposeTests(unittest.TestCase):
         self.assertEqual(decomposition["targets"], [])
         self.assertEqual(decomposition["coefficients"], [])
 
+    def test_decompose_factors(self):
+        """decomposition using a factor suggestion"""
+
+        # this document is most similar to B2 and C1
+        doc = dict(data="Bob Bravo Benjamin Charlie Clare. Bob Bravo.")
+        # standard decomposition
+        plain = self.crossmap.decompose(doc, "targets", n=2)
+        self.assertListEqual(list(plain["targets"]), ["B2", "C1"])
+        # decomposition can take a factor suggestion
+        result = self.crossmap.decompose(doc, "targets", n=2, factors=["B1"])
+        self.assertListEqual(list(result["targets"]), ["B1", "C1"])
+
 
 class CrossmapDecomposeBatchTests(unittest.TestCase):
     """Decomposing objects onto targets - in batch"""
@@ -73,12 +88,7 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
         cls.crossmap = Crossmap(config_file)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        targets = dict()
-        targets_file = cls.crossmap.settings.data_files["targets"]
-        with open(targets_file, "rt") as f:
-            for id, doc in yaml_document(f):
-                targets[id] = doc
-        cls.targets = targets
+        cls.targets = similars_docs
 
     @classmethod
     def tearDownClass(cls):

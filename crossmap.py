@@ -16,7 +16,7 @@ from json import dumps, loads
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap, validate_dataset_label
 from crossmap.info import CrossmapInfo
-from crossmap.tools import concise_exception_handler
+from crossmap.tools import concise_exception_handler, pretty_print
 
 # this is a command line utility
 if __name__ != "__main__":
@@ -51,6 +51,9 @@ parser.add_argument("--n", action="store",
 parser.add_argument("--diffusion", action="store",
                     default=None,
                     help="JSON of a dict setting diffusion strengths")
+parser.add_argument("--factors", action="store",
+                    default=None,
+                    help="comma-separated ids for decomposition")
 parser.add_argument("--pretty", action="store_true",
                     help="display prediction results using pretty-print")
 
@@ -91,31 +94,23 @@ if config.logging is not None:
 if not settings.valid:
     sys.exit()
 
-
-def print_pretty(x, pretty=False):
-    """helper to print something and terminate"""
-    if pretty:
-        x = dumps(x, indent=2)
-    else:
-        x = dumps(x)
-    # this try/except is necessary for some platforms
-    # it allows the user to pipe output to head on command line
-    try:
-        print(x)
-    except BrokenPipeError:
-        pass
+crossmap = None
+if action in {"search", "decompose"}:
+    logging.getLogger().setLevel(level=logging.ERROR)
+if action in {"build", "search", "decompose", "add"}:
+    crossmap = Crossmap(settings)
+if action in {"features", "diffuse", "distances", "matrix",
+              "counts", "summary"}:
+    crossmap = CrossmapInfo(settings)
 
 
 # ############################################################################
 # actions associated with primary functionality and batch processing
 
 if action == "build":
-    crossmap = Crossmap(settings)
     crossmap.build()
 
 if action in {"search", "decompose"}:
-    logging.getLogger().setLevel(level=logging.ERROR)
-    crossmap = Crossmap(settings)
     crossmap.load()
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     if config.dataset is None:
@@ -123,12 +118,15 @@ if action in {"search", "decompose"}:
     action_fun = crossmap.search_file
     if action == "decompose":
         action_fun = crossmap.decompose_file
+    factors = None
+    if config.factors is not None:
+        factors = config.factors.split(",")
     result = action_fun(config.data, config.dataset,
-                        n=config.n, diffusion=config.diffusion)
-    print_pretty(result, config.pretty)
+                        n=config.n, diffusion=config.diffusion,
+                        factors=factors)
+    pretty_print(result, config.pretty)
 
 if action == "add":
-    crossmap = Crossmap(settings)
     crossmap.load()
     idxs = crossmap.add_file(config.dataset, config.data)
 
@@ -137,7 +135,6 @@ if action == "add":
 # actions associated with diagnostics
 
 if action == "diffuse":
-    crossmap = CrossmapInfo(settings)
     result = []
     if config.data is not None:
         result.extend(crossmap.diffuse_file(config.data.split(","),
@@ -149,7 +146,7 @@ if action == "diffuse":
         result.extend(crossmap.diffuse_ids(config.dataset,
                                            config.ids.split(","),
                                            diffusion=config.diffusion))
-    print_pretty(result, config.pretty)
+    pretty_print(result, config.pretty)
 
 if action in {"distances", "vectors", "matrix"}:
     crossmap = CrossmapInfo(settings)
@@ -160,21 +157,19 @@ if action in {"distances", "vectors", "matrix"}:
         action_fun = crossmap.matrix
     result = action_fun(config.data, ids=config.ids.split(","),
                         diffusion=config.diffusion)
-    print_pretty(result, config.pretty)
+    pretty_print(result, config.pretty)
 
 if action == "counts":
-    crossmap = CrossmapInfo(settings)
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     result = crossmap.counts(config.dataset, features=config.ids.split(","))
-    print_pretty(result, config.pretty)
+    pretty_print(result, config.pretty)
 
 if action in {"features", "summary"}:
-    crossmap = CrossmapInfo(settings)
     crossmap.load()
     action_fun = crossmap.summary
     if config.action == "features":
         action_fun = crossmap.features
-    print_pretty(action_fun(), config.pretty)
+    pretty_print(action_fun(), config.pretty)
 
 
 # ############################################################################

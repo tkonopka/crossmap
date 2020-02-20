@@ -10,7 +10,8 @@ from scipy.sparse import csr_matrix, vstack
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
 from .diffuser import CrossmapDiffuser
-from .vectors import csr_residual, vec_decomposition
+from .vectors import csr_residual
+from .vectors import vec_decomposition as vec_decomp
 from .csr import dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
@@ -68,15 +69,13 @@ class Crossmap:
         self.db = None
         if not settings.valid:
             return
-
-        if not exists(self.settings.prefix):
-            mkdir(self.settings.prefix)
-
+        if not exists(settings.prefix):
+            mkdir(settings.prefix)
         self.indexer = CrossmapIndexer(settings)
         self.db = self.indexer.db
         self.encoder = self.indexer.encoder
         self.diffuser = None
-        self.default_label = list(self.settings.data_files.keys())[0]
+        self.default_label = list(settings.data_files.keys())[0]
 
     @property
     def valid(self):
@@ -94,10 +93,10 @@ class Crossmap:
         if not self.settings.valid:
             return
         self.indexer.build()
-        self.indexer.db.index("data")
-        self.diffuser = CrossmapDiffuser(self.settings, db=self.indexer.db)
+        self.db.index("data")
+        self.diffuser = CrossmapDiffuser(self.settings, db=self.db)
         self.diffuser.build()
-        self.diffuser.db.index("counts")
+        self.db.index("counts")
 
     def load(self):
         """load indexes from prepared files"""
@@ -191,7 +190,8 @@ class Crossmap:
         data = [{"feature": v[2], "value": v[1]} for i, v in enumerate(data)]
         return dict(query=query_name, features=data)
 
-    def search(self, doc, dataset, n=3, diffusion=None, query_name="query"):
+    def search(self, doc, dataset, n=3, diffusion=None, query_name="query",
+               **kwdargs):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "data_pos" and "data_neg"
@@ -199,6 +199,8 @@ class Crossmap:
         :param n: integer, number of target to report
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
+        :param kwdargs: other keyword arguments, ignored
+            (This is included for consistency with search() and decompose())
         :return: a dictionary containing an id, and lists to target ids and
             distances
         """
@@ -211,6 +213,7 @@ class Crossmap:
         return _search_result(targets, distances, query_name)
 
     def decompose(self, doc, dataset, n=3, diffusion=None,
+                  factors=None,
                   query_name="query"):
         """decompose of a query document in terms of targets
 
@@ -218,27 +221,35 @@ class Crossmap:
         :param dataset: string, identifier for dataset
         :param n: integer, number of target to report
         :param diffusion: dict, strength of diffusion on primary data
+        :param factors: list with item ids that must be included in the
+            decomposition
         :param query_name:  character, a name for the document
         :return: dictionary containing an id, and list with target ids and
             decomposition coefficients
         """
 
-        ids, coefficients, components = [], [], []
+        # shortcuts
         suggest = self.indexer.suggest
         get_data = self.indexer.db.get_data
-        decompose = vec_decomposition
         # representation of the query document, raw and diffused
         q_raw, q = self._prep_vector(doc, diffusion)
         q_indexes = set(q_raw.indices)
         q_dense = q.toarray()
         # loop for greedy decomposition
+        factors = factors if factors is not None else []
+        num_factors = len(factors)
+        ids, coefficients, components = [], [], []
         q_residual = q
         while len(components) < n and len(q_residual.data) > 0:
-            target, _ = suggest(q_residual, dataset, 1)
-            target_data = get_data(dataset, ids=target)
+            # use a suggested factors, or find a new factor via search
+            if len(components) < num_factors:
+                target = [factors[len(components)]]
+            else:
+                target, _ = suggest(q_residual, dataset, 1)
+            # residual mapped back onto an existing hit? quit early
             if target[0] in ids:
-                # residual mapped back onto an existing hit? quit early
                 break
+            target_data = get_data(dataset, ids=target)
             ids.append(target[0])
             target_vec = target_data[0]["data"]
             components.append(dimcollapse_csr(target_vec, q_indexes))
@@ -246,7 +257,7 @@ class Crossmap:
             q_modeled = q_dense
             if set(basis.indices) is not q_indexes:
                 q_modeled = dimcollapse_csr(q, set(basis.indices)).toarray()
-            coefficients = decompose(q_modeled, basis.toarray())
+            coefficients = vec_decomp(q_modeled, basis.toarray())
             if coefficients[-1] == 0:
                 break
             weights = csr_matrix(coefficients)
@@ -255,7 +266,7 @@ class Crossmap:
         # order the coefficients (decreasing size, most important first)
         if len(coefficients) > 0:
             # re-do decomposition using the entire q vector
-            coefficients = decompose(q_dense, basis.toarray())
+            coefficients = vec_decomp(q_dense, basis.toarray())
             first_id = ids[0]
             coefficients, ids = _ranked_decomposition(coefficients, ids)
             if len(ids) == 0:
@@ -263,31 +274,37 @@ class Crossmap:
 
         return _decomposition_result(ids, coefficients, query_name)
 
-    def search_file(self, filepath, dataset, n, diffusion=None):
+    def search_file(self, filepath, dataset, n, diffusion=None,
+                    **kwdargs):
         """find nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
         :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
         :param diffusion: dict, map with diffusion strengths
+        :param kwdargs: other keyword arguments, ignored
+            (This is included for consistency with decompose_file())
         :return: list with dicts, each as output by search()
         """
 
         return _action_file(self.search, filepath, dataset=dataset,
                             n=n, diffusion=diffusion)
 
-    def decompose_file(self, filepath, dataset, n=3, diffusion=None):
+    def decompose_file(self, filepath, dataset, n=3, diffusion=None,
+                       factors=None):
         """perform decomposition for documents defined in a file
 
         :param filepath: string, path to a file with documents
         :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
         :param diffusion: dict, map with diffusion strengths
+        :param factors: list with item ids that must be included in the
+            decomposition
         :return: list with dicts, each as output by decompose()
         """
 
         return _action_file(self.decompose, filepath, dataset=dataset,
-                            n=n, diffusion=diffusion)
+                            n=n, diffusion=diffusion, factors=factors)
 
 
 def validate_dataset_label(crossmap, label=None, log=True):

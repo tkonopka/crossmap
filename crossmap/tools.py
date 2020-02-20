@@ -6,6 +6,7 @@ import csv
 import gzip
 import yaml
 import pickle
+from json import dumps
 from logging import error
 from yaml import CBaseLoader
 from contextlib import contextmanager
@@ -170,6 +171,16 @@ def yaml_document(stream):
         yield parse_doc(data)
 
 
+def read_yaml_documents(filepath):
+    """read all documents from a file into a dictionary"""
+
+    result = dict()
+    with open_file(filepath, "rt") as f:
+        for id, doc in yaml_document(f):
+            result[id] = doc
+    return result
+
+
 def time():
     """make a timestamp string"""
 
@@ -187,4 +198,18 @@ def concise_exception_handler(exception_type, exception, traceback):
     # the non-essential elements to log only a brief message.
 
     error(exception)
+
+
+def pretty_print(x, pretty=False):
+    """helper to print something and terminate"""
+    if pretty:
+        x = dumps(x, indent=2)
+    else:
+        x = dumps(x)
+    # this try/except is necessary for some platforms
+    # it allows the user to pipe output to head on command line
+    try:
+        print(x)
+    except BrokenPipeError:
+        pass
 

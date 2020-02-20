@@ -6,7 +6,7 @@ import unittest
 from json import dumps
 from os.path import join
 from crossmap.crossmap import Crossmap
-from crossmap.tools import yaml_document
+from crossmap.tools import read_yaml_documents
 from .tools import remove_crossmap_cache
 
 
@@ -17,6 +17,10 @@ dataset_file = join(data_dir, "dataset.yaml")
 aux_file = join(data_dir, "documents.yaml")
 bad_file = join(data_dir, "bad_data_fields.yaml")
 
+# read the docs from the dataset
+dataset_docs = read_yaml_documents(dataset_file)
+aux_docs = read_yaml_documents(aux_file)
+
 
 class CrossmapSearchTests(unittest.TestCase):
     """Mapping new objects onto targets"""
@@ -26,15 +30,6 @@ class CrossmapSearchTests(unittest.TestCase):
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        # load all the target and auxiliary items
-        docs, auxs = dict(), dict()
-        with open(dataset_file, "rt") as f:
-            for id, doc in yaml_document(f):
-                docs[id] = doc
-        with open(aux_file, "rt") as f:
-            for id, doc in yaml_document(f):
-                auxs[id] = doc
-        cls.docs, cls.auxs = docs, auxs
 
     @classmethod
     def tearDownClass(cls):
@@ -43,7 +38,7 @@ class CrossmapSearchTests(unittest.TestCase):
     def test_output_is_serializable(self):
         """search output should be compatible with json"""
 
-        A = self.docs["A"]
+        A = dataset_docs["A"]
         result = self.crossmap.search(A, "targets", n=3)
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
@@ -60,7 +55,7 @@ class CrossmapSearchTests(unittest.TestCase):
     def test_search_targets_A(self):
         """target documents should map onto themselves"""
 
-        A = self.docs["A"]
+        A = dataset_docs["A"]
         result = self.crossmap.search(A, "targets", n=3)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 3)
@@ -70,7 +65,7 @@ class CrossmapSearchTests(unittest.TestCase):
     def test_search_targets_B(self):
         """target documents should map onto themselves"""
 
-        B = self.docs["B"]
+        B = dataset_docs["B"]
         result = self.crossmap.search(B, "targets", n=1)
         self.assertTrue(type(result) is dict)
         self.assertEqual(len(result["targets"]), 1)
@@ -107,12 +102,6 @@ class CrossmapSearchNoDocsTests(unittest.TestCase):
         cls.crossmap = Crossmap(config_single)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        # load all the target and auxiliary items
-        docs = dict()
-        with open(dataset_file, "rt") as f:
-            for id, doc in yaml_document(f):
-                docs[id] = doc
-        cls.docs = docs
 
     @classmethod
     def tearDownClass(cls):
@@ -120,7 +109,7 @@ class CrossmapSearchNoDocsTests(unittest.TestCase):
 
     def test_search_gives_output(self):
         """search should produce some output"""
-        A = self.docs["A"]
+        A = dataset_docs["A"]
         result = self.crossmap.search(A, "targets", n=3)
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
@@ -134,11 +123,6 @@ class CrossmapSearchBatchTests(unittest.TestCase):
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
         cls.feature_map = cls.crossmap.indexer.feature_map
-        targets = dict()
-        with open(dataset_file, "rt") as f:
-            for id, doc in yaml_document(f):
-                targets[id] = doc
-        cls.targets = targets
 
     @classmethod
     def tearDownClass(cls):
@@ -150,9 +134,9 @@ class CrossmapSearchBatchTests(unittest.TestCase):
         target_file = self.crossmap.settings.data_files["targets"]
         result = self.crossmap.search_file(target_file, "targets", 2)
         # all items should match the raw data and map onto themselves
-        self.assertEqual(len(result), len(self.targets))
+        self.assertEqual(len(result), len(dataset_docs))
         for i in range(len(result)):
-            self.assertTrue(result[i]["query"] in self.targets)
+            self.assertTrue(result[i]["query"] in dataset_docs)
             self.assertTrue(result[i]["targets"][0], result[i]["query"])
 
     def test_file_documents(self):
@@ -162,9 +146,9 @@ class CrossmapSearchBatchTests(unittest.TestCase):
         result = self.crossmap.search_file(docs_file, "targets", 2)
         for i in range(len(result)):
             if len(result[i]["targets"]) > 0:
-                self.assertTrue(result[i]["targets"][0] in self.targets)
+                self.assertTrue(result[i]["targets"][0] in dataset_docs)
             if len(result[i]["targets"]) > 1:
-                self.assertTrue(result[i]["targets"][1] in self.targets)
+                self.assertTrue(result[i]["targets"][1] in dataset_docs)
 
     def test_complains_improper_filed(self):
         """should raise if data file has improper content"""
