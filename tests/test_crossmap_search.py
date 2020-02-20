@@ -93,6 +93,16 @@ class CrossmapSearchTests(unittest.TestCase):
         self.assertEqual(len(result["targets"]), 2)
         self.assertEqual(set(result["targets"]), set(["U:A", "U:B"]))
 
+    def test_search_from_only_negative(self):
+        """search can accept only-negative values"""
+
+        doc = {"values": {"A": -1, "B": -1}}
+        result = self.crossmap.search(doc, "documents", n=2)
+        # targets should avoid database targets with A and B
+        self.assertEqual(len(result["targets"]), 2)
+        self.assertFalse("U:A" in set(result["targets"]))
+        self.assertFalse("U:B" in set(result["targets"]))
+
 
 class CrossmapSearchNoDocsTests(unittest.TestCase):
     """Mapping new objects onto targets without documents"""

@@ -24,11 +24,11 @@ alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
 alphabet_map = dict()
 for _ in range(len(alphabet)):
     alphabet_map[alphabet[_]] = (_, 1)
-vector_file = join(data_dir, "dataset-vectors.yaml")
-vector_items = dict()
-with open(vector_file, "r") as f:
+values_file = join(data_dir, "dataset-values.yaml")
+values_items = dict()
+with open(values_file, "r") as f:
     for id, doc in yaml_document(f):
-        vector_items[id] = doc
+        values_items[id] = doc
 
 
 class CrossmapEncoderTests(unittest.TestCase):
@@ -115,16 +115,16 @@ class CrossmapEncoderVectorTests(unittest.TestCase):
     def test_encode_document_w_vector_data(self):
         """process documents from text and from numerical data"""
 
-        abc1 = self.builder.document(vector_items["ABC1"])
-        abc2 = self.builder.document(vector_items["ABC2"])
+        abc1 = self.builder.document(values_items["ABC1"])
+        abc2 = self.builder.document(values_items["ABC2"])
         self.assertEqual(len(abc1.data), len(abc2.data))
         self.assertListEqual(list(abc1.data), list(abc2.data))
 
     def test_encode_document_w_vector_data_weighted(self):
         """process vector data with unequal weights"""
 
-        def1 = self.builder.document(vector_items["DEF1"])
-        def2 = self.builder.document(vector_items["DEF2"])
+        def1 = self.builder.document(values_items["DEF1"])
+        def2 = self.builder.document(values_items["DEF2"])
         self.assertEqual(len(def1.data), len(def2.data))
         self.assertListEqual(list(def1.indices), list(def2.indices))
         self.assertNotEqual(sum(def1.data), sum(def2.data))
@@ -134,8 +134,8 @@ class CrossmapEncoderVectorTests(unittest.TestCase):
     def test_encode_document_w_mixed_data(self):
         """process vector data with mixed data, text and vector"""
 
-        xyz1 = self.builder.document(vector_items["XYZ1"])
-        xyz2 = self.builder.document(vector_items["XYZ2"])
+        xyz1 = self.builder.document(values_items["XYZ1"])
+        xyz2 = self.builder.document(values_items["XYZ2"])
         self.assertEqual(len(xyz1.data), len(xyz2.data))
         self.assertListEqual(list(xyz1.indices), list(xyz2.indices))
         # one of the items in XYZ2 should be negative
