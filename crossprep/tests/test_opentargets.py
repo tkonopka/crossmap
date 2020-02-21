@@ -3,7 +3,9 @@ Tests for building crossmap datasets from opentargets json-like data
 """
 
 
+import io
 import unittest
+import yaml
 from os.path import join
 from crossprep.opentargets.build import build_opentargets_dataset
 
@@ -22,13 +24,18 @@ class BuildOpentargetsDatasetTests(unittest.TestCase):
 
     @classmethod
     def setUp(cls):
-        cls.dataset = build_opentargets_dataset(associations_file)
+        out = io.StringIO()
+        build_opentargets_dataset(associations_file, "MONDO", out)
+        data_str = out.getvalue()
+        out.close()
+        cls.dataset = yaml.load(data_str, Loader=yaml.CBaseLoader)
         cls.data1 = cls.dataset[id1]["data"]
 
     def test_length(self):
-        """dataset has three disorders"""
+        """dataset has two disease ids"""
 
-        self.assertEqual(len(self.dataset), 3)
+        # the whole file has three lines, two MONDO ids and one EFO id
+        self.assertEqual(len(self.dataset), 2)
 
     def test_data_components(self):
 

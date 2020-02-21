@@ -7,6 +7,7 @@ Usage: python crossprep.py command
 """
 
 import argparse
+import gzip
 import logging
 import sys
 from os import getcwd
@@ -59,11 +60,13 @@ parser.add_argument("--obo_aux", action="store",
                     help="types of auxiliary data to include",
                     default="parents,comments")
 
-# settings for obo
+# settings for opentargets
 parser.add_argument("--opentargets_associations", action="store",
                     help="path to associations file",
                     default=None)
-
+parser.add_argument("--opentargets_disease", action="store",
+                    help="prefix for disease ids",
+                    default=None)
 
 # settings for orphanet
 parser.add_argument("--orphanet_phenotypes", action="store",
@@ -166,7 +169,6 @@ if config.action == "obo":
         sys.exit()
     result = build_obo_dataset(config.obo, config.obo_root,
                                aux=config.obo_aux)
-    save_dataset(result, config.outdir, config.name)
 
 elif config.action == "pubmed_baseline":
     download_pubmed_baseline(config)
@@ -182,7 +184,10 @@ elif config.action == "wiktionary":
     build_wiktionary_dataset(config)
 
 elif config.action == "opentargets":
-    build_opentargets_dataset(config.opentargets_associations, result_file)
+    with gzip.open(result_file, "wt") as f:
+        build_opentargets_dataset(config.opentargets_associations,
+                                  config.opentargets_disease,
+                                  out=f)
 
 elif config.action == "orphanet":
     if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):

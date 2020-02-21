@@ -3,6 +3,7 @@ Build a dataset for crossmap from opentargets json-like downloads
 """
 
 import gzip
+import sys
 from json import loads
 from yaml import dump
 
@@ -38,10 +39,12 @@ def build_one_association(data):
     return id, {"data": data, "metadata": metadata}
 
 
-def build_opentargets_dataset(associations_path, out_path=None):
+def build_opentargets_dataset(associations_path, disease_prefix, out=sys.stdout):
     """create a dict containing gene-disease associations
 
     :param associations_path: character, path to json-like file
+    :param disease_prefix: prefix for disease ids (other associations ignored)
+    :param out: output stream
     :return: dictionary
     """
 
@@ -50,19 +53,11 @@ def build_opentargets_dataset(associations_path, out_path=None):
         open_fn = open
 
     # either create a dict in memory, or write into a stream
-    if out_path is None:
-        result = dict()
-        with open_fn(associations_path, "rt") as f:
-            for line in f:
-                id, item = build_one_association(loads(line))
-                result[id] = item
-        return result
-
-    with gzip.open(out_path, "wt") as out:
-        with open_fn(associations_path, "rt") as f:
-            for line in f:
-                id, item = build_one_association(loads(line))
+    with open_fn(associations_path, "rt") as f:
+        for line in f:
+            id, item = build_one_association(loads(line))
+            disease_id = item["metadata"]["disease_id"]
+            if disease_id.startswith(disease_prefix):
                 out.write(dump({id: item}))
 
-    return out_path
 
