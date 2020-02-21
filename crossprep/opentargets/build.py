@@ -18,25 +18,29 @@ def build_one_association(data):
     id = "OT:" + data["id"]
     metadata = {"id": id}
     tractability = []
-    gene_info, disease_info = "", ""
+    disease_info = ""
+    gene_name, gene_symbol = "", ""
     if "tractability" in target:
         for k, v in target["tractability"].items():
-            v_top = v["top_category"]
+            v_top = v["top_category"].replace("__", ", ")
+            v_top = v_top.replace("_", " ")
             if k == "smallmolecule":
                 k = "small molecule"
             if v_top != "Unknown":
-                tractability.append(k + " - "+v_top)
+                tractability.append(k + ", "+v_top)
     if "gene_info" in target:
-        gene_info = target["gene_info"]["symbol"]+" - "+target["gene_info"]["name"]
+        gene_symbol = target["gene_info"]["symbol"]
+        gene_name = target["gene_info"]["name"]
         metadata["gene_id"] = target["id"]
     if "efo_info" in disease:
         if "label" in disease["efo_info"]:
             disease_info = disease["efo_info"]["label"]
         metadata["disease_id"] = disease["id"]
-    data = {"gene": gene_info,
+    title = gene_symbol + " - " + disease_info
+    data = {"gene": gene_symbol + "; " + gene_name,
             "disease": disease_info,
             "tractability": tractability}
-    return id, {"data": data, "metadata": metadata}
+    return id, {"title": title, "data": data, "metadata": metadata}
 
 
 def build_opentargets_dataset(associations_path, disease_prefix, out=sys.stdout):
@@ -59,5 +63,4 @@ def build_opentargets_dataset(associations_path, disease_prefix, out=sys.stdout)
             disease_id = item["metadata"]["disease_id"]
             if disease_id.startswith(disease_prefix):
                 out.write(dump({id: item}))
-
 
