@@ -151,7 +151,7 @@ def combine_phenotypes_genes(phen_data, gene_data):
 
 
 def build_orphanet_dataset(phenotypes_path, genes_path):
-    """create a dict containing data individual orphanet discorder
+    """create a dict containing orphanet discorders
 
     :param phenotypes_path: character, path to xml with disorder-phenotypes
     :param genes_path: character, path to xml with disorder gene associations

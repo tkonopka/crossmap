@@ -10,9 +10,11 @@ import argparse
 import logging
 import sys
 from os import getcwd
+from os.path import join
 from crossmap.tools import concise_exception_handler
 from crossprep.tools import save_dataset
 from crossprep.obo.build import build_obo_dataset
+from crossprep.opentargets.build import build_opentargets_dataset
 from crossprep.orphanet.build import build_orphanet_dataset
 from crossprep.pubmed.baseline import download_pubmed_baseline
 from crossprep.pubmed.build import build_pubmed_dataset
@@ -34,8 +36,9 @@ sys.excepthook = concise_exception_handler
 parser = argparse.ArgumentParser(description="crossprep")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["obo", "orphanet", "pubmed", "pubmed_baseline",
-                             "genesets", "wikipedia", "wiktionary"])
+                    choices=["obo", "opentargets", "orphanet", "pubmed",
+                             "pubmed_baseline", "genesets", "wikipedia",
+                             "wiktionary"])
 
 # common arguments
 parser.add_argument("--outdir", action="store",
@@ -55,6 +58,12 @@ parser.add_argument("--obo_root", action="store",
 parser.add_argument("--obo_aux", action="store",
                     help="types of auxiliary data to include",
                     default="parents,comments")
+
+# settings for obo
+parser.add_argument("--opentargets_associations", action="store",
+                    help="path to associations file",
+                    default=None)
+
 
 # settings for orphanet
 parser.add_argument("--orphanet_phenotypes", action="store",
@@ -148,6 +157,10 @@ def missing_arguments(argnames):
 if config.name is None or config.name == "":
     config.name = config.action
 
+result = None
+result_file = join(config.outdir, config.name + ".yaml.gz")
+
+
 if config.action == "obo":
     if missing_arguments(["obo"]):
         sys.exit()
@@ -168,16 +181,21 @@ elif config.action == "wikipedia":
 elif config.action == "wiktionary":
     build_wiktionary_dataset(config)
 
+elif config.action == "opentargets":
+    build_opentargets_dataset(config.opentargets_associations, result_file)
+
 elif config.action == "orphanet":
     if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):
         sys.exit()
     result = build_orphanet_dataset(config.orphanet_phenotypes,
                                     config.orphanet_genes)
-    save_dataset(result, config.outdir, config.name)
 
 elif config.action == "genesets":
     result = build_gmt_dataset(config.gmt,
                                config.gmt_min_size, config.gmt_max_size)
+
+
+if result is not None:
     save_dataset(result, config.outdir, config.name)
 
 logging.info("done")
