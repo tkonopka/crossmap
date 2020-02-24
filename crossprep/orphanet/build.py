@@ -113,23 +113,72 @@ class OrphanetDisorderPhenotypes:
         return str(self.id)+"; "+str(self.name)+"; "+str(self.phenotypes)
 
 
-def combine_phenotypes_genes(phen_data, gene_data):
+class OrphanetDisorder:
+    """Container for disease description"""
+
+    def __init__(self, node):
+        """create a new container, parse data from an xml node"""
+
+        self.id = 0
+        self.name = ""
+        self.description = []
+
+        for child in node:
+            if child.tag == "OrphaNumber":
+                self.id = child.text
+            if child.tag == "Name":
+                self.name = child.text
+            elif child.tag == "TextualInformationList":
+                self._parse_textinfo_list(child)
+
+    def _parse_textinfo_list(self, node):
+        for child in node:
+            if child.tag == "TextualInformation":
+                self._parse_textinfo(child)
+
+    def _parse_textinfo(self, node):
+        for child in node:
+            if child.tag == "TextSectionList":
+                self._parse_textsection_list(child)
+
+    def _parse_textsection_list(self, node):
+        for child in node:
+            if child.tag == "TextSection":
+                self._parse_textsection(child)
+
+    def _parse_textsection(self, node):
+        for child in node:
+            if child.tag == "Contents":
+                self.description.append(child.text)
+
+    def __str__(self):
+        return str(self.id)+"; "+str(self.description)
+
+
+def orpha_id(id):
+    return "ORPHA:" + str(id)
+
+
+def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
     """Transfer data for objects into a crossmap format
 
     :param phen_data: dict mapping ids to OrphanetDisorderPhenotypes
     :param gene_data: dict mapping ids to OrphanetDisorderGenes
+    :param disorder_data: dict mapping ids to OrphanetDisorder
     :return: dict with a crossmap dataset
     """
 
     # create blank entries for all disorders
-    result = dict()
     all_ids = list(phen_data.keys())
     all_ids.extend(gene_data.keys())
+    all_ids.extend(disorder_data.keys())
+    result = dict()
     for id in all_ids:
-        orpha_id = "ORPHA:" + str(id)
-        result[orpha_id] = dict(title="",
-                                data=dict(title="", genes=[], phenotypes=[]),
-                                metadata=dict())
+        result[orpha_id(id)] = dict(title="",
+                                    data=dict(title="",
+                                              description="",
+                                              genes=[], phenotypes=[]),
+                                    metadata=dict(id=orpha_id(id)))
 
     # transfer information about phenotypes and genes
     for disorder in phen_data.values():
@@ -147,18 +196,29 @@ def combine_phenotypes_genes(phen_data, gene_data):
         data["data"]["genes"].extend(genes)
         data["metadata"]["hgnc_ids"] = disorder.hgnc
         data["metadata"]["ensembl_ids"] = disorder.ensembl
+    for disorder in disorder_data.values():
+        data = result[orpha_id(disorder.id)]
+        disorder_desc = ""
+        if len(disorder.description) == 1:
+            disorder_desc = disorder.description[0]
+        elif len(disorder.description) > 1:
+            disorder_desc = disorder.description
+        data["data"]["description"] = disorder_desc
+        data["title"] = data["data"]["title"] = disorder.name
     return result
 
 
-def build_orphanet_dataset(phenotypes_path, genes_path):
+def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
     """create a dict containing orphanet discorders
 
     :param phenotypes_path: character, path to xml with disorder-phenotypes
     :param genes_path: character, path to xml with disorder gene associations
+    :param nomenclature_path: character, path to xml with disorder
+        descriptions
     :return: dictionary
     """
 
-    phen_data, gene_data = dict(), dict()
+    phen_data, gene_data, nomenclature_data = dict(), dict(), dict()
     # parse the phenotype data, then gene data
     phenotypes_root = XML.parse(phenotypes_path).getroot()
     for n1 in phenotypes_root:
@@ -174,6 +234,12 @@ def build_orphanet_dataset(phenotypes_path, genes_path):
         for disorder in n1:
             data = OrphanetDisorderGenes(disorder)
             gene_data[data.id] = data
-    # create dataset
-    return combine_phenotypes_genes(phen_data, gene_data)
+    nomenclature_root = XML.parse(nomenclature_path).getroot()
+    for n1 in nomenclature_root:
+        if n1.tag != "DisorderList":
+            continue
+        for disorder in n1:
+            data = OrphanetDisorder(disorder)
+            nomenclature_data[data.id] = data
+    return combine_phenotypes_genes(phen_data, gene_data, nomenclature_data)
 

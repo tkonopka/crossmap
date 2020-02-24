@@ -73,6 +73,8 @@ parser.add_argument("--orphanet_phenotypes", action="store",
                     help="path to orphanet disorder-phenotype xml")
 parser.add_argument("--orphanet_genes", action="store",
                     help="path to orphanet disorder-gene xml")
+parser.add_argument("--orphanet_nomenclature", action="store",
+                    help="path to orphanet disorder-nomenclature xml")
 
 # setting for pubmed baseline
 parser.add_argument("--baseline_url", action="store",
@@ -198,10 +200,13 @@ elif config.action == "opentargets":
                                   "disease", out=f)
 
 elif config.action == "orphanet":
-    if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):
+    orphanet_fields = ["orphanet_phenotypes", "orphanet_genes",
+                       "orphanet_nomenclature"]
+    if missing_arguments(orphanet_fields):
         sys.exit()
     result = build_orphanet_dataset(config.orphanet_phenotypes,
-                                    config.orphanet_genes)
+                                    config.orphanet_genes,
+                                    config.orphanet_nomenclature)
 
 elif config.action == "genesets":
     result = build_gmt_dataset(config.gmt,

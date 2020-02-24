@@ -11,6 +11,7 @@ from crossprep.orphanet.build import build_orphanet_dataset
 data_dir = join("crossprep", "tests", "testdata")
 phenotypes_file = join(data_dir, "orphanet_HPO.xml")
 genes_file = join(data_dir, "orphanet_genes.xml")
+nomenclature_file = join(data_dir, "orphanet_nomenclature.xml")
 
 
 class BuildOrphanetDatasetTests(unittest.TestCase):
@@ -18,7 +19,9 @@ class BuildOrphanetDatasetTests(unittest.TestCase):
 
     @classmethod
     def setUp(cls):
-        cls.dataset = build_orphanet_dataset(phenotypes_file, genes_file)
+        cls.dataset = build_orphanet_dataset(phenotypes_file,
+                                             genes_file,
+                                             nomenclature_file)
 
     def test_disorders_length(self):
         """dataset has three disorders"""
@@ -112,3 +115,11 @@ class BuildOrphanetDatasetTests(unittest.TestCase):
         self.assertTrue("HGNC:30497" in str(meta))
         self.assertTrue("Disorder name" in str(data))
 
+    def test_disorder_descriptions(self):
+        """dataset should contain descriptions"""
+
+        result = self.dataset
+        data_1 = str(result["ORPHA:1"]["data"])
+        data_2 = str(result["ORPHA:2"]["data"])
+        self.assertTrue("Description of disorder A" in str(data_1))
+        self.assertTrue("Description of disorder B" in str(data_2))
