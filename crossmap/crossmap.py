@@ -206,7 +206,7 @@ class Crossmap:
         """
 
         raw, diffused = self._prep_vector(doc, diffusion)
-        if sum(raw.data) == 0:
+        if len(raw.data) == 0:
             return _search_result([], [], query_name)
         suggest = self.indexer.suggest
         targets, distances = suggest(diffused, dataset, n)

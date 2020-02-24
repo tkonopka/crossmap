@@ -41,9 +41,11 @@ class BuildOpentargetsDatasetTests(unittest.TestCase):
         """dataset has two disease ids"""
 
         # the whole file has three lines, two MONDO ids and one EFO id
-        self.assertEqual(len(self.disease_data), 2)
         # the whole file describes only one gene
-        self.assertEqual(len(self.gene_data), 1)
+        # expected counts in objects are multiplied by two because
+        # one set is for small molecules and another set is for antibodies
+        self.assertEqual(len(self.disease_data), 4)
+        self.assertEqual(len(self.gene_data), 2)
 
     def test_data_components(self):
         """all items should have a data field with components"""
@@ -67,6 +69,6 @@ class BuildOpentargetsDatasetTests(unittest.TestCase):
     def test_tractability(self):
         """item has tractability information"""
 
-        self.assertFalse("antibody" in str(self.disease_data))
+        self.assertTrue("antibody" in str(self.disease_data))
         self.assertTrue("molecule" in str(self.disease_data))
 
