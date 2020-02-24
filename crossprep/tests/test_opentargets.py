@@ -16,46 +16,57 @@ data_dir = join("crossprep", "tests", "testdata")
 # each line is a valid json object, but the lines are all independent
 associations_file = join(data_dir, "opentargets.json")
 
-id1 = "OT:ENSG00000121879-MONDO_0045024"
-
 
 class BuildOpentargetsDatasetTests(unittest.TestCase):
     """creating a dataset from json-like opentargets data."""
 
     @classmethod
     def setUp(cls):
-        out = io.StringIO()
-        build_opentargets_dataset(associations_file, "MONDO", out)
-        data_str = out.getvalue()
-        out.close()
-        cls.dataset = yaml.load(data_str, Loader=yaml.CBaseLoader)
-        cls.data1 = cls.dataset[id1]["data"]
+        # build gene-based dataset
+        out_gene = io.StringIO()
+        build_opentargets_dataset(associations_file, "MONDO",
+                                  "gene", out_gene)
+        gene_str = out_gene.getvalue()
+        out_gene.close()
+        cls.gene_data = yaml.load(gene_str, Loader=yaml.CBaseLoader)
+        # build disease-based dataset
+        out_disease = io.StringIO()
+        build_opentargets_dataset(associations_file, "MONDO",
+                                  "disease", out_disease)
+        disease_str = out_disease.getvalue()
+        out_disease.close()
+        cls.disease_data = yaml.load(disease_str, Loader=yaml.CBaseLoader)
 
     def test_length(self):
         """dataset has two disease ids"""
 
         # the whole file has three lines, two MONDO ids and one EFO id
-        self.assertEqual(len(self.dataset), 2)
+        self.assertEqual(len(self.disease_data), 2)
+        # the whole file describes only one gene
+        self.assertEqual(len(self.gene_data), 1)
 
     def test_data_components(self):
-
-        self.assertTrue("tractability" in self.data1)
-        self.assertTrue("gene" in self.data1)
-        self.assertTrue("disease" in self.data1)
+        """all items should have a data field with components"""
+        for k, v in self.disease_data.items():
+            self.assertTrue("tractability" in v["data"])
+            self.assertTrue("gene" in v["data"])
+            self.assertTrue("disease" in v["data"])
 
     def test_gene(self):
         """item has gene information"""
 
-        self.assertTrue("PIK3CA" in str(self.data1))
+        self.assertTrue("PIK3CA" in str(self.disease_data))
+        self.assertTrue("PIK3CA" in str(self.gene_data))
 
     def test_disease(self):
         """item has disease information"""
 
-        self.assertTrue("neoplastic" in str(self.data1))
+        self.assertTrue("neoplastic" in str(self.disease_data))
+        self.assertTrue("neoplastic" in str(self.gene_data))
 
     def test_tractability(self):
-        """item has disease information"""
+        """item has tractability information"""
 
-        self.assertTrue("antibody" in str(self.data1))
-        self.assertTrue("molecule" in str(self.data1))
+        self.assertFalse("antibody" in str(self.disease_data))
+        self.assertTrue("molecule" in str(self.disease_data))
 

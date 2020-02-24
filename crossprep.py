@@ -184,10 +184,18 @@ elif config.action == "wiktionary":
     build_wiktionary_dataset(config)
 
 elif config.action == "opentargets":
-    with gzip.open(result_file, "wt") as f:
+    gene_file = join(config.outdir, config.name + "-genes.yaml.gz")
+    disease_file = join(config.outdir, config.name + "-diseases.yaml.gz")
+    # this processing is in two passes
+    # this is somewhat wasteful but makes  implementation simpler
+    with gzip.open(gene_file, "wt") as f:
         build_opentargets_dataset(config.opentargets_associations,
                                   config.opentargets_disease,
-                                  out=f)
+                                  "gene", out=f)
+    with gzip.open(disease_file, "wt") as f:
+        build_opentargets_dataset(config.opentargets_associations,
+                                  config.opentargets_disease,
+                                  "disease", out=f)
 
 elif config.action == "orphanet":
     if missing_arguments(["orphanet_phenotypes", "orphanet_genes"]):
