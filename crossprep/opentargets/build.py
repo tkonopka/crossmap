@@ -50,10 +50,10 @@ class OpentargetsRawAssociation:
 class OpentargetsAssociationsGroup:
     """container for associations between diseases and genes"""
 
-    def __init__(self, association_type="small molecule"):
+    def __init__(self, tractability="small molecule"):
         self.disease_ids = []
         self.diseases = []
-        self.association_type = association_type
+        self.tractability = tractability
         self.genes = []
         self.gene_ids = []
         self.gene_symbols = []
@@ -69,7 +69,7 @@ class OpentargetsAssociationsGroup:
 
     def crossmap_item(self, association_type="gene"):
         """prepare an id and data item for crossmap"""
-        tt = self.association_type
+        tt = self.tractability
         data = {"tractability": tt}
         if association_type == "gene":
             id = "OT:" + tt.replace(" ", "_") + "-" + self.gene_ids[0]
@@ -90,7 +90,7 @@ class OpentargetsAssociationsGroup:
     def __str__(self):
         result = {"disease_ids": self.disease_ids,
                   "diseases": self.diseases,
-                  "association_type": self.association_type,
+                  "association_type": self.tractability,
                   "gene_ids": self.gene_ids,
                   "genes": self.genes}
         return str(result)
@@ -144,9 +144,9 @@ def build_opentargets_dataset(associations_path, disease_prefix,
             sm_id = "OT:small_molecule_" + assoc_id
             ab_id = "OT:antibody_" + assoc_id
             if sm_id not in result:
-                result[sm_id] = assoc_class()
+                result[sm_id] = assoc_class("small molecule")
             if ab_id not in result:
-                result[ab_id] = assoc_class()
+                result[ab_id] = assoc_class("antibody")
             if item.small_molecule is not None:
                 result[sm_id].add_gene(item.gene_id, item.gene_symbol,
                                        item.gene_name)
