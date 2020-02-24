@@ -56,10 +56,12 @@ class OpentargetsAssociationsGroup:
         self.association_type = association_type
         self.genes = []
         self.gene_ids = []
+        self.gene_symbols = []
 
     def add_gene(self, gene_id, gene_symbol, gene_name):
         self.genes.append(gene_symbol + ", " + gene_name)
         self.gene_ids.append(gene_id)
+        self.gene_symbols.append(gene_symbol)
 
     def add_disease(self, disease_id, disease):
         self.disease_ids.append(disease_id)
@@ -68,16 +70,18 @@ class OpentargetsAssociationsGroup:
     def crossmap_item(self, association_type="gene"):
         """prepare an id and data item for crossmap"""
         tt = self.association_type
+        data = {"tractability": tt}
         if association_type == "gene":
             id = "OT:" + tt.replace(" ", "_") + "-" + self.gene_ids[0]
             gene_symbol = self.genes[0].split(",")[0]
-            title = "Opentargets, " + gene_symbol + ", " + tt
+            title = "Diseases linked to " + gene_symbol + ", via " + tt
+            data["gene"] = self.genes[0]
+            data["disease"] = self.diseases
         else:
             id = "OT:" + tt.replace(" ", "_") + "-" + self.disease_ids[0]
-            title = "Opentargets, " + self.diseases[0] + ", " + tt
-        data = {"tractability": tt,
-                "gene": self.genes,
-                "disease": self.diseases}
+            title = tt + " targets for " + self.diseases[0]
+            data["gene"] = self.gene_symbols
+            data["disease"] = self.diseases[0]
         metadata = {"id": id,
                     "gene_id": self.gene_ids,
                     "disease_id": self.disease_ids}
@@ -85,10 +89,10 @@ class OpentargetsAssociationsGroup:
 
     def __str__(self):
         result = {"disease_ids": self.disease_ids,
-                "diseases": self.diseases,
-                "association_type": self.association_type,
-                "gene_ids": self.gene_ids,
-                "genes": self.genes}
+                  "diseases": self.diseases,
+                  "association_type": self.association_type,
+                  "gene_ids": self.gene_ids,
+                  "genes": self.genes}
         return str(result)
 
 
