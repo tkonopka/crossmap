@@ -17,6 +17,7 @@ class UserQueryMessage extends ChatMessage {
         super(props);
         this.toggleExtendedView = this.toggleExtendedView.bind(this);
         this.sendClone = this.sendClone.bind(this);
+        this.sendDeepClone = this.sendDeepClone.bind(this);
     }
 
     componentDidMount() {
@@ -25,8 +26,15 @@ class UserQueryMessage extends ChatMessage {
     toggleExtendedView() {
         this.setState((prevState) => ({extended: (prevState.extended+1) %2 }));
     }
+    /** shallow clone - copy only the text inputs **/
     sendClone() {
-       this.props.clone(JSON.parse(JSON.stringify(this.props.data)));
+        let shallow_copy = {"data_pos": this.props.data["data_pos"],
+                            "data_neg": this.props.data["data_neg"]};
+       this.props.clone(JSON.parse(JSON.stringify(shallow_copy)));
+    }
+    /** deeper clone - copies both text inputs and query settings **/
+    sendDeepClone() {
+        this.props.clone(JSON.parse(JSON.stringify(this.props.data)));
     }
 
     render() {
@@ -95,7 +103,12 @@ class UserQueryMessage extends ChatMessage {
                     <Grid container direction="row" justify="flex-end" alignItems="flex-end">
                         <Button onClick={this.sendClone}>
                             <img src="icons/clone.svg"
-                                 alt="clone settings"
+                                 alt="clone - text only"
+                                 className="chat-icon"/>
+                        </Button>
+                        <Button onClick={this.sendDeepClone}>
+                            <img src="icons/deepclone.svg"
+                                 alt="deep clone - text and settings"
                                  className="chat-icon"/>
                         </Button>
                         <Button onClick={this.toggleExtendedView}>

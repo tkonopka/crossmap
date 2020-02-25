@@ -1,7 +1,6 @@
 import React from 'react';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
-import Box from '@material-ui/core/Box';
 
 
 /**
@@ -35,13 +34,11 @@ class ControllerQueryForm extends React.Component {
                                value={this.props.data_pos}
                                onInput={(e) => this.props.update("data_pos", e.target.value)}
                                label="Query" margin="normal"/>
-                    <Box display={this.props.extended ? "block": "none"}>
-                        <TextField id="query-data-neg" fullWidth multiline rowsMax={8}
-                                   value={this.props.data_neg}
-                                   onKeyPress={(e) => this.handleKeyPress(e) }
-                                   onInput={(e) => this.props.update("data_neg", e.target.value)}
-                                   label="Query (negative weight)" margin="normal"/>
-                    </Box>
+                    <TextField id="query-data-neg" fullWidth multiline rowsMax={8}
+                               value={this.props.data_neg}
+                               onKeyPress={(e) => this.handleKeyPress(e) }
+                               onInput={(e) => this.props.update("data_neg", e.target.value)}
+                               label="Query (negative weight)" margin="normal"/>
                 </Grid>
             </Grid>
             </form>

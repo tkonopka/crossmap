@@ -15,7 +15,7 @@ class Controller extends React.Component {
     constructor(props) {
         super(props);
         this.handleChangeAction = this.handleChangeAction.bind(this);
-        this.toggleSearchView = this.toggleSearchView.bind(this);
+        this.showSearchView = this.showSearchView.bind(this);
         this.showState = this.showState.bind(this);
         this.showSettingsView = this.showSettingsView.bind(this);
         this.handleStateUpdate = this.handleStateUpdate.bind(this);
@@ -35,7 +35,7 @@ class Controller extends React.Component {
         console.log(JSON.stringify(props.datasets));
         console.log("Building controller with dataset: " + JSON.stringify(dataset));
         this.state = {
-            action: "search", view: "search", extended: 0,
+            action: "search", view: "search",
             dataset: dataset, n: 1,
             data_pos: "", data_neg: "",
             id: "", title: "", metadata: "",
@@ -53,8 +53,8 @@ class Controller extends React.Component {
         let view = (action === "add") ? "add" : "search";
         this.setState({"action": action, "view": view});
     };
-    toggleSearchView = function() {
-        this.setState((prevstate) => ({ extended: (prevstate.extended+1)%2, view: "search" }));
+    showSearchView = function() {
+        this.setState({ view: "search" });
     };
     showSettingsView = function() {
         this.setState({ view: "settings"});
@@ -109,22 +109,22 @@ class Controller extends React.Component {
     }
 
     render() {
-        let middlebox = [];
+        let middle = [];
         const view = this.state.view;
         if (view === "search") {
-            middlebox.push(<ControllerQueryForm key={0}
+            middle.push(<ControllerQueryForm key={0}
                                                 data_pos={this.state.data_pos}
                                                 data_neg={this.state.data_neg}
                                                 extended={this.state.extended}
                                                 update={this.handleStateUpdate}
                                                 send={this.composeAndSend}/>)
         } else if (view === "add") {
-            middlebox.push(<ControllerAddForm key={1}
+            middle.push(<ControllerAddForm key={1}
                                               settings={this.state}
                                               datasets={this.props.datasets}
                                               update={this.handleStateUpdate}/>)
         } else if (view === "settings") {
-            middlebox.push(<ControllerSettingsForm key={2}
+            middle.push(<ControllerSettingsForm key={2}
                                                    datasets={this.props.datasets}
                                                    settings={this.state}
                                                    update={this.handleStateUpdate}/>)
@@ -146,32 +146,30 @@ class Controller extends React.Component {
                     <Button>
                         <img src="icons/search.svg" alt="toggle small/extended search view"
                              className="controller-icon"
-                             onClick={this.toggleSearchView}
-                        />
+                             onClick={this.showSearchView}/>
                     </Button>
                     <Button>
                         <img src="icons/sliders-h.svg"
                              alt="Configuration"
                              className="controller-icon"
-                             onClick={this.showSettingsView}
-                        />
-                    </Button></Box>
-                    <Box><Button>
-                        <img src="icons/robot.svg"
-                             alt="showState"
-                             className="controller-icon"
-                             onClick={this.showState}
-                        />
+                             onClick={this.showSettingsView}/>
                     </Button></Box>
                 </Grid>
                 </Box>
             </Grid>
             <Grid item xs={9}>
-                {middlebox}
+                {middle}
             </Grid>
-            <Grid item xs={1} className="col-send" margin="normal"><Box m={1}>
-                <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
-            </Box></Grid>
+                <Grid item xs={1} className="col-send" margin="normal">
+                    <Box m={1}>
+                        <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
+                    </Box>
+                    <Box><Button>
+                        <img src="icons/robot.svg" alt="showState"
+                             className="controller-icon"
+                             onClick={this.showState}/>
+                    </Button></Box>
+                </Grid>
             </Grid></div>);
     }
 }
@@ -187,7 +185,7 @@ let JSONcopy = function(x) {
 };
 
 
-/** Helper determins if query boxes have some nonempty values **/
+/** Helper determines if query boxes have some nonempty values **/
 let hasPayload = function(state) {
     return (state["data_pos"].trim() !== "");
 };
