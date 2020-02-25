@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<JDBOR date="2020-02-24" version="0.1" comment="dataset based on orphanet nomenclature schema, with dummy entries, for testing">
+  <DisorderList count="2">
+    <Disorder>
+      <OrphaNumber>1</OrphaNumber>
+      <ExpertLink></ExpertLink>
+      <Name>Disorder name 1</Name>
+      <FlagValue>1</FlagValue>
+      <Totalstatus>Active</Totalstatus>
+      <SynonymList count="2">
+        <Synonym>Disorder synonym 1</Synonym>
+        <Synonym>Disorder synonym 2</Synonym>
+      </SynonymList>
+      <GroupOfType>
+        <Name>Disorder</Name>
+      </GroupOfType>
+      <DisorderType>
+        <Name>Disease</Name>
+      </DisorderType>
+      <DisorderDisorderAssociationList count="0">
+      </DisorderDisorderAssociationList>
+      <TextualInformationList>
+        <TextualInformation>
+          <TextSectionList>
+            <TextSection>
+              <TextSectionType>
+                <Name>Disease definition</Name>
+              </TextSectionType>
+              <Contents>Description of disorder A.</Contents>
+            </TextSection>
+          </TextSectionList>
+        </TextualInformation>
+      </TextualInformationList>
+      <AggregationLevelSection>
+        <AggregationLevelList>
+          <AggregationLevel>
+            <OrphanumberAggregation>5</OrphanumberAggregation>
+            <PreferredTerm>Disorder preferred term</PreferredTerm>
+            <AggregationLevelStatus>Applicable</AggregationLevelStatus>
+          </AggregationLevel>
+        </AggregationLevelList>
+      </AggregationLevelSection>
+    </Disorder>
+    <Disorder>
+      <OrphaNumber>2</OrphaNumber>
+      <ExpertLink></ExpertLink>
+      <Name>Disorder name 2</Name>
+      <FlagValue>1</FlagValue>
+      <Totalstatus>Active</Totalstatus>
+      <SynonymList count="1">
+        <Synonym>Disorder synonym 3</Synonym>
+      </SynonymList>
+      <GroupOfType>
+        <Name>Disorder</Name>
+      </GroupOfType>
+      <DisorderType>
+        <Name>Disease</Name>
+      </DisorderType>
+      <DisorderDisorderAssociationList>
+      </DisorderDisorderAssociationList>
+      <TextualInformationList>
+        <TextualInformation>
+          <TextSectionList>
+            <TextSection>
+              <TextSectionType>
+                <Name>Disease definition</Name>
+              </TextSectionType>
+              <Contents>Description of disorder B.</Contents>
+            </TextSection>
+          </TextSectionList>
+        </TextualInformation>
+      </TextualInformationList>
+      <AggregationLevelSection>
+        <AggregationLevelList count="1">
+          <AggregationLevel>
+            <OrphanumberAggregation>6</OrphanumberAggregation>
+            <PreferredTerm>3-methylcrotonyl-CoA carboxylase deficiency</PreferredTerm>
+            <AggregationLevelStatus>Applicable</AggregationLevelStatus>
+          </AggregationLevel>
+        </AggregationLevelList>
+      </AggregationLevelSection>
+    </Disorder>
+  </DisorderList>
+</JDBOR>
