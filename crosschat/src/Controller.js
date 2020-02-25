@@ -32,8 +32,6 @@ class Controller extends React.Component {
                 return null;
             })
         }
-        console.log(JSON.stringify(props.datasets));
-        console.log("Building controller with dataset: " + JSON.stringify(dataset));
         this.state = {
             action: "search", view: "search",
             dataset: dataset, n: 1,
@@ -62,20 +60,15 @@ class Controller extends React.Component {
     handleStateUpdate = function(key, value, group) {
         this.setState((prevstate) => {
             if (group === undefined) {
-                let obj = {};
-                obj[key] = value;
-                return obj
-            } else {
-                let obj = prevstate[group];
-                obj[key] = value;
-                let newstate = {};
-                newstate[group] = obj;
-                return newstate
+                return {[key]: value};
             }
+            let obj = prevstate[group];
+            obj[key] = value;
+            return {[group]: obj};
         })
     };
     showState = function() {
-        alert("controller state: "+JSON.stringify(this.state));
+        alert("controller state: " + JSON.stringify(this.state));
     };
     composeAndSend = function() {
         let dataset = this.state.dataset;
@@ -131,35 +124,33 @@ class Controller extends React.Component {
         }
         return(<div width={1} id="chat-controller" ref={(divElement) => this.controllerElement = divElement}>
             <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
-            <Grid item xs={2}>
-                <TextField select id="controller-action" variant="filled" label="Action"
-                           value={this.state.action} onChange={this.handleChangeAction}
-                           fullWidth margin="normal">
-                    <MenuItem value="search">Search</MenuItem>
-                    <MenuItem value="decompose">Decompose</MenuItem>
-                    <MenuItem value="diffuse">Diffuse</MenuItem>
-                    <MenuItem value="add">Train</MenuItem>
-                </TextField>
-                <Box m={1}>
-                <Grid container direction="row" justify="space-around" alignItems="baseline">
-                    <Box display={view === "add" ? "none" : "block"}>
-                    <Button>
-                        <img src="icons/search.svg" alt="toggle small/extended search view"
-                             className="controller-icon"
-                             onClick={this.showSearchView}/>
-                    </Button>
-                    <Button>
-                        <img src="icons/sliders-h.svg"
-                             alt="Configuration"
-                             className="controller-icon"
-                             onClick={this.showSettingsView}/>
-                    </Button></Box>
+                <Grid item xs={2}>
+                    <TextField select id="controller-action" variant="filled" label="Action"
+                               value={this.state.action} onChange={this.handleChangeAction}
+                               fullWidth margin="normal">
+                        <MenuItem value="search">Search</MenuItem>
+                        <MenuItem value="decompose">Decompose</MenuItem>
+                        <MenuItem value="diffuse">Diffuse</MenuItem>
+                        <MenuItem value="add">Train</MenuItem>
+                    </TextField>
+                    <Box m={1}>
+                    <Grid container direction="row" justify="space-around" alignItems="baseline">
+                        <Box display={view === "add" ? "none" : "block"}>
+                        <Button>
+                            <img src="icons/search.svg" alt="toggle small/extended search view"
+                                 className="controller-icon"
+                                 onClick={this.showSearchView}/>
+                        </Button>
+                        <Button>
+                            <img src="icons/sliders-h.svg"
+                                 alt="Configuration"
+                                 className="controller-icon"
+                                 onClick={this.showSettingsView}/>
+                        </Button></Box>
+                    </Grid>
+                    </Box>
                 </Grid>
-                </Box>
-            </Grid>
-            <Grid item xs={9}>
-                {middle}
-            </Grid>
+                <Grid item xs={9}>{middle}</Grid>
                 <Grid item xs={1} className="col-send" margin="normal">
                     <Box m={1}>
                         <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
