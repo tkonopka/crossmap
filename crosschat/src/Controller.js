@@ -27,16 +27,20 @@ class Controller extends React.Component {
             dataset = props.datasets[0]["label"];
             train_dataset = props.datasets[props.datasets.length-1]["label"];
             props.datasets.map((x) => {
-                let xlab = x["label"];
-                diffusion[xlab] = 0;
+                diffusion[x["label"]] = 0;
                 return null;
             })
         }
         this.state = {
-            action: "search", view: "search",
-            dataset: dataset, n: 1,
-            data_pos: "", data_neg: "",
-            id: "", title: "", metadata: "",
+            action: "search",
+            view: "search",
+            dataset: dataset,
+            n: 1,
+            data_pos: "",
+            data_neg: "",
+            id: "",
+            title: "",
+            metadata: "",
             diffusion: diffusion,
             train_dataset: train_dataset
         }

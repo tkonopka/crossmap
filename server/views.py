@@ -5,13 +5,15 @@ views for crossmap server
 from functools import wraps
 from json import dumps, loads
 from crossmap.crossmap import Crossmap
+from crossmap.settings import CrossmapSettings
 from os import environ
 from django.http import HttpResponse
 
 
 # load the crossmap object based on configuration saved in an OS variable
 config_path = environ.get('DJANGO_CROSSMAP_CONFIG_PATH')
-crossmap = Crossmap(config_path)
+settings = CrossmapSettings(config_path, require_data_files=False)
+crossmap = Crossmap(settings)
 crossmap.load()
 
 
