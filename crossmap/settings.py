@@ -46,6 +46,8 @@ class CrossmapSettingsDefaults:
         self.cache = CrossmapCacheSettings()
         # summary of state
         self.valid = False
+        # misc settings set at runtime
+        self.require_data_files = True
 
     def db_file(self):
         """path to db file"""
@@ -71,14 +73,18 @@ class CrossmapSettingsDefaults:
 class CrossmapSettings(CrossmapSettingsDefaults):
     """Container keeping and validating settings for a Crossmap project"""
 
-    def __init__(self, config, create_dir=False):
+    def __init__(self, config, create_dir=False, require_data_files=True):
         """create a settings object
 
         :param config: path to a configuration file
         :param create_dir: logical, create directory automatically
+        :param require_data_files: logical, set True to require access to
+            original data files. Set to False to allow using a configuration
+             despite missing data files.
         """
 
         super().__init__()
+        self.require_data_files = require_data_files
         if config is not None:
             if isdir(config):
                 self.dir = config
@@ -145,12 +151,14 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if not result["name"]:
             error(missing_msg + "valid name")
 
-        # target objects to map toward
-        self.data_files, skipped = query_files(self.data_files,
-                                               "data file", dir=dir)
-        result["data"] = len(self.data_files) > 0
-        if not result["data"]:
-            error(missing_msg + "'data'")
+        # data collections
+        result["data"] = True
+        if self.require_data_files:
+            self.data_files, skipped = query_files(self.data_files,
+                                                   "data file", dir=dir)
+            result["data"] = len(self.data_files) > 0
+            if not result["data"]:
+                error(missing_msg + "'data'")
 
         fmf = self.features.map_file
         if fmf is not None:

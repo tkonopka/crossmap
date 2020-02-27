@@ -87,10 +87,13 @@ if config.diffusion is not None:
         raise Exception("Error parsing diffusion json: "+str(e))
 action = config.action
 
-
-settings = CrossmapSettings(config.config)
 if config.logging is not None:
     logging.getLogger().setLevel(config.logging)
+
+# for build, settings check all data files are available
+# for other actions, the settings can be lenient
+settings = CrossmapSettings(config.config,
+                            require_data_files=(action == "build"))
 if not settings.valid:
     sys.exit()
 

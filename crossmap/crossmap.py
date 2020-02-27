@@ -75,7 +75,14 @@ class Crossmap:
         self.db = self.indexer.db
         self.encoder = self.indexer.encoder
         self.diffuser = None
-        self.default_label = list(settings.data_files.keys())[0]
+        # determine a default dataset for querying
+        try:
+            self.default_label = list(settings.data_files.keys())[0]
+        except IndexError:
+            if len(self.db.datasets):
+                self.default_label = list(self.db.datasets.keys())[0]
+            else:
+                raise Exception("could not determine default dataset label")
 
     @property
     def valid(self):

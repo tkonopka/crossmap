@@ -14,6 +14,7 @@ data_dir = join("tests", "testdata")
 config_simple = join(data_dir, "config-simple.yaml")
 config_noname = join(data_dir, "config-no-name.yaml")
 config_nodocs = join(data_dir, "config-single.yaml")
+config_simple_nodata = join(data_dir, "config-simple-nodata.yaml")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
@@ -116,6 +117,18 @@ class CrossmapBuildStandardTests(unittest.TestCase):
         docs_file = self.crossmap.settings.index_file("documents")
         self.assertTrue(exists(targets_file))
         self.assertTrue(exists(docs_file))
+
+    def test_connect_with_partial_config(self):
+        """after an instance is built, can connect to it"""
+
+        # create settings with very minimal settings
+        # (no data fields)
+        settings = CrossmapSettings(config_simple_nodata,
+                                    require_data_files=False)
+        instance = Crossmap(settings)
+        instance.load()
+        self.assertEqual(instance.valid, True)
+        self.assertEqual(instance.default_label, "targets")
 
 
 class CrossmapBuildNoDocsTests(unittest.TestCase):
