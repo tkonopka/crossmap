@@ -121,7 +121,8 @@ class OboBuilder:
             data_pos = self.content(term, extras=False)
             data_pos["emphasis"] = term.name
             data_neg = dict()
-            metadata = dict()
+            # always put id and parent ids into the metadata
+            metadata = dict(id=id, parents=list(obo.parents(id)))
             if aux_comments:
                 data_pos["comments"] = comments(term)
             if aux_synonyms:
@@ -136,10 +137,8 @@ class OboBuilder:
                     ancestor_content = flat_content(obo.terms[ancestor])
                     data_pos["ancestors"].append(ancestor_content)
             elif aux_parents:
-                metadata["parents"] = []
                 data_pos["parents"] = []
-                for parent in obo.parents(id):
-                    metadata["parents"].append(parent)
+                for parent in metadata["parents"]:
                     parent_content = flat_content(obo.terms[parent])
                     data_pos["parents"].append(parent_content)
             if aux_parents and (term.data is None or "def" not in term.data):
