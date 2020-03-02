@@ -2,6 +2,8 @@
 Build a dataset of crossmap using obo files.
 """
 
+import sys
+from yaml import dump
 from .obo import Obo
 
 
@@ -102,9 +104,7 @@ class OboBuilder:
         return result
 
     def build(self):
-        """transfer data from obo into a dictionary"""
-
-        result = dict()
+        """transfer data from obo into a dictionary, generator"""
 
         # shortcuts
         obo, hits = self.obo, self.hits
@@ -159,11 +159,10 @@ class OboBuilder:
             if len(data_neg):
                 obj["data_neg"] = data_neg
             obj["metadata"] = metadata
-            result[id] =obj
-        return result
+            yield id, obj
 
 
-def build_obo_dataset(obo_file, root_id=None, aux="none"):
+def build_obo_dataset(obo_file, root_id=None, aux="none", out=sys.stdout):
     """transfer data from an obo into a dictionary
 
     :param obo_file: path to obo file
@@ -171,9 +170,31 @@ def build_obo_dataset(obo_file, root_id=None, aux="none"):
         build a dataset for an ontology branch
     :param aux: character, the type of data to include in
         aux_pos and aux_neg fields
+    :param out: stream, for output
     :return: dictionary mapping ids to objects with
         data, aux_pos, aux_neg components
     """
 
     builder = OboBuilder(obo_file, root_id, aux)
-    return builder.build()
+    for item_id, item in builder.build():
+        out.write(dump({item_id: item}))
+
+
+def build_obo_dataset_dict(obo_file, root_id=None, aux="none", out=sys.stdout):
+    """transfer data from an obo into a dictionary
+
+    :param obo_file: path to obo file
+    :param root_id: character, id of root node. This can be used to
+        build a dataset for an ontology branch
+    :param aux: character, the type of data to include in
+        aux_pos and aux_neg fields
+    :param out: stream, for output
+    :return: dictionary mapping ids to objects with
+        data, aux_pos, aux_neg components
+    """
+
+    builder = OboBuilder(obo_file, root_id, aux)
+    result = dict()
+    for item_id, item in builder.build():
+        result[item_id] = item
+    return result

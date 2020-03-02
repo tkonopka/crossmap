@@ -169,8 +169,9 @@ result_file = join(config.outdir, config.name + ".yaml.gz")
 if config.action == "obo":
     if missing_arguments(["obo"]):
         sys.exit()
-    result = build_obo_dataset(config.obo, config.obo_root,
-                               aux=config.obo_aux)
+    with gzip.open(result_file, "wt") as f:
+        build_obo_dataset(config.obo, config.obo_root,
+                          aux=config.obo_aux, out=f)
 
 elif config.action == "pubmed_baseline":
     download_pubmed_baseline(config)
@@ -209,8 +210,12 @@ elif config.action == "orphanet":
                                     config.orphanet_nomenclature)
 
 elif config.action == "genesets":
-    result = build_gmt_dataset(config.gmt,
-                               config.gmt_min_size, config.gmt_max_size)
+    if missing_arguments(["gmt"]):
+        sys.exit()
+    with gzip.open(result_file, "wt") as f:
+        build_gmt_dataset(config.gmt,
+                          config.gmt_min_size, config.gmt_max_size,
+                          out=f)
 
 
 if result is not None:

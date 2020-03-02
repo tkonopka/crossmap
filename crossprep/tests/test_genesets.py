@@ -5,7 +5,7 @@ Tests for building crossmap datasets from gene sets
 
 import unittest
 from os.path import join
-from crossprep.genesets.build import build_gmt_dataset
+from crossprep.genesets.build import build_gmt_dataset_dict as build_gmt_dict
 
 
 data_dir = join("crossprep", "tests", "testdata")
@@ -18,7 +18,7 @@ class BuildGenesetDatasetTests(unittest.TestCase):
     def test_gmt_basic(self):
         """dataset has three genesets"""
 
-        result = build_gmt_dataset(gmt_file)
+        result = build_gmt_dict(gmt_file)
         self.assertEqual(len(result), 3)
         self.assertTrue("S:01" in str(list(result.keys())))
         self.assertTrue("small" in result["S:01"]["data"]["name"])
@@ -31,7 +31,7 @@ class BuildGenesetDatasetTests(unittest.TestCase):
     def test_gmt_skip_small(self):
         """dataset has three genesets"""
 
-        result = build_gmt_dataset(gmt_file, min_size=3)
+        result = build_gmt_dict(gmt_file, min_size=3)
         self.assertEqual(len(result), 2)
         self.assertFalse("S:01" in result)
         self.assertTrue("S:02" in result)
@@ -40,7 +40,7 @@ class BuildGenesetDatasetTests(unittest.TestCase):
     def test_gmt_skip_large(self):
         """dataset has three genesets"""
 
-        result = build_gmt_dataset(gmt_file, min_size=0, max_size=6)
+        result = build_gmt_dict(gmt_file, min_size=0, max_size=6)
         self.assertEqual(len(result), 2)
         self.assertTrue("S:01" in result)
         self.assertTrue("S:02" in result)
