@@ -49,7 +49,8 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
 
     def setUp(self):
         self.default = CrossmapFeatureSettings()
-        custom = {"max_number": 200,
+        custom = {"data": "dataset.yaml",
+                  "max_number": 200,
                   "min_count": 2,
                   "decoy": 0,
                   "weighting": [0.5, 0.5],
@@ -74,17 +75,26 @@ class CrossmapFeaturesSettingsTests(unittest.TestCase):
         self.assertEqual(self.default.weighting[0], 1)
         self.assertEqual(self.custom.weighting[1], 0.5)
 
-    def test_str(self):
-        """summarize settings in a string"""
-
-        self.assertTrue("0.5" in str(self.custom))
-
     def test_map_file(self):
         """declare a file source for features"""
 
         self.assertEqual(self.default.map_file, None)
         with_map = CrossmapFeatureSettings({"map": "table.tsv"}, "crossmap")
         self.assertEqual(with_map.map_file, join("crossmap", "table.tsv"))
+
+    def test_data_files(self):
+        """declare a yaml collection source for feature extraction."""
+
+        self.assertEqual(self.default.data_files, {})
+        custom_data = {"custom": "documents.yaml"}
+        with_data = CrossmapFeatureSettings({"data": custom_data}, "crossmap")
+        self.assertEqual(with_data.data_files,
+                         {"custom": join("crossmap", "documents.yaml")})
+
+    def test_str(self):
+        """summarize settings in a string"""
+
+        self.assertTrue("0.5" in str(self.custom))
 
 
 class CrossmapTokenSettingsTests(unittest.TestCase):

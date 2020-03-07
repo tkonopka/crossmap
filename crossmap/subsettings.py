@@ -38,6 +38,7 @@ class CrossmapFeatureSettings:
         self.min_count = 1
         self.weighting = [1, 0]
         self.map_file = None
+        self.data_files = dict()
 
         if config is None:
             return
@@ -53,6 +54,13 @@ class CrossmapFeatureSettings:
                 if data_dir is not None:
                     map_file = join(data_dir, val)
                 self.map_file = map_file
+            elif key == "data":
+                if type(val) is str:
+                    val = {"_": val}
+                self.data_files = val
+                if data_dir is not None:
+                    for k, v in val.items():
+                        self.data_files[k] = join(data_dir, v)
 
     def __str__(self):
         result = dict(features={"max_number": self.max_number,

@@ -137,8 +137,11 @@ def _feature_map(settings):
     if max_features == 0:
         max_features = maxsize
     tokenizer = CrossmapTokenizer(settings)
+    # get data files - from primary data and from features
+    data_files = settings.data_files.copy()
+    data_files.update(settings.features.data_files)
     # scan the files and count tokens
-    counts, n = _count_tokens(tokenizer, settings.data_files, progress)
+    counts, n = _count_tokens(tokenizer, data_files, progress)
     result = dict()
     for k, v in counts.most_common():
         if len(result) >= max_features:

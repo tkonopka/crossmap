@@ -64,7 +64,7 @@ parser.add_argument("--text", action="store",
                     help="comma-separated text items")
 
 
-# fine-tuning of predictions and output
+# fine-tuning of logging
 parser.add_argument("--logging", action="store",
                     default=None, choices=["WARNING", "INFO", "ERROR"],
                     help="logging levels, use WARNING, INFO, or ERROR")

@@ -1,0 +1,7 @@
+name: crossmap_advanced_features
+comment: configuration for one dataset, but using two datasets for extracting features
+data:
+  targets: dataset.yaml
+features:
+  data:
+    custom: documents.yaml

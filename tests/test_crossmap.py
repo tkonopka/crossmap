@@ -15,6 +15,7 @@ config_simple = join(data_dir, "config-simple.yaml")
 config_noname = join(data_dir, "config-no-name.yaml")
 config_nodocs = join(data_dir, "config-single.yaml")
 config_simple_nodata = join(data_dir, "config-simple-nodata.yaml")
+config_advanced_features = join(data_dir, "config-advanced-features.yaml")
 include_file = join(data_dir, "include.txt")
 dataset_file = join(data_dir, "dataset.yaml")
 
@@ -147,4 +148,27 @@ class CrossmapBuildNoDocsTests(unittest.TestCase):
         docs_file = crossmap.settings.index_file("documents")
         self.assertTrue(exists(targets_file))
         self.assertFalse(exists(docs_file))
+
+
+class CrossmapBuildAdvancedFeaturesTests(unittest.TestCase):
+    """Building a crossmap object with advanced feature settings"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_advanced_features")
+
+    def test_get_features_from_custom_file(self):
+        """build with one collection, get features from separate data"""
+
+        crossmap = Crossmap(config_advanced_features)
+        crossmap.build()
+
+        # the instance should have only one dataset
+        self.assertEqual(len(crossmap.db.datasets), 1)
+
+        # its feature map should have items from several data collections
+        feature_map = crossmap.indexer.feature_map
+        # from the primary data
+        self.assertTrue("alice" in feature_map)
+        # from files defined only via features: data: ...
+        self.assertTrue("alpha" in feature_map)
 
