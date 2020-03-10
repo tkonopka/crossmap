@@ -53,7 +53,7 @@ class UserQueryMessage extends ChatMessage {
             return null;
         });
         let settings_datasets = Object.keys(data.diffusion);
-        let diffusion_marks = [0, 1, 2, 3, 4].map((x) => ({value: x, label: x}));
+        let diffusion_marks = [0, 0.5, 1, 1.5, 2].map((x) => ({value: x, label: x}));
         let diffusion_rows = settings_datasets.map((d) => {
             return(<TableRow key={"diffusion_"+d}>
                 <TableCell variant="head">{d===settings_datasets[0] ? "diffusion" : ""}</TableCell>
@@ -62,7 +62,7 @@ class UserQueryMessage extends ChatMessage {
                                    value={data["diffusion"][d]}
                                    valueLabelDisplay="auto"
                                    marks={diffusion_marks}
-                                   min={0} max={4}/>
+                                   min={0} max={2}/>
                 </TableCell>
             </TableRow>)
         });
