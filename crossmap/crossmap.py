@@ -104,6 +104,7 @@ class Crossmap:
         self.diffuser = CrossmapDiffuser(self.settings, db=self.db)
         self.diffuser.build()
         self.db.index("counts")
+        info("done")
 
     def load(self):
         """load indexes from prepared files"""
@@ -159,7 +160,7 @@ class Crossmap:
         with open_file(filepath, "rt") as f:
             for id, doc in yaml_document(f):
                 result.append(self.add(dataset, doc, id, rebuild=False))
-        info("Added "+str(len(result))+ " entries")
+        info("Added "+str(len(result)) + " entries")
         self.indexer.rebuild_index(dataset)
         return result
 

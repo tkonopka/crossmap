@@ -107,6 +107,9 @@ def _text_to_vec(tokens, component, feature_map):
         try:
             fm = feature_map[k]
         except KeyError:
+            # skips tokens that are not in the feature map
+            # the try/except construct is faster than
+            # if k not in feature_map: continue
             continue
         # these two branches are equivalent, but the first branch is a shortcut
         # for a common case

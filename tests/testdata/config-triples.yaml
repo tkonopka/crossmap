@@ -1,0 +1,7 @@
+name: crossmap_triples
+comment: a configuration designed to test diffusion in presence of
+  overlapping tokens.
+data:
+  targets: dataset-triples.yaml
+tokens:
+  k: 3

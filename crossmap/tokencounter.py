@@ -49,3 +49,11 @@ class TokenCounter:
 
         return self.data.keys()
 
+    def __str__(self):
+        """display a summary of the counted tokens"""
+        result = ["TokenCounter"]
+        for k in self.data.keys():
+            print(str(k))
+            result.append(str(self.data[k]) + "\t" + str(self.count[k]))
+        return "\n".join(result)
+

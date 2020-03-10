@@ -1,0 +1,21 @@
+T:
+  data: 000
+  metadata: dataset with 3-letter tokens and combinations
+T0:
+  data: abc bcd cde
+T1:
+  data: def efg fgh
+T2:
+  data: ghi hij ijk
+T3:
+  data: jkl klm lmn
+T4:
+  data: mno nop opq
+T5:
+  data: opq pqr qrs
+T6:
+  data: rst stu tuv
+T7:
+  data: uvw vwx wxy
+T8:
+  data: xyz

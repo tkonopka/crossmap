@@ -28,6 +28,16 @@ def token_counts(docs, components=("data", "data_pos", "data_neg")):
     return result
 
 
+def _unit_fun(x):
+    """unit function"""
+    return x
+
+
+def _sq_fun(x):
+    """square function"""
+    return x*x
+
+
 class Kmerizer:
     """A tokenizer of documents that splits words into kmers"""
 
@@ -43,7 +53,7 @@ class Kmerizer:
         """
 
         self.k = k
-        self.k2 = k2 if k2 is not None else 2*k
+        self.k2 = k2 if k2 is not None else k
         self.case_sensitive = case_sensitive
         if alphabet is None:
             alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -88,8 +98,8 @@ class Kmerizer:
         """parse a long string into tokens
 
         :param s: string
-        :param scale_fun: scaling function, used for overlapping tokens
-        :return: Counter, map from tokens to a scaling-adjusted count
+        :param scale_fun: scaling function used for overlapping tokens
+        :return: Counter, map from tokens to an adjusted count
         """
 
         if type(scale_fun) is str:
@@ -125,16 +135,6 @@ class CrossmapTokenizer(Kmerizer):
 
         super().__init__(k=settings.tokens.k,
                          alphabet=settings.tokens.alphabet)
-
-
-def _unit_fun(x):
-    """unit function"""
-    return x
-
-
-def _sq_fun(x):
-    """square function"""
-    return x*x
 
 
 def scale_overlap_fun(scale_overlap="sqrt"):
