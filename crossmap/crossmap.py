@@ -9,6 +9,8 @@ from os.path import exists
 from scipy.sparse import csr_matrix, vstack
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
+from .encoder import CrossmapEncoder
+from .tokenizer import CrossmapDiffusionTokenizer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual
 from .vectors import vec_decomposition as vec_decomp
@@ -73,7 +75,9 @@ class Crossmap:
             mkdir(settings.prefix)
         self.indexer = CrossmapIndexer(settings)
         self.db = self.indexer.db
+        # two encoders - for the primary encoding and for diffusion weights
         self.encoder = self.indexer.encoder
+        self.diff_tokenizer = CrossmapDiffusionTokenizer(settings)
         self.diffuser = None
         # determine a default dataset for querying
         try:
@@ -175,7 +179,7 @@ class Crossmap:
         v = self.encoder.document(doc)
         if diffusion is None:
             return v, v
-        w = self.encoder.document(doc, scale_fun="sq")
+        w = self.encoder.document(doc, tokenizer=self.diff_tokenizer)
         return v, self.diffuser.diffuse(v, diffusion, weight=w)
 
     def diffuse(self, doc, diffusion=None, query_name="", **kwdargs):

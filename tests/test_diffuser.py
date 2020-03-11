@@ -7,6 +7,7 @@ from os.path import join
 from crossmap.settings import CrossmapSettings
 from crossmap.indexer import CrossmapIndexer
 from crossmap.diffuser import CrossmapDiffuser
+from crossmap.tokenizer import CrossmapTokenizer, CrossmapDiffusionTokenizer
 from crossmap.diffuser import _pass_weights
 from .tools import remove_crossmap_cache
 from crossmap.vectors import sparse_to_dense
@@ -180,20 +181,14 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         cls.feature_map = cls.diffuser.feature_map
         cls.db = cls.diffuser.db
         cls.encoder = cls.indexer.encoder
+        cls.plain_tokenizer = CrossmapTokenizer(settings)
+        cls.diff_tokenizer = CrossmapDiffusionTokenizer(settings)
         # extract data vectors
         cls.data = dict()
         temp = cls.db.get_data(dataset="targets",
                                    ids=["L0", "L1", "L2", "L3", "L4"])
         for _ in temp:
             cls.data[_["id"]] = sparse_to_dense(_["data"])
-
-        # for debugging
-        #print("feature map")
-        #print(str(cls.feature_map))
-        #print("\n")
-        #for _ in cls.data:
-        #    print(str(_)+"\n"+str(cls.data[_]))
-        #print("\n")
 
     @classmethod
     def tearDownClass(cls):
@@ -234,8 +229,8 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
     def test_diffusion_shifts_away_from_longword(self):
         """encoding is reasonable after diffusion"""
 
-        v = self.encoder.document(self.long_b)
-        w = self.encoder.document(self.long_b, scale_fun="sq")
+        v = self.encoder.document(self.long_b, self.plain_tokenizer)
+        w = self.encoder.document(self.long_b, self.diff_tokenizer)
         v_dense = sparse_to_dense(v)
         # w_dense = sparse_to_dense(w)
         vd = self.diffuser.diffuse(v, dict(targets=5))

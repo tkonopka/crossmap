@@ -50,7 +50,8 @@ def _scale_overlap_fun(scale_overlap="sqrt"):
 class Kmerizer:
     """A tokenizer of documents that splits words into weighted kmers"""
 
-    def __init__(self, k=(5, 10), case_sensitive=False, alphabet=None):
+    def __init__(self, k=(5, 10), case_sensitive=False, alphabet=None,
+                 scale_fun="sqrt"):
         """configure a tokenizer
 
         :param k: pair of integer,
@@ -59,6 +60,10 @@ class Kmerizer:
             If one number is given, the recorded values will be (k, 2*k).
         :param case_sensitive: logical, if False, tokens will be lowercase
         :param alphabet: string with all possible characters
+        :param scale_fun: function that determines normalization applied
+            to tokens that come from overlapping text.
+            Use "sqrt" for conventional encoding.
+            Use "sq" for obtaining diffusion weights.
         """
 
         if type(k) is int or type(k) is float:
@@ -73,6 +78,10 @@ class Kmerizer:
         if not case_sensitive:
             alphabet = alphabet.lower()
         self.alphabet = set([_ for _ in alphabet])
+        # determine a scaling function for weights of overlapping tokens
+        if type(scale_fun) is str:
+            scale_fun = _scale_overlap_fun(scale_fun)
+        self.scale_fun = scale_fun
 
     def tokenize_path(self, filepath):
         """generator for ids and tokens from a data file
@@ -87,17 +96,14 @@ class Kmerizer:
             for id, doc in yaml_document(f):
                 yield id, tokenize(doc)
 
-    def tokenize(self, doc, scale_fun=sqrt, keys=None):
+    def tokenize(self, doc, keys=None):
         """obtain token counts from a single document
 
         :param doc: dictionary whose content to parse
-        :param scale_fun: function
         :param keys: items within the doc to process. Leave None
             to process all the components in doc
         """
 
-        if type(scale_fun) is str:
-            scale_fun = _scale_overlap_fun(scale_fun)
         parse = self.parse
         result = dict()
         if keys is None:
@@ -108,19 +114,17 @@ class Kmerizer:
             data = doc[k]
             if type(data) is dict:
                 data = [str(v) for v in data.values()]
-            result[k] = parse(str(data), scale_fun)
+            result[k] = parse(str(data))
         return result
 
-    def parse(self, s, scale_fun):
+    def parse(self, s):
         """parse a long string into tokens
 
         :param s: string
-        :param scale_fun: scaling function used for overlapping tokens
         :return: Counter, map from tokens to an adjusted count
         """
 
-        if type(scale_fun) is str:
-            scale_fun = _scale_overlap_fun(scale_fun)
+        scale_fun = self.scale_fun
         k1 = self.k[0]
         k2 = self.k[1]
         alphabet = self.alphabet
@@ -151,5 +155,19 @@ class CrossmapTokenizer(Kmerizer):
         """
 
         super().__init__(k=settings.tokens.k,
-                         alphabet=settings.tokens.alphabet)
+                         alphabet=settings.tokens.alphabet,
+                         scale_fun="sqrt")
 
+
+class CrossmapDiffusionTokenizer(Kmerizer):
+    """A Kmerizer specifically for encoding diffusion weights"""
+
+    def __init__(self, settings):
+        """Create a tokenizer object.
+
+        :param settings: object of class CrossmapSettings
+        """
+
+        super().__init__(k=settings.tokens.k,
+                         alphabet=settings.tokens.alphabet,
+                         scale_fun="sq")

@@ -3,15 +3,13 @@ Diffuser for crossmap vectors
 
 The diffuser is a class that can take a vector and diffuse
 values for certain features into other features. The way in which
-the diffusion spreads is controlled via connections store in a db.
+the diffusion spreads is controlled via connections stored in a db.
 """
 
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from numpy import array, sign
 from .db import CrossmapDB
-from .encoder import CrossmapEncoder
-from .tokenizer import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
@@ -42,8 +40,6 @@ class CrossmapDiffuser:
         for _, v in self.feature_map.items():
             weights[v[0]] = v[1]
         self.feature_weights = weights / weights.mean()
-        self.tokenizer = CrossmapTokenizer(self.settings)
-        self.encoder = CrossmapEncoder(self.feature_map, self.tokenizer)
         self.num_passes = settings.diffusion.num_passes
 
     def _set_empty_counts(self, dataset):
@@ -161,13 +157,10 @@ class CrossmapDiffuser:
         num_passes = self.num_passes
         f_weights = self.feature_weights
         hms = harmonic_multiply_sparse
-        #print("initial vector\n"+str(result))
         for pass_weight in _pass_weights(num_passes):
-            #print("pass weight "+str(pass_weight))
             last_result = result.copy()
             for corpus, value in strength.items():
                 diffusion_data = counts[corpus]
-                #print("diffusing "+str(corpus)+" "+str(value))
                 for di, ddata in diffusion_data.items():
                     # ddata[0] - values from a sparse vector
                     # ddata[1] - indexes matched to the values in ddata[0]
@@ -176,24 +169,17 @@ class CrossmapDiffuser:
                     row_norm = ddata[3]
                     if row_norm == 0.0:
                         continue
-                    #print(str(di) + " row_norm "+str(row_norm) + " "+str(ddata[2]))
                     # cap by row_norm (avoids over-diffusing into self)
                     data = ceiling_vec(ddata[0].copy(), row_norm)
-                    #print(str(data))
                     # avoid diffusion from important feature to inflate value
                     # of an unimportant feature
                     data = hms(f_weights, data, ddata[1], f_weights[di])
-                    #print(str(data))
                     # penalize diffusion from overlapping tokens
                     # multiplier = min(1.0, (w_dense[di]/v_dense[di]))
                     multiplier = w_dense[di]/v_dense[di]
-                    #print(str(di)+" multiplier: "+str(multiplier))
                     multiplier *= last_result[di] / row_norm
                     data *= pass_weight * value * multiplier
-                    #print("data: "+str(data))
-                    #print("indices "+str(ddata[1]))
                     result = add_sparse(result, data, ddata[1])
-                #print("vector\n"+str(result))
         return normalize_csr(csr_matrix(result))
 
 

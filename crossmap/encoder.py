@@ -5,9 +5,8 @@ Encoding documents into feature vectors
 import gzip
 from math import log2
 from numpy import zeros
-from .vectors import normalize_vec
-from .tokenizer import _scale_overlap_fun
 from scipy.sparse import csr_matrix
+from .vectors import normalize_vec
 from .tools import yaml_document
 
 
@@ -30,47 +29,49 @@ class CrossmapEncoder:
         for k, v in feature_map.items():
             self.inv_feature_map[v[0]] = k
 
-    def documents(self, filepaths, scale_fun="sqrt"):
+    def documents(self, filepaths, tokenizer=None):
         """generator to parsing data from disk files
 
         :param filepaths: paths to yaml documents
-        :param scale_fun: string, scaling type
+        :param tokenizer: Kmerizer, if None defaults to self.tokenizer
         :return: array with encoded  matrix and a dict mapping ids
             associated with each matrix row array with one string
         """
 
         encode_document = self.document
+        if tokenizer is None:
+            tokenizer = self.tokenizer
         if type(filepaths) is str:
             filepaths = [filepaths]
         for filepath in filepaths:
             open_fn = gzip.open if filepath.endswith(".gz") else open
             with open_fn(filepath, "rt") as f:
                 for id, doc in yaml_document(f):
-                    result = encode_document(doc, scale_fun)
+                    result = encode_document(doc, tokenizer)
                     title = doc["title"] if "title" in doc else ""
                     yield result, id, title
 
-    def document(self, doc, scale_fun="sqrt"):
+    def document(self, doc, tokenizer=None):
         """encode one document into a vector"""
 
-        if type(scale_fun) is str:
-            scale_fun = _scale_overlap_fun(scale_fun)
-        tokens = self.tokenizer.tokenize(doc, scale_fun, self.data_fields)
+        if tokenizer is None:
+            tokenizer = self.tokenizer
+        tokens = tokenizer.tokenize(doc, self.data_fields)
         # simple way out - document only has text data
         if "values" not in doc:
-            return self.encode(tokens, None)
+            return self._encode(tokens, None)
         # convert a key-value dictionary into feature-value dictionary
         values = dict()
-        parse = self.tokenizer.parse
+        parse = tokenizer.parse
         for k, v in doc["values"].items():
-            features = parse(k, scale_fun)
+            features = parse(k)
             for f in features.keys():
                 if f not in values:
                     values[f] = 0
                 values[f] += float(v) * features.data[f]
-        return self.encode(tokens, values)
+        return self._encode(tokens, values)
 
-    def encode(self, tokens, values=None):
+    def _encode(self, tokens, values=None):
         """encode one document into a vector
 
         :param tokens: dictionary with tokens for data, data_pos, data_neg
