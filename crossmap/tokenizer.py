@@ -38,6 +38,15 @@ def _sq_fun(x):
     return x*x
 
 
+def _scale_overlap_fun(scale_overlap="sqrt"):
+    result = _unit_fun
+    if scale_overlap == "sqrt":
+        result = sqrt
+    elif scale_overlap == "sq":
+        result = _sq_fun
+    return result
+
+
 class Kmerizer:
     """A tokenizer of documents that splits words into weighted kmers"""
 
@@ -79,10 +88,16 @@ class Kmerizer:
                 yield id, tokenize(doc)
 
     def tokenize(self, doc, scale_fun=sqrt, keys=None):
-        """obtain token counts from a single document"""
+        """obtain token counts from a single document
+
+        :param doc: dictionary whose content to parse
+        :param scale_fun: function
+        :param keys: items within the doc to process. Leave None
+            to process all the components in doc
+        """
 
         if type(scale_fun) is str:
-            scale_fun = scale_overlap_fun(scale_fun)
+            scale_fun = _scale_overlap_fun(scale_fun)
         parse = self.parse
         result = dict()
         if keys is None:
@@ -105,7 +120,7 @@ class Kmerizer:
         """
 
         if type(scale_fun) is str:
-            scale_fun = scale_overlap_fun(scale_fun)
+            scale_fun = _scale_overlap_fun(scale_fun)
         k1 = self.k[0]
         k2 = self.k[1]
         alphabet = self.alphabet
@@ -138,11 +153,3 @@ class CrossmapTokenizer(Kmerizer):
         super().__init__(k=settings.tokens.k,
                          alphabet=settings.tokens.alphabet)
 
-
-def scale_overlap_fun(scale_overlap="sqrt"):
-    result = _unit_fun
-    if scale_overlap == "sqrt":
-        result = sqrt
-    elif scale_overlap == "sq":
-        result = _sq_fun
-    return result

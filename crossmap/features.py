@@ -4,11 +4,13 @@ Constructing feature sets for a Crossmap analysis
 
 import csv
 from collections import Counter
-from logging import info
+from logging import info, error
 from math import log2
 from os.path import exists, basename
 from sys import maxsize
 from .tokenizer import CrossmapTokenizer
+from .db import CrossmapDB
+from .tools import read_dict
 
 
 # column titles for feature map files
@@ -82,40 +84,43 @@ def _feature_weights(count_map, N, model_weights):
     return {k: (v[0], w0 - w1*log2(v[1]/(N+1))) for k, v in map.items()}
 
 
-def feature_map(settings, use_cache=True):
+def feature_map(settings, features=None):
     """construct a dict with features
 
     :param settings: object of class CrossmapSettings
-    :param use_cache: logical, whether to use fetch data from cache
+    :param features: list with custom features
     :return: dictionary mapping tokens to 2-tuples with
         feature index and a weight.
         Features correspond to tokens from target files
         and most common tokens from document files.
     """
 
-    cache_file = settings.tsv_file("feature-map")
-    result = None
-    if use_cache and exists(cache_file):
-        info("Reading feature map from file: " + basename(cache_file))
-        result = read_feature_map(cache_file)
-        use_cache = False
-    if result is None:
-        result = _feature_map(settings)
-    info("Feature map size: "+str(len(result)))
-    if use_cache:
-        info("Saving feature map")
-        write_feature_map(result, settings)
-    return result
+    # attempt to use predefined file, or build a feature map from scratch
+    map_file = settings.features.map_file
+    if features is None and map_file is not None:
+        info("reading features from prepared dictionary")
+        result = read_dict(map_file, id_col="id",
+                           value_col="weight", value_fun=float)
+        return feature_dict_map(result)
+    # attempt to construct from a dict or list
+    if features is not None:
+        info("reading features from given list/dictionary")
+        return feature_dict_map(features)
+    info("Extracting features from data files")
+    return _feature_map(settings)
 
 
-def feature_dict_map(settings, weights):
-    """construct a dict with features from a weights dictionary"""
+def feature_dict_map(weights):
+    """construct a dict with features from a weights dictionary
+
+    :param weights: dictionary mapping features to numeric weights
+    :return: dictionary from features to a (index, weight)
+    """
 
     if type(weights) is dict:
         result = {k: (i, weights[k]) for i, k in enumerate(weights)}
     else:
         result = {k: (i, 1) for i, k in enumerate(weights)}
-    write_feature_map(result, settings)
     return result
 
 
@@ -151,4 +156,23 @@ def _feature_map(settings):
         result[k] = [len(result), v]
 
     return _feature_weights(result, n, settings.features.weighting)
+
+
+class CrossmapFeatures:
+
+    def __init__(self, settings, features=None):
+        """initialize indexes and their links with the crossmap db
+
+        :param settings:  CrossmapSettings object
+        :param features:  list with feature items (used for testing)
+        """
+
+        db = CrossmapDB(settings.db_file())
+        db.build()
+        self.map = db.get_feature_map()
+        if len(self.map) == 0:
+            self.map = feature_map(settings, features)
+            db.set_feature_map(self.map)
+            info("Saving feature map")
+            write_feature_map(self.map, settings)
 

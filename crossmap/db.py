@@ -75,10 +75,10 @@ class CrossmapDB:
     """Management of a DB for features and data vectors"""
 
     def __init__(self, db_file, cache_settings=None):
-        """sets up path to db, operations performed via functions"""
+        """sets up path to db"""
 
         self.db_file = db_file
-        self.n_features = None
+        self.n_features = self._n_features()
         self.datasets = self._datasets()
         # set up cache objects (uses sloppy cache by default)
         if cache_settings is None:
@@ -101,6 +101,17 @@ class CrossmapDB:
             c.execute("SELECT dataset, label FROM datasets")
             for row in c:
                 result[row["label"]] = row["dataset"]
+        return result
+
+    def _n_features(self):
+        """count number of features if the db exists"""
+
+        if not exists(self.db_file):
+            return None
+        with get_conn(self.db_file) as conn:
+            c = conn.cursor()
+            sql = "SELECT COUNT(*) FROM features"
+            result = c.execute(sql).fetchone()[0]
         return result
 
     @valid_dataset

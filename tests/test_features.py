@@ -5,7 +5,7 @@ Tests for turning documents into tokens
 import unittest
 from os.path import join, exists
 from crossmap.settings import CrossmapSettings
-from crossmap.features import feature_map
+from crossmap.features import feature_map, CrossmapFeatures
 from crossmap.features import read_feature_map, write_feature_map
 from .tools import remove_crossmap_cache
 
@@ -33,50 +33,14 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         all_indexes = set([v[0] for k,v in map.items()])
         self.assertEqual(len(all_indexes), len(map))
 
-    def test_feature_map_wo_cache(self):
-        """scan for features in targets and documents"""
-
-        self.assertFalse(exists(self.cache_file))
-        map = feature_map(self.settings, False)
-        self.assertFalse(exists(self.cache_file))
-        self.assertGreater(len(map), 2)
-        self.assertTrue("bob" in map)
-        self.assertTrue("g" in map)
-        # all items in map should be distinct
-        indexes = [v[0] for k, v in map.items()]
-        weights = [v[1] for k, v in map.items()]
-        self.assertEqual(max(indexes), len(map)-1)
-        self.assertGreater(min(weights), 0, "all weights should be positive")
-
-    def test_feature_map_w_cache(self):
-        """scan for features and record in cache"""
-
-        self.assertFalse(exists(self.cache_file))
-        # run the map, this should log and create a cache file
-        with self.assertLogs(level="INFO") as cm1:
-            map = feature_map(self.settings, True)
-        self.assertTrue(exists(self.cache_file))
-        self.assertTrue("Saving" in str(cm1.output))
-        # running again should use the cache value
-        with self.assertLogs(level="INFO") as cm2:
-            map = feature_map(self.settings, True)
-        self.assertTrue(exists(self.cache_file))
-        self.assertTrue("Reading" in str(cm2.output))
-        self.assertFalse("Extracting" in str(cm2.output))
-        # but can ignore cache file and extract from scratch
-        with self.assertLogs(level="INFO") as cm3:
-            feature_map(self.settings, False)
-        self.assertFalse("Reading" in str(cm3.output))
-        self.assertTrue("Extracting" in str(cm3.output))
-
     def test_skipping_partial_documents(self):
         """scan for features in targets, but not documents"""
 
         # with an intermediate number of required features,
         # some features will come from targets, some from documents.
         self.settings.features.max_number = 50
-        with self.assertLogs(level="INFO") as cm:
-            map = feature_map(self.settings, False)
+        with self.assertLogs(level="INFO"):
+            map = feature_map(self.settings)
         self.assertTrue("bob" in map)
         # map will have exactly the max features
         self.assertEqual(len(map), 50)
@@ -87,13 +51,13 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         """weights using constant and ic scaling"""
 
         # compute maps using different weightings
-        with self.assertLogs(level="INFO") as cm:
+        with self.assertLogs(level="INFO"):
             self.settings.features.weighting = [1,0]
-            map_const = feature_map(self.settings, False)
+            map_const = feature_map(self.settings)
             self.settings.features.weighting = [0, 1]
-            map_ic = feature_map(self.settings, False)
+            map_ic = feature_map(self.settings)
             self.settings.features.weighting = [1, 1]
-            map_mid = feature_map(self.settings, False)
+            map_mid = feature_map(self.settings)
         # maps should all contain same features, i.e. equal length
         self.assertEqual(len(map_const), len(map_ic))
         self.assertEqual(len(map_const), len(map_mid))
@@ -106,7 +70,7 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertLess(with_ic, map_ic["alice"][1])
         self.assertLess(with_ic, map_ic["uniqu"][1])
         self.assertEqual(map_ic["uniqu"][1], map_ic["token"][1])
-        # Because mixed map has high coefficient for both constnat and ic component,
+        # Because mixed map has high coefficient for both constant and ic,
         # all values should be higher than in either constant or ic maps
         with_mid = map_mid["with"][1]
         self.assertGreater(with_mid, with_ic)
@@ -118,9 +82,9 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         with self.assertLogs(level="INFO"):
             self.settings.features.max_number = 1000
             self.settings.features.min_count = 1
-            map1 = feature_map(self.settings, False)
+            map1 = feature_map(self.settings)
             self.settings.features.min_count = 2
-            map2 = feature_map(self.settings, False)
+            map2 = feature_map(self.settings)
         # map will have exactly the max features
         self.assertTrue("abcde" in map1)
         self.assertFalse("abcde" in map2)
@@ -139,7 +103,7 @@ class CrossmapFeatureMapWeightingTests(unittest.TestCase):
         settings = CrossmapSettings(config_constant_file, create_dir=True)
         with self.assertLogs(level="INFO") as cm:
             settings.features.weighting = [0, 1]
-            map_const = feature_map(settings, False)
+            map_const = feature_map(settings)
         self.assertTrue("Extracting" in str(cm.output))
         # all features should have >0 weights
         for k, v in map_const.items():
@@ -165,4 +129,23 @@ class CrossmapFeatureMapIOTests(unittest.TestCase):
         self.assertEqual(len(map2), len(map))
         self.assertEqual(map2["a"], map["a"])
         self.assertEqual(map2["b"], map["b"])
+
+
+class CrossmapFeaturesClassTests(unittest.TestCase):
+    """using the class to save features in database"""
+
+    def tearDown(self):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
+
+    def test_saves_disk_file(self):
+        """scan for features and record in cache"""
+
+        settings = CrossmapSettings(config_file, create_dir=True)
+        cache_file = settings.tsv_file("feature-map")
+        self.assertFalse(exists(cache_file))
+        # run the feature extraction, should create a cache file
+        with self.assertLogs(level="INFO") as cm1:
+            CrossmapFeatures(settings)
+        self.assertTrue(exists(cache_file))
+        self.assertTrue("Saving" in str(cm1.output))
 

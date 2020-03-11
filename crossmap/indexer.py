@@ -13,6 +13,7 @@ from .features import feature_map, feature_dict_map
 from .db import CrossmapDB
 from .tokenizer import CrossmapTokenizer
 from .encoder import CrossmapEncoder
+from .features import CrossmapFeatures
 from .vectors import all_zero, sparse_to_dense
 from .distance import euc_dist
 from .tools import read_dict
@@ -29,7 +30,7 @@ almost_sqrt2 = floor(sqrt2*1e7)/1e7
 class CrossmapIndexer:
     """Indexing data for crossmap"""
 
-    def __init__(self, settings, features=None):
+    def __init__(self, settings):
         """initialize indexes and their links with the crossmap db
 
         :param settings:  CrossmapSettings object
@@ -37,20 +38,19 @@ class CrossmapIndexer:
         """
 
         self.settings = settings
+        features = CrossmapFeatures(settings)
         tokenizer = CrossmapTokenizer(settings)
         self.db = CrossmapDB(self.settings.db_file())
         self.db.build()
-        self.feature_map = self._init_features(features)
-        if len(self.feature_map) == 0:
-            error("feature map is empty")
-        self.encoder = CrossmapEncoder(self.feature_map, tokenizer)
+        self.feature_map = features.map
+        self.encoder = CrossmapEncoder(features.map, tokenizer)
         self.indexes = dict()
         self.index_files = dict()
         # cache holding string identifiers for items in the db
         self.item_ids = dict()
 
-    def _init_features(self, features):
-        """determine the feature_map compoent from db, file, or from scratch"""
+    def _REMOVE_init_features(self, features):
+        """determine the feature_map component from db, file, or from scratch"""
 
         db_featuremap = self.db.get_feature_map()
         if len(db_featuremap) == 0:

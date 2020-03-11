@@ -6,6 +6,7 @@ import unittest
 from os.path import join, exists
 from crossmap.settings import CrossmapSettings
 from crossmap.indexer import CrossmapIndexer
+from crossmap.features import CrossmapFeatures
 from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
@@ -25,7 +26,9 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
     def setUp(self):
         settings = CrossmapSettings(config_plain, create_dir=True)
         settings.tokens.k = 10
-        self.indexer = CrossmapIndexer(settings, test_features)
+        # initialize the db with custom features
+        CrossmapFeatures(settings, features=test_features)
+        self.indexer = CrossmapIndexer(settings)
         self.feature_map = self.indexer.feature_map
         self.index_file = settings.index_file("targets")
 
@@ -67,8 +70,7 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         # the second indexer is created from scratch, with the same settings
         # build should detect presence of indexes and load instead
         with self.assertLogs(level="WARNING") as cm:
-            newindexer = CrossmapIndexer(self.indexer.settings,
-                                         self.indexer.feature_map)
+            newindexer = CrossmapIndexer(self.indexer.settings)
             newindexer.build()
         self.assertTrue("Skip" in str(cm.output))
         # after build, the indexer should be ready to use
@@ -99,7 +101,8 @@ class CrossmapIndexerSkippingTests(unittest.TestCase):
     def test_skip_certain_docs(self):
         settings = CrossmapSettings(config_plain, create_dir=True)
         settings.tokens.k = 10
-        indexer = CrossmapIndexer(settings, self.limited_features)
+        CrossmapFeatures(settings, features=self.limited_features)
+        indexer = CrossmapIndexer(settings)
         with self.assertLogs(level="WARNING") as cm:
             indexer.build()
         self.assertTrue("item" in str(cm.output))
@@ -112,7 +115,8 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
         settings.tokens.k = 10
-        cls.indexer = CrossmapIndexer(settings, test_features)
+        CrossmapFeatures(settings, features=test_features)
+        cls.indexer = CrossmapIndexer(settings)
         cls.feature_map = cls.indexer.feature_map
         cls.indexer.build()
 
@@ -201,7 +205,8 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
 
         settings = CrossmapSettings(config_single, create_dir=True)
         settings.tokens.k = 10
-        cls.indexer = CrossmapIndexer(settings, test_features)
+        CrossmapFeatures(settings, features=test_features)
+        cls.indexer = CrossmapIndexer(settings)
         cls.feature_map = cls.indexer.feature_map
         cls.indexer.build()
 
@@ -245,27 +250,27 @@ class CrossmapIndexerFixedFeaturemapTests(unittest.TestCase):
     def test_loads_features_from_file(self):
         """features should match exactly content of file"""
 
-        featuremap = self.indexer.feature_map
+        feature_map = self.indexer.feature_map
         # file has a limited number or tokens (alpha, beta, ..., echo)
-        self.assertEqual(len(featuremap), 8)
-        self.assertTrue("alpha" in featuremap)
-        self.assertTrue("echo" in featuremap)
-        self.assertTrue("entry" in featuremap)
-        self.assertFalse("alice" in featuremap)
+        self.assertEqual(len(feature_map), 8)
+        self.assertTrue("alpha" in feature_map)
+        self.assertTrue("echo" in feature_map)
+        self.assertTrue("entry" in feature_map)
+        self.assertFalse("alice" in feature_map)
 
     def test_feature_weights_from_file(self):
         """weights in file are not all equal to 1.0"""
 
-        featuremap = self.indexer.feature_map
-        self.assertEqual(featuremap["alpha"][1], 1.0)
-        self.assertNotEqual(featuremap["beta"][1], 1.0)
+        feature_map = self.indexer.feature_map
+        self.assertEqual(feature_map["alpha"][1], 1.0)
+        self.assertNotEqual(feature_map["beta"][1], 1.0)
 
     def test_transfers_features_into_db(self):
         """after creating indexes, features are stored in db"""
 
-        featuremap = self.indexer.feature_map
-        dbmap = self.indexer.db.get_feature_map()
-        self.assertEqual(len(featuremap), len(dbmap))
+        feature_map = self.indexer.feature_map
+        db_map = self.indexer.db.get_feature_map()
+        self.assertEqual(len(feature_map), len(db_map))
 
     def test_saves_features_file(self):
         """after creating indexes, copies features into project directory"""

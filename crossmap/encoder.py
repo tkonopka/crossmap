@@ -6,7 +6,7 @@ import gzip
 from math import log2
 from numpy import zeros
 from .vectors import normalize_vec
-from .tokenizer import scale_overlap_fun
+from .tokenizer import _scale_overlap_fun
 from scipy.sparse import csr_matrix
 from .tools import yaml_document
 
@@ -54,7 +54,7 @@ class CrossmapEncoder:
         """encode one document into a vector"""
 
         if type(scale_fun) is str:
-            scale_fun = scale_overlap_fun(scale_fun)
+            scale_fun = _scale_overlap_fun(scale_fun)
         tokens = self.tokenizer.tokenize(doc, scale_fun, self.data_fields)
         # simple way out - document only has text data
         if "values" not in doc:
