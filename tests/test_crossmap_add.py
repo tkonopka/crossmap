@@ -67,7 +67,7 @@ class CrossmapAddTests(unittest.TestCase):
         self.assertGreater(db.count_rows("manual", "data"), 0)
         # db should contain a data record with features from the doc
         doc_data = db.get_data("manual", ids=["T0"])[0]
-        fm = self.crossmap.indexer.feature_map
+        fm = self.crossmap.encoder.feature_map
         alice_idx = fm["alice"][0]
         self.assertEqual(doc_data["data"].shape[1], len(fm))
         self.assertGreater(doc_data["data"][0, alice_idx], 0)
@@ -158,7 +158,6 @@ class CrossmapAddBatchTests(unittest.TestCase):
     def setUpClass(cls):
         cls.crossmap = Crossmap(config_file)
         cls.crossmap.build()
-        cls.feature_map = cls.crossmap.indexer.feature_map
 
     @classmethod
     def tearDownClass(cls):

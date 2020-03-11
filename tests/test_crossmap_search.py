@@ -29,7 +29,6 @@ class CrossmapSearchTests(unittest.TestCase):
     def setUpClass(cls):
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
-        cls.feature_map = cls.crossmap.indexer.feature_map
 
     @classmethod
     def tearDownClass(cls):
@@ -111,7 +110,6 @@ class CrossmapSearchNoDocsTests(unittest.TestCase):
     def setUpClass(cls):
         cls.crossmap = Crossmap(config_single)
         cls.crossmap.build()
-        cls.feature_map = cls.crossmap.indexer.feature_map
 
     @classmethod
     def tearDownClass(cls):
@@ -132,7 +130,6 @@ class CrossmapSearchBatchTests(unittest.TestCase):
     def setUpClass(cls):
         cls.crossmap = Crossmap(config_plain)
         cls.crossmap.build()
-        cls.feature_map = cls.crossmap.indexer.feature_map
 
     @classmethod
     def tearDownClass(cls):

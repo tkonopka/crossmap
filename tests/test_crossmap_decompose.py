@@ -24,7 +24,6 @@ class CrossmapDecomposeTests(unittest.TestCase):
     def setUpClass(cls):
         cls.crossmap = Crossmap(config_file)
         cls.crossmap.build()
-        cls.feature_map = cls.crossmap.indexer.feature_map
 
     @classmethod
     def tearDownClass(cls):
@@ -87,7 +86,6 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
     def setUpClass(cls):
         cls.crossmap = Crossmap(config_file)
         cls.crossmap.build()
-        cls.feature_map = cls.crossmap.indexer.feature_map
         cls.targets = similars_docs
 
     @classmethod

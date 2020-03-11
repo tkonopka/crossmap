@@ -29,7 +29,6 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
         # initialize the db with custom features
         CrossmapFeatures(settings, features=test_features)
         self.indexer = CrossmapIndexer(settings)
-        self.feature_map = self.indexer.feature_map
         self.index_file = settings.index_file("targets")
 
     def tearDown(self):
@@ -117,7 +116,6 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         settings.tokens.k = 10
         CrossmapFeatures(settings, features=test_features)
         cls.indexer = CrossmapIndexer(settings)
-        cls.feature_map = cls.indexer.feature_map
         cls.indexer.build()
 
     @classmethod
@@ -207,7 +205,6 @@ class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):
         settings.tokens.k = 10
         CrossmapFeatures(settings, features=test_features)
         cls.indexer = CrossmapIndexer(settings)
-        cls.feature_map = cls.indexer.feature_map
         cls.indexer.build()
 
     @classmethod
@@ -242,6 +239,7 @@ class CrossmapIndexerFixedFeaturemapTests(unittest.TestCase):
         settings.tokens.k = 20
         cls.indexer = CrossmapIndexer(settings)
         cls.indexer.build()
+        cls.feature_map = cls.indexer.encoder.feature_map
 
     @classmethod
     def tearDownClass(cls):
@@ -250,27 +248,24 @@ class CrossmapIndexerFixedFeaturemapTests(unittest.TestCase):
     def test_loads_features_from_file(self):
         """features should match exactly content of file"""
 
-        feature_map = self.indexer.feature_map
         # file has a limited number or tokens (alpha, beta, ..., echo)
-        self.assertEqual(len(feature_map), 8)
-        self.assertTrue("alpha" in feature_map)
-        self.assertTrue("echo" in feature_map)
-        self.assertTrue("entry" in feature_map)
-        self.assertFalse("alice" in feature_map)
+        self.assertEqual(len(self.feature_map), 8)
+        self.assertTrue("alpha" in self.feature_map)
+        self.assertTrue("echo" in self.feature_map)
+        self.assertTrue("entry" in self.feature_map)
+        self.assertFalse("alice" in self.feature_map)
 
     def test_feature_weights_from_file(self):
         """weights in file are not all equal to 1.0"""
 
-        feature_map = self.indexer.feature_map
-        self.assertEqual(feature_map["alpha"][1], 1.0)
-        self.assertNotEqual(feature_map["beta"][1], 1.0)
+        self.assertEqual(self.feature_map["alpha"][1], 1.0)
+        self.assertNotEqual(self.feature_map["beta"][1], 1.0)
 
     def test_transfers_features_into_db(self):
         """after creating indexes, features are stored in db"""
 
-        feature_map = self.indexer.feature_map
         db_map = self.indexer.db.get_feature_map()
-        self.assertEqual(len(feature_map), len(db_map))
+        self.assertEqual(len(self.feature_map), len(db_map))
 
     def test_saves_features_file(self):
         """after creating indexes, copies features into project directory"""

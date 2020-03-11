@@ -166,7 +166,7 @@ class CrossmapBuildAdvancedFeaturesTests(unittest.TestCase):
         self.assertEqual(len(crossmap.db.datasets), 1)
 
         # its feature map should have items from several data collections
-        feature_map = crossmap.indexer.feature_map
+        feature_map = crossmap.indexer.encoder.feature_map
         # from the primary data
         self.assertTrue("alice" in feature_map)
         # from files defined only via features: data: ...

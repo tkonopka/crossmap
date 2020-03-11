@@ -9,14 +9,12 @@ from os import remove
 from os.path import exists
 from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
-from .features import feature_map, feature_dict_map
 from .db import CrossmapDB
 from .tokenizer import CrossmapTokenizer
 from .encoder import CrossmapEncoder
 from .features import CrossmapFeatures
 from .vectors import all_zero, sparse_to_dense
 from .distance import euc_dist
-from .tools import read_dict
 
 
 # this removes the INFO messages from nmslib
@@ -42,34 +40,11 @@ class CrossmapIndexer:
         tokenizer = CrossmapTokenizer(settings)
         self.db = CrossmapDB(self.settings.db_file())
         self.db.build()
-        self.feature_map = features.map
         self.encoder = CrossmapEncoder(features.map, tokenizer)
         self.indexes = dict()
         self.index_files = dict()
         # cache holding string identifiers for items in the db
         self.item_ids = dict()
-
-    def _REMOVE_init_features(self, features):
-        """determine the feature_map component from db, file, or from scratch"""
-
-        db_featuremap = self.db.get_feature_map()
-        if len(db_featuremap) == 0:
-            features_file = self.settings.features.map_file
-            if features is None and features_file is not None:
-                info("reading features from prepared dictionary")
-                features = read_dict(features_file, id_col="id",
-                                     value_col="weight", value_fun=float)
-            if features is None:
-                result = feature_map(self.settings)
-            else:
-                result = feature_dict_map(self.settings, features)
-            self.db.set_feature_map(result)
-        else:
-            if features is not None:
-                warning("features in constructor will be ignored")
-            result = db_featuremap
-
-        return result
 
     def clear(self):
         self.indexes = dict()
@@ -294,15 +269,15 @@ class CrossmapIndexer:
 
         if len(self.indexes) == 0:
             return False
-        if self.feature_map is None:
+        if self.encoder.feature_map is None:
             return False
-        return len(self.feature_map) > 0
+        return len(self.encoder.feature_map) > 0
 
     def __str__(self):
         """short description of the indexer structure"""
 
         result = ["Indexer",
-                  "Feature map: \t" + str(len(self.feature_map)),
+                  "Feature map: \t" + str(len(self.encoder.feature_map)),
                   "Num. Indexes:\t" + str(len(self.indexes))]
         return "\n".join(result)
 

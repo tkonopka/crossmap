@@ -27,8 +27,9 @@ class CrossmapInfo(Crossmap):
         self.load()
 
         # set up a conversion from indexes into feature strings
-        self.feature_map = self.indexer.feature_map
-        self.inv_feature_map = self.indexer.encoder.inv_feature_map
+        encoder = self.indexer.encoder
+        self.feature_map = encoder.feature_map
+        self.inv_feature_map = encoder.inv_feature_map
 
     def diffuse(self, doc, diffusion=None):
         """provide an explanation for diffusion in terms of original features
@@ -243,7 +244,7 @@ class CrossmapInfo(Crossmap):
         """extract feature information"""
 
         result = []
-        for k, v in self.indexer.feature_map.items():
+        for k, v in self.feature_map.items():
             result.append(dict(feature=k, index=v[0], weight=v[1]))
         return result
 
@@ -266,7 +267,7 @@ class CrossmapInfo(Crossmap):
 
         return dict(name=self.settings.name,
                     dir=self.settings.dir,
-                    features=len(self.indexer.feature_map),
+                    features=len(self.feature_map),
                     datasets=datasets)
 
 
