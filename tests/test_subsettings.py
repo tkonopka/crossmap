@@ -107,8 +107,8 @@ class CrossmapTokenSettingsTests(unittest.TestCase):
     def test_k(self):
         """length of kmers"""
 
-        self.assertEqual(self.default.k, 5)
-        self.assertEqual(self.custom.k, 8)
+        self.assertListEqual(self.default.k, [5, 10])
+        self.assertListEqual(self.custom.k, [8, 16])
 
     def test_alphabet(self):
         """settings are transfered from file into settings object"""

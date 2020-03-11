@@ -5,7 +5,7 @@ Tests for encoding documents into numeric vectors
 import unittest
 from math import sqrt
 from os.path import join
-from crossmap.tokens import Kmerizer
+from crossmap.tokenizer import Kmerizer
 from crossmap.encoder import CrossmapEncoder
 from crossmap.tools import yaml_document
 

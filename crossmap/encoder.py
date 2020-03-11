@@ -6,7 +6,7 @@ import gzip
 from math import log2
 from numpy import zeros
 from .vectors import normalize_vec
-from .tokens import scale_overlap_fun
+from .tokenizer import scale_overlap_fun
 from scipy.sparse import csr_matrix
 from .tools import yaml_document
 

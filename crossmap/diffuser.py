@@ -11,7 +11,7 @@ from scipy.sparse import csr_matrix
 from numpy import array, sign
 from .db import CrossmapDB
 from .encoder import CrossmapEncoder
-from .tokens import CrossmapTokenizer
+from .tokenizer import CrossmapTokenizer
 from .csr import normalize_csr, threshold_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector

@@ -8,7 +8,7 @@ from logging import info
 from math import log2
 from os.path import exists, basename
 from sys import maxsize
-from .tokens import CrossmapTokenizer
+from .tokenizer import CrossmapTokenizer
 
 
 # column titles for feature map files

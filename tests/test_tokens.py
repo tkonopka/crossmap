@@ -4,8 +4,8 @@ Tests for turning datasets into tokens
 
 import unittest
 from os.path import join
-from crossmap.tokens import token_counts
-from crossmap.tokens import kmers, Kmerizer
+from crossmap.tokenizer import token_counts
+from crossmap.tokenizer import kmers, Kmerizer
 
 data_dir = join("tests", "testdata")
 include_file = join(data_dir, "include.txt")
@@ -32,11 +32,17 @@ class KmersTests(unittest.TestCase):
 class KmerizerTests(unittest.TestCase):
     """Turning text data into kmer tokens"""
 
-    def test_init_small_k(self):
-        """Configure a tokenizer with custom k"""
+    def test_init_small_k_array(self):
+        """Configure a tokenizer with custom k (one value)"""
+
+        tokenizer = Kmerizer(k=[2, 3])
+        self.assertEqual(tokenizer.k, (2, 3))
+
+    def test_init_small_k_int(self):
+        """Configure a tokenizer with custom k (one value)"""
 
         tokenizer = Kmerizer(k=2)
-        self.assertEqual(tokenizer.k, 2)
+        self.assertEqual(tokenizer.k, (2, 4))
 
     def test_init_default(self):
         """Configure a tokenizer with default alphabet"""

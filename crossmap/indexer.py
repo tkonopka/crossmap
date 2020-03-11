@@ -11,7 +11,7 @@ from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
 from .features import feature_map, feature_dict_map
 from .db import CrossmapDB
-from .tokens import CrossmapTokenizer
+from .tokenizer import CrossmapTokenizer
 from .encoder import CrossmapEncoder
 from .vectors import all_zero, sparse_to_dense
 from .distance import euc_dist

@@ -39,21 +39,23 @@ def _sq_fun(x):
 
 
 class Kmerizer:
-    """A tokenizer of documents that splits words into kmers"""
+    """A tokenizer of documents that splits words into weighted kmers"""
 
-    def __init__(self, k=5, case_sensitive=False, alphabet=None, k2=None):
+    def __init__(self, k=(5, 10), case_sensitive=False, alphabet=None):
         """configure a tokenizer
 
-        :param k: integer, length of kmers (words will be split into
-            overlapping kmers)
+        :param k: pair of integer,
+            length of kmers (words will be split into overlapping kmers),
+            length of string that should be weighted as a unit.
+            If one number is given, the recorded values will be (k, 2*k).
         :param case_sensitive: logical, if False, tokens will be lowercase
         :param alphabet: string with all possible characters
-        :param k2: integer, length of kmers used in overlap weighting
-            This can be different to k to give less importance to long words
         """
 
-        self.k = k
-        self.k2 = k2 if k2 is not None else k
+        if type(k) is int or type(k) is float:
+            self.k = (int(k), 2*int(k))
+        else:
+            self.k = (k[0], k[1])
         self.case_sensitive = case_sensitive
         if alphabet is None:
             alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -104,8 +106,8 @@ class Kmerizer:
 
         if type(scale_fun) is str:
             scale_fun = scale_overlap_fun(scale_fun)
-        k = self.k
-        k2 = self.k2
+        k1 = self.k[0]
+        k2 = self.k[1]
         alphabet = self.alphabet
         if not self.case_sensitive:
             s = s.lower()
@@ -118,8 +120,8 @@ class Kmerizer:
             word = word.strip()
             for sub_word in word.split():
                 wlen = len(sub_word)
-                weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k + 1))
-                for _ in kmers(sub_word, k):
+                weight = scale_fun(max(1.0, wlen/k2) / max(1.0, wlen - k1 + 1))
+                for _ in kmers(sub_word, k1):
                     result.add(_.strip(), weight)
         return result
 

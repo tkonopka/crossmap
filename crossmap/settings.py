@@ -6,7 +6,7 @@ import yaml
 from logging import error, warning
 from os import getcwd, mkdir
 from os.path import join, exists, dirname, basename, isdir
-from .tokens import Kmerizer
+from .tokenizer import Kmerizer
 from .subsettings import \
     CrossmapLoggingSettings, \
     CrossmapServerSettings, \

@@ -4,24 +4,29 @@ Small classes for capturing small sets of settings for specialized contexts
 
 from os.path import join
 from yaml import dump
-from .tokens import Kmerizer
+from .tokenizer import Kmerizer
 
 
 # a tokenizer with default parameters
 default_tokenizer = Kmerizer()
 
 
-class CrossmapTokenSettings():
+class CrossmapTokenSettings:
     """Container for settings for kmer-based tokenizer"""
 
     def __init__(self, config=None):
-        self.k = 5
+        self.k = [5, 10]
         self.alphabet = None
 
         if config is not None:
             for key, val in config.items():
                 if key == "k":
-                    self.k = int(val)
+                    if type(val) is str:
+                        self.k = [int(val), 2*int(val)]
+                    elif type(val) is int:
+                        self.k = [val, 2*val]
+                    else:
+                        self.k = [int(_) for _ in val]
                 if key == "alphabet":
                     self.alphabet = val
 
