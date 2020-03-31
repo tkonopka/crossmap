@@ -144,6 +144,7 @@ class CrossmapServerSettings:
     def __init__(self, config=None):
         self.api_port = 8098
         self.ui_port = 8099
+        self.db_port = 8097
 
         if config is None:
             return
@@ -152,10 +153,13 @@ class CrossmapServerSettings:
                 self.api_port = int(val)
             elif key == "ui_port":
                 self.ui_port = int(val)
+            elif key == "db_port":
+                self.db_port = int(val)
 
     def __str__(self):
         result = dict(server={"api_port": self.api_port,
-                              "ui_port": self.ui_port})
+                              "ui_port": self.ui_port,
+                              "db_port": self.db_port})
         return dump(result)
 
 

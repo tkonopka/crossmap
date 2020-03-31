@@ -154,7 +154,7 @@ class CrossmapServerSettingsTests(unittest.TestCase):
     """Settings related to configuring servers"""
 
     def setUp(self):
-        ports = {"api_port": 8080, "ui_port": 8081 }
+        ports = {"api_port": 8080, "ui_port": 8081, "db_port": 8082}
         self.custom = CrossmapServerSettings(ports)
 
     def test_ports(self):
@@ -162,6 +162,7 @@ class CrossmapServerSettingsTests(unittest.TestCase):
 
         self.assertEqual(self.custom.api_port, 8080)
         self.assertEqual(self.custom.ui_port, 8081)
+        self.assertEqual(self.custom.db_port, 8082)
 
     def test_str(self):
         """summarize settings in a string"""

@@ -1,36 +1,32 @@
 """
-Tests for handling the crossmap data db (sqlite)
+Tests for handling the crossmap data db (mongodb)
 """
 
 import unittest
 from scipy.sparse import csr_matrix
 from os.path import join, exists
-from crossmap.db import CrossmapDB
+from crossmap.dbmongo import CrossmapMongoDB
 from crossmap.settings import CrossmapSettings
 from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
-test_feature_map = dict(w=(0,1),
-                        x=(1,1),
-                        y=(2,1),
-                        z=(3,0.5))
+test_feature_map = dict(w=(0, 1),
+                        x=(1, 1),
+                        y=(2, 1),
+                        z=(3, 0.5))
 
 
-class CrossmapDBBuildEmptyTests(unittest.TestCase):
+class CrossmapMongoDBBuildEmptyTests(unittest.TestCase):
     """Creating an empty DB with basic structure"""
 
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        db_file = settings.db_file()
-        cls.assertFalse(cls, exists(db_file))
         with cls.assertLogs(cls, level="INFO"):
-            db = CrossmapDB(db_file)
-            db.build()
+            db = CrossmapMongoDB(settings.name, settings.server.db_port)
             db.register_dataset("targets")
             db.register_dataset("documents")
-        cls.assertTrue(cls, exists(db_file))
         cls.db = db
 
     @classmethod
@@ -38,7 +34,7 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def test_db_empty_tables(self):
-        """all tables should initialy be empty database"""
+        """all tables should initially be empty database"""
 
         # all tables should be empty
         self.assertEqual(self.db.count_rows("targets", "data"), 0)
@@ -54,7 +50,7 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         """cannot extract data associated with a nonexistent label"""
 
         with self.assertRaises(Exception):
-            db.get_data(idxs=[0], dataset="abc")
+            self.db.get_data(idxs=[0], dataset="abc")
 
     def test_valid_labels(self):
         """db can signal that a new dataset label is allowed"""
@@ -86,37 +82,32 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         self.assertEqual(self.db.validate_dataset_label("trailing_"), -1)
 
 
-class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
+class CrossmapMongoDBBuildAndPopulateTests(unittest.TestCase):
     """Creating a DB, reseting, filling features"""
 
     def setUp(self):
         self.settings = CrossmapSettings(config_plain, create_dir=True)
-        self.db_file = self.settings.db_file()
+        self.db_name = self.settings.name
+        self.db_port = self.settings.server.db_port
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
-    def test_db_build_and_rebuild(self):
-        """build a db from a simple configuration"""
+    def test_db_rebuild(self):
+        """rebuild a db from a simple configuration"""
 
-        db = CrossmapDB(self.db_file)
-        # first pass can create a db with an info message
-        with self.assertLogs(level="INFO") as cm1:
-            db.build()
-        self.assertTrue("Creating" in str(cm1.output))
-        # second build can remove existing file and create a new db
+        db = CrossmapMongoDB(self.db_name, self.db_port)
+        # rebuilding
         with self.assertLogs(level="WARNING") as cm2:
-            db.build(reset=True)
+            db.rebuild()
         self.assertTrue("Removing" in str(cm2.output))
 
     def test_db_feature_map(self):
         """build process produces a feature map in db"""
 
-        db = CrossmapDB(self.db_file)
-        with self.assertLogs(level="INFO"):
-            db.build()
+        db = CrossmapMongoDB(self.db_name, self.db_port)
         # store a feature map
-        self.assertEqual(db.n_features, None)
+        self.assertEqual(db.n_features, 0)
         db.set_feature_map(test_feature_map)
         self.assertEqual(db.n_features, len(test_feature_map))
         # retrieve a feature map
@@ -126,18 +117,16 @@ class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
             self.assertListEqual(list(v), list(test_feature_map[k]))
 
 
-class CrossmapDBAddGetTests(unittest.TestCase):
+class CrossmapMongoDBAddGetTests(unittest.TestCase):
     """Add/Get data from a db"""
 
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        db = CrossmapDB(settings.db_file())
-        with cls.assertLogs(cls, level="INFO"):
-            db.build()
-            db.register_dataset("targets")
-            db.register_dataset("documents")
-            db.set_feature_map(test_feature_map)
+        db = CrossmapMongoDB(settings.name, settings.server.db_port)
+        db.register_dataset("targets")
+        db.register_dataset("documents")
+        db.set_feature_map(test_feature_map)
         # add data to documents
         ids = ["a", "b"]
         idxs = [0, 1]
@@ -176,7 +165,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
     def test_dataset_unusual_identifiers(self):
         """cannot use strange identifiers to refer to datasets"""
 
-        # a float is an unacceptable identifer
+        # a float is an unacceptable identifier
         with self.assertRaises(Exception):
             self.db.dataset_size(1.2)
 
@@ -196,6 +185,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
 
     def test_get_data_a(self):
         """can retrieve data vectors"""
+
         A = self.db.get_data("documents", idxs=[0])
         self.assertEqual(len(A), 1)
         self.assertEqual(A[0]["id"], "a")
@@ -204,6 +194,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
 
     def test_get_data_b(self):
         """can retrieve data vectors"""
+
         B = self.db.get_data("documents", ids=["b"])
         self.assertEqual(len(B), 1)
         self.assertEqual(B[0]["id"], "b")
@@ -231,18 +222,15 @@ class CrossmapDBAddGetTests(unittest.TestCase):
         self.assertEqual(len(documents_ids), 2)
 
 
-class CrossmapDBQueriesTests(unittest.TestCase):
+class CrossmapMongoDBQueriesTests(unittest.TestCase):
     """Querying DB """
 
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        cls.db_file = settings.db_file()
-        cls.db = CrossmapDB(cls.db_file)
-        with cls.assertLogs(cls, level="INFO"):
-            cls.db.build()
-            cls.db.register_dataset("targets")
-            cls.db.register_dataset("documents")
+        cls.db = CrossmapMongoDB(settings.name, settings.server.db_port)
+        cls.db.register_dataset("targets")
+        cls.db.register_dataset("documents")
         # insert some data
         target_ids = [_ + "_target" for _ in ["a", "b"]]
         doc_ids = [_ + "_doc" for _ in ["a", "b"]]
@@ -258,7 +246,7 @@ class CrossmapDBQueriesTests(unittest.TestCase):
     def test_raises_unknown_table(self):
         # raise errors when query strange table
         with self.assertRaises(Exception):
-            self.db.ids("abc", [0,1])
+            self.db.ids("abc", [0, 1])
 
     def test_ids_from_named_table(self):
         """standard retrieval, user specifying table by string name"""
@@ -269,7 +257,7 @@ class CrossmapDBQueriesTests(unittest.TestCase):
                              {0: "a_doc", 1: "b_doc"})
 
     def test_ids_empty_queries(self):
-        """retrieval, input is emptyy"""
+        """retrieval, input is empty"""
 
         self.assertDictEqual(self.db.ids("targets", []), dict())
 

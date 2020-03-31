@@ -20,6 +20,7 @@ diffusion:
 server:
   api_port: 8080
   ui_port: 8081
+  db_port: 8082
 logging:
   level: INFO
   progress: 10000

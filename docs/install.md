@@ -19,7 +19,7 @@ Beyond the python interpreter, the software requires a number of packages
 . These can be installed using the package manager `pip`.
 
 ```
-pip install sqlite3 numpy scipy numba nmslib
+pip install sqlite3 numpy scipy numba nmslib pymongo
 ```
 
 Some of these, in particular nmslib, have bindings to libraries for high

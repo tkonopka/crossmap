@@ -148,7 +148,7 @@ class CrossmapIndexer:
         result.saveIndex(index_file, save_data=True)
 
     def rebuild_index(self, dataset):
-        """delete an exsting index and force a rebuild
+        """delete an existing index and force a rebuild
 
         :param dataset: string, name of dataset to rebuild
         """
