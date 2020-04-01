@@ -9,7 +9,8 @@ the diffusion spreads is controlled via connections stored in a db.
 from logging import info, warning, error
 from scipy.sparse import csr_matrix
 from numpy import array, sign
-from .db import CrossmapDB
+#from .dbsqlite import CrossmapSqliteDB as CrossmapDB
+from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .csr import normalize_csr, threshold_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
@@ -29,7 +30,7 @@ class CrossmapDiffuser:
         self.settings = settings
         self.threshold = self.settings.diffusion.threshold
         if db is None:
-            self.db = CrossmapDB(settings.db_file())
+            self.db = CrossmapDB(settings)
             self.db.build()
         else:
             self.db = db

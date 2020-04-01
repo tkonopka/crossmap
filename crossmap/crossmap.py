@@ -9,7 +9,6 @@ from os.path import exists
 from scipy.sparse import csr_matrix, vstack
 from .settings import CrossmapSettings
 from .indexer import CrossmapIndexer
-from .encoder import CrossmapEncoder
 from .tokenizer import CrossmapDiffusionTokenizer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual

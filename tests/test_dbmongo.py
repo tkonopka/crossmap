@@ -24,7 +24,7 @@ class CrossmapMongoDBBuildEmptyTests(unittest.TestCase):
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
         with cls.assertLogs(cls, level="INFO"):
-            db = CrossmapMongoDB(settings.name, settings.server.db_port)
+            db = CrossmapMongoDB(settings)
             db.register_dataset("targets")
             db.register_dataset("documents")
         cls.db = db
@@ -87,8 +87,6 @@ class CrossmapMongoDBBuildAndPopulateTests(unittest.TestCase):
 
     def setUp(self):
         self.settings = CrossmapSettings(config_plain, create_dir=True)
-        self.db_name = self.settings.name
-        self.db_port = self.settings.server.db_port
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
@@ -96,8 +94,7 @@ class CrossmapMongoDBBuildAndPopulateTests(unittest.TestCase):
     def test_db_rebuild(self):
         """rebuild a db from a simple configuration"""
 
-        db = CrossmapMongoDB(self.db_name, self.db_port)
-        # rebuilding
+        db = CrossmapMongoDB(self.settings)
         with self.assertLogs(level="WARNING") as cm2:
             db.rebuild()
         self.assertTrue("Removing" in str(cm2.output))
@@ -105,7 +102,7 @@ class CrossmapMongoDBBuildAndPopulateTests(unittest.TestCase):
     def test_db_feature_map(self):
         """build process produces a feature map in db"""
 
-        db = CrossmapMongoDB(self.db_name, self.db_port)
+        db = CrossmapMongoDB(self.settings)
         # store a feature map
         self.assertEqual(db.n_features, 0)
         db.set_feature_map(test_feature_map)
@@ -123,7 +120,7 @@ class CrossmapMongoDBAddGetTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        db = CrossmapMongoDB(settings.name, settings.server.db_port)
+        db = CrossmapMongoDB(settings)
         db.register_dataset("targets")
         db.register_dataset("documents")
         db.set_feature_map(test_feature_map)
@@ -184,7 +181,7 @@ class CrossmapMongoDBAddGetTests(unittest.TestCase):
         self.assertFalse(self.db.has_id("targets", "a"))
 
     def test_get_data_a(self):
-        """can retrieve data vectors"""
+        """retrieve data vectors"""
 
         A = self.db.get_data("documents", idxs=[0])
         self.assertEqual(len(A), 1)
@@ -193,7 +190,7 @@ class CrossmapMongoDBAddGetTests(unittest.TestCase):
         self.assertListEqual(list(Avec), list(self.vec_a))
 
     def test_get_data_b(self):
-        """can retrieve data vectors"""
+        """retrieve data vectors, another example"""
 
         B = self.db.get_data("documents", ids=["b"])
         self.assertEqual(len(B), 1)
@@ -228,7 +225,7 @@ class CrossmapMongoDBQueriesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        cls.db = CrossmapMongoDB(settings.name, settings.server.db_port)
+        cls.db = CrossmapMongoDB(settings)
         cls.db.register_dataset("targets")
         cls.db.register_dataset("documents")
         # insert some data

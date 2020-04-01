@@ -71,13 +71,13 @@ def valid_dataset(f):
     return wrapped
 
 
-class CrossmapDB:
+class CrossmapSqliteDB:
     """Management of a DB for features and data vectors"""
 
-    def __init__(self, db_file, cache_settings=None):
+    def __init__(self, settings, cache_settings=None):
         """sets up path to db"""
 
-        self.db_file = db_file
+        self.db_file = settings.db_file()
         self.n_features = self._n_features()
         self.datasets = self._datasets()
         # set up cache objects (uses sloppy cache by default)

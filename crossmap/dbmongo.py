@@ -37,16 +37,16 @@ def valid_dataset(f):
 class CrossmapMongoDB:
     """Management of a DB for features and data vectors"""
 
-    def __init__(self, dbname, port=20717, cache_settings=None):
+    def __init__(self, settings, cache_settings=None):
         """sets up a connection to a db and defines settings"""
 
-        self.dbname = dbname
-        self.client = MongoClient(port=port,
-                                  username="root",
-                                  password="rootpassword")
+        dbname = settings.name
+        client = MongoClient(port=settings.server.db_port,
+                             username="root",
+                             password="rootpassword")
         # set up connection to the db, and to collections
         info("Creating database")
-        self._db = self.client[dbname]
+        self._db = client[dbname]
         self._features = self._db["features"]
         self._datasets = self._db["datasets"]
         self._data = self._db["data"]
@@ -96,6 +96,10 @@ class CrossmapMongoDB:
         if collection not in crossmap_collection_types:
             return 0
         return self._db[collection].count_documents({"dataset": dataset})
+
+    def build(self):
+        """this exists for consistency with sqlite db"""
+        pass
 
     def rebuild(self):
         """empty the contents of the database tables"""
@@ -163,16 +167,16 @@ class CrossmapMongoDB:
 
         info("Indexing " + collection)
         if collection == "data":
-            self._data.create_index({"dataset": 1, "id": 1})
-            self._data.create_index({"dataset": 1, "idx": 1})
+            self._data.create_index([("dataset", 1), ("id", 1)])
+            self._data.create_index([("dataset", 1), ("idx", 1)])
         elif collection == "counts":
-            self._counts.create_index({"dataset": 1, "idx": 1})
+            self._counts.create_index([("dataset", 1), ("idx", 1)])
 
     def get_feature_map(self):
         """construct a feature map"""
 
         result = dict()
-        for row in self._features.find():
+        for row in self._features.find({}):
             result[row["id"]] = (row["idx"], row["weight"])
         return result
 
@@ -262,10 +266,12 @@ class CrossmapMongoDB:
         result, missing = self.counts_cache.get(dataset, idxs)
         if len(missing) == 0:
             return result
-        for idx in missing:
-            row = self._counts.find_one({"dataset": dataset, "idx": idx})
+        find = self._counts.find
+        for row in find({"dataset": dataset, "idx": {"$in": missing}},
+                        {"_id": 0, "idx": 1, "data": 1}):
             row_data = bytes_to_arrays(row["data"])
-            result[row["idx"]] = row_data
+            idx = row["idx"]
+            result[idx] = row_data
             self.counts_cache.set(dataset, idx, row_data)
         return result
 
@@ -337,10 +343,9 @@ class CrossmapMongoDB:
         if len(missing) == 0:
             return result
         # perform queries to fill in remaining items
-        for idx in missing:
-            row = self._data.find_one({"dataset": dataset, column: idx})
-            if row is None:
-                continue
+        find = self._data.find
+        for row in find({"dataset": dataset, column: {"$in": missing}},
+                        {"id": 1, "idx": 1, "data": 1, "_id": 0}):
             rowdict = dict(id=row["id"], idx=row["idx"],
                            data=bytes_to_csr(row["data"], n_features))
             result.append(rowdict)
@@ -356,7 +361,7 @@ class CrossmapMongoDB:
         """
 
         n_features = self.n_features
-        for row in self._data.find_one({"dataset": dataset}):
+        for row in self._data.find({"dataset": dataset}):
             result = dict(id=row["id"], idx=row["idx"],
                           data=bytes_to_csr(row["data"], n_features))
             yield result
@@ -382,8 +387,9 @@ class CrossmapMongoDB:
         if len(missing) == 0:
             return result
         # fetch the rest from the db
-        for idx in missing:
-            row = self._data.find_one({"dataset": dataset, column: idx})
+        find = self._data.find
+        for row in find({"dataset": dataset, column: {"$in": missing}},
+                        {"_id": 0, "id": 1, "idx": 1, "title": 1}):
             result[row[column]] = row["title"]
             self.titles_cache.set(dataset, row[column], row["title"])
         return result
@@ -401,9 +407,8 @@ class CrossmapMongoDB:
         if len(idxs) == 0:
             return dict()
         result = dict()
-        for idx in idxs:
-            row = self._data.find_one({"dataset": dataset, "idx": idx},
-                                      {"_id": 0, "id": 1, "idx": 1})
+        for row in self._data.find({"dataset": dataset, "idx": {"$in": idxs}},
+                                   {"_id": 0, "id": 1, "idx": 1}):
             result[row["idx"]] = row["id"]
         return result
 

@@ -9,7 +9,8 @@ from os import remove
 from os.path import exists
 from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
-from .db import CrossmapDB
+#from .dbsqlite import CrossmapSqliteDB as CrossmapDB
+from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .tokenizer import CrossmapTokenizer
 from .encoder import CrossmapEncoder
 from .features import CrossmapFeatures
@@ -38,7 +39,7 @@ class CrossmapIndexer:
         self.settings = settings
         features = CrossmapFeatures(settings)
         tokenizer = CrossmapTokenizer(settings)
-        self.db = CrossmapDB(self.settings.db_file())
+        self.db = CrossmapDB(self.settings)
         self.db.build()
         self.encoder = CrossmapEncoder(features.map, tokenizer)
         self.indexes = dict()
@@ -159,9 +160,8 @@ class CrossmapIndexer:
         self._build_index(dataset)
 
     def build(self):
-        """construct indexes from targets and other documents"""
+        """construct indexes for data collections"""
 
-        # build an index just for the targets, then just for documents
         settings = self.settings
         self.clear()
         for dataset in self.settings.data_files.keys():

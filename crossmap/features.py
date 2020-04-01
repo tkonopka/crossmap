@@ -9,7 +9,8 @@ from math import log2
 from os.path import exists, basename
 from sys import maxsize
 from .tokenizer import CrossmapTokenizer
-from .db import CrossmapDB
+#from .dbsqlite import CrossmapSqliteDB as CrossmapDB
+from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .tools import read_dict
 
 
@@ -167,7 +168,7 @@ class CrossmapFeatures:
         :param features:  list with feature items (used for testing)
         """
 
-        db = CrossmapDB(settings.db_file())
+        db = CrossmapDB(settings)
         db.build()
         self.map = db.get_feature_map()
         if len(self.map) == 0:

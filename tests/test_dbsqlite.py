@@ -5,16 +5,16 @@ Tests for handling the crossmap data db (sqlite)
 import unittest
 from scipy.sparse import csr_matrix
 from os.path import join, exists
-from crossmap.db import CrossmapDB
+from crossmap.dbsqlite import CrossmapSqliteDB
 from crossmap.settings import CrossmapSettings
 from .tools import remove_crossmap_cache
 
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
-test_feature_map = dict(w=(0,1),
-                        x=(1,1),
-                        y=(2,1),
-                        z=(3,0.5))
+test_feature_map = dict(w=(0, 1),
+                        x=(1, 1),
+                        y=(2, 1),
+                        z=(3, 0.5))
 
 
 class CrossmapDBBuildEmptyTests(unittest.TestCase):
@@ -26,7 +26,7 @@ class CrossmapDBBuildEmptyTests(unittest.TestCase):
         db_file = settings.db_file()
         cls.assertFalse(cls, exists(db_file))
         with cls.assertLogs(cls, level="INFO"):
-            db = CrossmapDB(db_file)
+            db = CrossmapSqliteDB(settings)
             db.build()
             db.register_dataset("targets")
             db.register_dataset("documents")
@@ -99,7 +99,7 @@ class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
     def test_db_build_and_rebuild(self):
         """build a db from a simple configuration"""
 
-        db = CrossmapDB(self.db_file)
+        db = CrossmapSqliteDB(self.settings)
         # first pass can create a db with an info message
         with self.assertLogs(level="INFO") as cm1:
             db.build()
@@ -112,7 +112,7 @@ class CrossmapDBBuildAndPopulateTests(unittest.TestCase):
     def test_db_feature_map(self):
         """build process produces a feature map in db"""
 
-        db = CrossmapDB(self.db_file)
+        db = CrossmapSqliteDB(self.settings)
         with self.assertLogs(level="INFO"):
             db.build()
         # store a feature map
@@ -132,7 +132,7 @@ class CrossmapDBAddGetTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        db = CrossmapDB(settings.db_file())
+        db = CrossmapSqliteDB(settings)
         with cls.assertLogs(cls, level="INFO"):
             db.build()
             db.register_dataset("targets")
@@ -237,8 +237,7 @@ class CrossmapDBQueriesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        cls.db_file = settings.db_file()
-        cls.db = CrossmapDB(cls.db_file)
+        cls.db = CrossmapSqliteDB(settings)
         with cls.assertLogs(cls, level="INFO"):
             cls.db.build()
             cls.db.register_dataset("targets")
