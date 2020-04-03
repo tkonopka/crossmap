@@ -1,0 +1,8 @@
+.git
+.idea
+crossmap.iml
+crosschat/node_modules
+crosschat/build
+docs
+docker-data
+docker-compose*

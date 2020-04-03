@@ -4,7 +4,7 @@ Helper functions used within the test suite
 
 import glob
 from contextlib import suppress
-from os import remove, rmdir
+from os import environ, remove, rmdir
 from os.path import join, exists
 from pymongo import MongoClient
 
@@ -20,7 +20,10 @@ def remove_file(files):
 def remove_crossmap_cache(dir, name, use_subdir=True):
     """remove any crossmap cache files for a crossmap project"""
 
-    client = MongoClient(port=8097, username="root", password="rootpassword")
+    host = environ["MONGODB_HOST"] if "MONGODB_HOST" in environ else "0.0.0.0"
+    port = environ["MONGODB_PORT"] if "MONGODB_PORT" in environ else 8097
+    client = MongoClient(host=host, port=int(port),
+                         username="crossmap", password="crossmap")
     client.drop_database(name)
     crossmap_data_dir = join(dir, name) if use_subdir else dir
     prefix = join(crossmap_data_dir, name)

@@ -1,11 +1,42 @@
 version: '3.7'
 services:
-  mongodb:
+  db:
     image: mongo:4.2.5
+    restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+      MONGO_INITDB_ROOT_USERNAME: crossmap
+      MONGO_INITDB_ROOT_PASSWORD: crossmap
+    command: ["--bind_ip_all"]
     ports:
       - 8097:27017
     volumes:
       - ./docker-data:/data/db
+    networks:
+      crossmapNetwork:
+
+  server:
+    build: .
+    environment:
+      - MONGODB_HOST=db
+      - MONGODB_PORT=27017
+    command: python3.7 -m unittest
+    depends_on:
+      - db
+    ports:
+      - 8098:8098
+    networks:
+      crossmapNetwork:
+
+  gui:
+    build: .
+    command: python3.7 crossmap.py
+    depends_on:
+      - server
+    ports:
+      - 8099:8099
+    networks:
+      crossmapNetwork:
+
+networks:
+  crossmapNetwork:
+

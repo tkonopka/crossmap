@@ -10,10 +10,10 @@ import argparse
 import gzip
 import logging
 import sys
+import yaml
 from os import getcwd
 from os.path import join
 from crossmap.tools import concise_exception_handler
-from crossprep.tools import save_dataset
 from crossprep.obo.build import build_obo_dataset
 from crossprep.opentargets.build import build_opentargets_dataset
 from crossprep.orphanet.build import build_orphanet_dataset
@@ -133,14 +133,14 @@ parser.add_argument("--wiktionary_length", action="store", type=float,
 
 
 # ############################################################################
-# Script below assumes running from command line
+# helper functions
 
-config = parser.parse_args()
+def save_dataset(data, dir, name):
+    """write a dictionary with data to a crossmap file"""
 
-logging.basicConfig(format='[%(asctime)s] %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    level=logging.INFO)
-logging.info("Starting " + config.action + " - " + str(config.name) )
+    out_file = join(dir, name+".yaml.gz")
+    with gzip.open(out_file, "wt") as out:
+        out.write(yaml.dump(data))
 
 
 def missing_arguments(argnames):
@@ -156,6 +156,19 @@ def missing_arguments(argnames):
     if len(missing) > 0:
         logging.error("missing required arguments: " + ", ".join(missing))
     return len(missing) > 0
+
+
+# ############################################################################
+# Script below assumes running from command line
+
+config = parser.parse_args()
+
+logging.basicConfig(format='[%(asctime)s] %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    level=logging.INFO)
+logging.info("Starting " + config.action + " - " + str(config.name) )
+
+
 
 
 # set a nontrivial output file name

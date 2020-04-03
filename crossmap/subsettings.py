@@ -2,6 +2,7 @@
 Small classes for capturing small sets of settings for specialized contexts
 """
 
+import os
 from os.path import join
 from yaml import dump
 from .tokenizer import Kmerizer
@@ -144,12 +145,20 @@ class CrossmapServerSettings:
     def __init__(self, config=None):
         self.api_port = 8098
         self.ui_port = 8099
+        self.db_host = "127.0.0.1"
         self.db_port = 8097
+
+        if "MONGODB_HOST" in os.environ:
+            self.db_host = os.environ["MONGODB_HOST"]
+        if "MONGODB_PORT" in os.environ:
+            self.db_port = int(os.environ["MONGODB_PORT"])
 
         if config is None:
             return
         for key, val in config.items():
-            if key == "api_port":
+            if key == "db_host":
+                self.db_host = val
+            elif key == "api_port":
                 self.api_port = int(val)
             elif key == "ui_port":
                 self.ui_port = int(val)
@@ -159,6 +168,7 @@ class CrossmapServerSettings:
     def __str__(self):
         result = dict(server={"api_port": self.api_port,
                               "ui_port": self.ui_port,
+                              "db_host": self.db_host,
                               "db_port": self.db_port})
         return dump(result)
 

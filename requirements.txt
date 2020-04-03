@@ -1,0 +1,7 @@
+django
+numba
+numpy
+pymongo
+pyyaml
+requests
+scipy

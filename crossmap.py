@@ -50,12 +50,12 @@ parser.add_argument("--n", action="store",
                     help="number of targets")
 parser.add_argument("--diffusion", action="store",
                     default=None,
-                    help="JSON of a dict setting diffusion strengths")
+                    help="JSON of a dict with diffusion strengths")
 parser.add_argument("--factors", action="store",
                     default=None,
                     help="comma-separated ids for decomposition")
 parser.add_argument("--pretty", action="store_true",
-                    help="display prediction results using pretty-print")
+                    help="pretty-print JSON outputs for human readability")
 
 # manual investigation/debugging
 parser.add_argument("--ids", action="store",

@@ -41,9 +41,11 @@ class CrossmapMongoDB:
         """sets up a connection to a db and defines settings"""
 
         dbname = settings.name
-        client = MongoClient(port=settings.server.db_port,
-                             username="root",
-                             password="rootpassword")
+        #print(str(settings.server))
+        client = MongoClient(host=settings.server.db_host,
+                             port=settings.server.db_port,
+                             username="crossmap",
+                             password="crossmap")
         # set up connection to the db, and to collections
         info("Creating database")
         self._db = client[dbname]
