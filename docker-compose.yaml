@@ -10,12 +10,12 @@ services:
     ports:
       - 8097:27017
     volumes:
-      - ./docker-data:/data/db
+      - ./mongodb-data:/data/db
     networks:
       crossmapNetwork:
 
-  server:
-    build: .
+  test:
+    image: crossmap
     environment:
       - MONGODB_HOST=db
       - MONGODB_PORT=27017
@@ -24,16 +24,6 @@ services:
       - db
     ports:
       - 8098:8098
-    networks:
-      crossmapNetwork:
-
-  gui:
-    build: .
-    command: python3.7 crossmap.py
-    depends_on:
-      - server
-    ports:
-      - 8099:8099
     networks:
       crossmapNetwork:
 

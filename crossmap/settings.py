@@ -8,6 +8,7 @@ from os import getcwd, mkdir
 from os.path import join, exists, dirname, basename, isdir
 from .tokenizer import Kmerizer
 from .subsettings import \
+    CrossmapDataSettings, \
     CrossmapLoggingSettings, \
     CrossmapServerSettings, \
     CrossmapFeatureSettings, \
@@ -28,8 +29,8 @@ class CrossmapSettingsDefaults:
         self.dir = getcwd()
         self.prefix = join(self.dir, self.name)
         self.file = "crossmap.yaml"
-        # paths to disk files
-        self.data_files = dict()
+        # paths to data files on disk
+        self.data = CrossmapDataSettings()
         # settings for features (e.g. max number, or from file)
         self.features = CrossmapFeatureSettings()
         # settings for indexing and search quality
@@ -53,25 +54,35 @@ class CrossmapSettingsDefaults:
         """path to db file"""
         return join(self.prefix, self.name + ".sqlite")
 
+    def _filepath(self, label, extension=".yaml"):
+        """path to an internal crossmap file"""
+        result = join(self.prefix, self.name + "-" + label)
+        if extension is None:
+            return result
+        return result + extension
+
+    def settings_file(self):
+        return join(self.dir, self.file)
+
     def yaml_file(self, label):
         """path to manual dataset"""
-        return join(self.prefix, self.name + "-" + label + ".yaml")
+        return self._filepath(label, ".yaml")
 
     def tsv_file(self, label):
         """path for project tsv data"""
-        return join(self.prefix, self.name + "-" + label + ".tsv")
+        return self._filepath(label, ".tsv")
 
     def pickle_file(self, label):
         """path for project binary data object"""
-        return join(self.prefix, self.name + "-" + label)
+        return self._filepath(label, extension=None)
 
     def index_file(self, label):
         """path for a project indexer file"""
-        return join(self.prefix, self.name + "-" + label + "-index")
+        return self._filepath(label, "-index")
 
 
 class CrossmapSettings(CrossmapSettingsDefaults):
-    """Container keeping and validating settings for a Crossmap project"""
+    """Container with settings for a Crossmap project"""
 
     def __init__(self, config, create_dir=False, require_data_files=True):
         """create a settings object
@@ -115,7 +126,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
             result = yaml.safe_load(f)
         for k, v in result.items():
             if k == "data":
-                self.data_files = v
+                self.data = CrossmapDataSettings(v, self.dir)
             elif k == "tokens":
                 self.tokens = CrossmapTokenSettings(v)
             elif k == "features":
@@ -154,9 +165,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         # data collections
         result["data"] = True
         if self.require_data_files:
-            self.data_files, skipped = query_files(self.data_files,
-                                                   "data file", dir=dir)
-            result["data"] = len(self.data_files) > 0
+            self.data.validate(log_fun=warning)
+            result["data"] = len(self.data.collections) > 0
             if not result["data"]:
                 error(missing_msg + "'data'")
 
@@ -190,28 +200,6 @@ def query_file(filepath, filetype, log=warning):
             log(filetype + " does not exist: " + filepath)
         return False
     return True
-
-
-def query_files(filepaths, filetype, log=warning, dir=None):
-    """assess whether files in a dict are usable or not
-
-    :param filepaths: dict to paths to files on disk
-    :param filetype: string, used in logging messages
-    :param log: logging function
-    :param dir: path to a directory
-    :return: dict of usable file paths and an integer indicating skipped files
-    """
-
-    result, skipped = dict(), 0
-    for k, filepath in filepaths.items():
-        fullpath = filepath
-        if dir is not None:
-            fullpath = join(dir, filepath)
-        if query_file(fullpath, filetype, log):
-            result[k] = fullpath
-        else:
-            skipped += 1
-    return result, skipped
 
 
 def require_file(filepath, filetype):

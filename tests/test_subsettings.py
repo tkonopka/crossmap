@@ -7,8 +7,9 @@ classes start performing stronger validation)
 
 import unittest
 import yaml
-from os.path import join
+from os.path import join, exists
 from crossmap.subsettings import \
+    CrossmapDataSettings, \
     CrossmapLoggingSettings, \
     CrossmapFeatureSettings, \
     CrossmapTokenSettings, \
@@ -16,6 +17,30 @@ from crossmap.subsettings import \
     CrossmapServerSettings, \
     CrossmapDiffusionSettings, \
     CrossmapCacheSettings
+
+
+class CrossmapSettingsDataTests(unittest.TestCase):
+    """parsing settings for data collections"""
+
+    def test_find_files_from_filenames(self):
+        """specify data collection paths based on filenames only"""
+        simple_path = "documents.yaml"
+        result = CrossmapDataSettings({"docs": simple_path},
+                                      data_dir=join("tests", "testdata"))
+        self.assertTrue(exists(result.collections["docs"]))
+
+    def test_find_files_from_dirpath(self):
+        """specify data collections based on relative paths"""
+        rel_path = join("testdata", "documents.yaml")
+        result = CrossmapDataSettings({"docs": rel_path},
+                                      data_dir=join("tests"))
+        self.assertTrue(exists(result.collections["docs"]))
+
+    def test_str(self):
+        """str captures all files and default collection"""
+        result = CrossmapDataSettings({"docs": "documents.yaml"},
+                                      data_dir=join("tests", "testdata"))
+        self.assertTrue("docs" in str(result))
 
 
 class CrossmapSettingsDiffusionTests(unittest.TestCase):

@@ -19,7 +19,7 @@ SECRET_KEY = 'ng%4qbz_a-3v^2rl#ikyqq@-r+zrisnh$e1-tty)@_2)g((j&n'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'gui', '0.0.0.0']
 
 
 # Application definition

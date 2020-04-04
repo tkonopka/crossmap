@@ -40,15 +40,13 @@ class CrossmapMongoDB:
     def __init__(self, settings, cache_settings=None):
         """sets up a connection to a db and defines settings"""
 
-        dbname = settings.name
-        #print(str(settings.server))
+        self.db_name = settings.name
         client = MongoClient(host=settings.server.db_host,
                              port=settings.server.db_port,
                              username="crossmap",
                              password="crossmap")
         # set up connection to the db, and to collections
-        info("Creating database")
-        self._db = client[dbname]
+        self._db = client[self.db_name]
         self._features = self._db["features"]
         self._datasets = self._db["datasets"]
         self._data = self._db["data"]
@@ -110,6 +108,14 @@ class CrossmapMongoDB:
         for x in crossmap_collection_types:
             self._db[x].delete_many({})
 
+    def remove(self):
+        """remove database"""
+        self._db.client.drop_database(self.db_name)
+        self._data = None
+        self._features = None
+        self._counts = None
+        self._datasets = None
+
     def validate_dataset_label(self, label):
         """evaluates whether a label is allowed for a dataset
 
@@ -143,6 +149,7 @@ class CrossmapMongoDB:
         if label in self.datasets:
             error("dataset label already exists")
             return
+        info("Registering dataset: " + str(label))
         self._datasets.insert_one({"dataset": len(self.datasets),
                                    "label": label,
                                    "title": title})

@@ -1,7 +1,53 @@
 version: '3.7'
 services:
+  db:
+    image: mongo:4.2.5
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: crossmap
+      MONGO_INITDB_ROOT_PASSWORD: crossmap
+    command: ["--bind_ip_all"]
+    ports:
+      - 8097:27017
+    volumes:
+      - ./mongodb-data:/data/db
+    networks:
+      crossmapNetwork:
+        aliases:
+          - db
+
   server:
-    command:
+    image: crossmap
+    environment:
+      - MONGODB_HOST=db
+      - MONGODB_PORT=27017
+    command: python3.7 crossmap.py server --config data/config.yaml
+    depends_on:
+      - db
+    ports:
+      - 8098:8098
+    volumes:
+      - .:/crossmap/data
+    networks:
+      crossmapNetwork:
+        aliases:
+          - server
 
   gui:
-    command:
+    image: crossmap
+    environment:
+      - PORT=8099
+    command: serve -s crosschat/build
+    depends_on:
+      - server
+    ports:
+      - 8099:8099
+    volumes:
+      - .:/crossmap/data
+    networks:
+      crossmapNetwork:
+        aliases:
+          - gui
+
+networks:
+  crossmapNetwork:

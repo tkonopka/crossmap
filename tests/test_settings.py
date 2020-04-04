@@ -83,22 +83,16 @@ class CrossmapSettingsSimpleTests(unittest.TestCase):
     def test_full_paths_data(self):
         """Extract project file paths"""
 
-        settings = self.settings
-        self.assertEqual(len(settings.data_files), 2)
-        self.assertEqual(settings.data_files["documents"], documents_file)
-        self.assertEqual(settings.data_files["targets"], dataset_file)
+        data_files = self.settings.data.collections
+        self.assertEqual(len(data_files), 2)
+        self.assertEqual(data_files["documents"], documents_file)
+        self.assertEqual(data_files["targets"], dataset_file)
 
     def test_full_paths_featuremap(self):
         """simple configuration does not specify a feature map file"""
 
         settings = self.settings
         self.assertEqual(settings.features.map_file, None)
-
-    def test_warning_upon_faulty_file_retrieval(self):
-        """Retrieving a non-canonical file type gives warning"""
-
-        with self.assertRaises(Exception):
-            self.settings.data["badname"]
 
     def test_tsv_file(self):
         """settings object can create a file path to a tsv file"""

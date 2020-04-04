@@ -3,13 +3,54 @@ Small classes for capturing small sets of settings for specialized contexts
 """
 
 import os
-from os.path import join
+from os.path import join, exists
 from yaml import dump
 from .tokenizer import Kmerizer
 
 
 # a tokenizer with default parameters
 default_tokenizer = Kmerizer()
+
+
+class CrossmapDataSettings:
+    """Container for settings for data collections"""
+
+    def __init__(self, config=dict(), data_dir=None):
+        self.collections = dict()
+        for k, v in config.items():
+            file = v
+            if data_dir is not None:
+                file = join(data_dir, v)
+            self.collections[k] = file
+        names = list(self.collections.keys())
+        self.default = None if len(names) == 0 else names[0]
+
+    def validate(self, log_fun=None, remove=True):
+        """assess whether data files are usable
+
+        :param log_fun: logging function
+        :param remove: logical, when True missing data items are removed from
+            self.collections
+        :return: number of invalid files
+        """
+
+        missing, n_invalid = [], 0
+        for k, filepath in self.collections.items():
+            if exists(filepath):
+                continue
+            n_invalid += 1
+            if log_fun is not None:
+                log_fun("collection file does not exist: " + filepath)
+            if remove:
+                missing.append(k)
+        for k in missing:
+            self.collections.pop(k)
+        return n_invalid
+
+    def __str__(self):
+        result = dict(data={"collections": self.collections,
+                            "default": self.default})
+        return dump(result)
 
 
 class CrossmapTokenSettings:

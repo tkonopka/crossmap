@@ -12,9 +12,10 @@ import logging
 import sys
 from os import environ, system
 from os.path import join, dirname
-from json import dumps, loads
+from json import loads
 from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap, validate_dataset_label
+from crossmap.crossmap import remove_db_and_files
 from crossmap.info import CrossmapInfo
 from crossmap.tools import concise_exception_handler, pretty_print
 
@@ -30,7 +31,8 @@ sys.excepthook = concise_exception_handler
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "search", "decompose", "add",
+                    choices=["build", "remove",
+                             "search", "decompose", "add",
                              "server", "gui",
                              "distances", "vectors", "matrix", "counts",
                              "diffuse", "features", "summary"])
@@ -113,6 +115,9 @@ if action in {"features", "diffuse", "distances", "matrix",
 if action == "build":
     crossmap.build()
 
+if action == "remove":
+    remove_db_and_files(settings)
+
 if action in {"search", "decompose"}:
     crossmap.load()
     config.dataset = validate_dataset_label(crossmap, config.dataset)
@@ -184,8 +189,9 @@ if action == "server":
     except ImportError as exc:
         raise ImportError("Could not import Django.")
     environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
-    environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', settings.file)
-    execute_from_command_line(['', 'runserver', str(settings.server.api_port)])
+    environ.setdefault('DJANGO_CROSSMAP_CONFIG_PATH', config.config)
+    ip_port = "0.0.0.0:"+str(settings.server.api_port)
+    execute_from_command_line(['', 'runserver', ip_port])
 
 if action == "gui":
     environ.setdefault('PORT', str(settings.server.ui_port))

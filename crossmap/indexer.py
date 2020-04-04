@@ -164,10 +164,10 @@ class CrossmapIndexer:
 
         settings = self.settings
         self.clear()
-        for dataset in self.settings.data_files.keys():
+        for dataset in settings.data.collections.keys():
             if dataset not in self.db.datasets:
                 self.db.register_dataset(dataset)
-        for dataset, filepath in settings.data_files.items():
+        for dataset, filepath in settings.data.collections.items():
             self._build_data(filepath, dataset)
             self._build_index(dataset)
         self.db.get_feature_map()

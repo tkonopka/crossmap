@@ -8,6 +8,7 @@ from crossmap.crossmap import Crossmap
 from crossmap.settings import CrossmapSettings
 from os import environ
 from django.http import HttpResponse
+from logging import info
 
 
 # load the crossmap object based on configuration saved in an OS variable
@@ -15,6 +16,7 @@ config_path = environ.get('DJANGO_CROSSMAP_CONFIG_PATH')
 settings = CrossmapSettings(config_path, require_data_files=False)
 crossmap = Crossmap(settings)
 crossmap.load()
+info("dbs "+str(crossmap.db._db.list_collection_names()))
 
 
 def get_or_default(data, k, default=None):

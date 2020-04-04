@@ -144,7 +144,7 @@ def _feature_map(settings):
         max_features = maxsize
     tokenizer = CrossmapTokenizer(settings)
     # get data files - from primary data and from features
-    data_files = settings.data_files.copy()
+    data_files = settings.data.collections.copy()
     data_files.update(settings.features.data_files)
     # scan the files and count tokens
     counts, n = _count_tokens(tokenizer, data_files, progress)

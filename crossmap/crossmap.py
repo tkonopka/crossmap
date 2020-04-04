@@ -2,12 +2,15 @@
 Crossmap class
 """
 
+from contextlib import suppress
 from yaml import dump
 from logging import info, warning, error
 from os import mkdir
 from os.path import exists
+from shutil import rmtree
 from scipy.sparse import csr_matrix, vstack
 from .settings import CrossmapSettings
+from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .indexer import CrossmapIndexer
 from .tokenizer import CrossmapDiffusionTokenizer
 from .diffuser import CrossmapDiffuser
@@ -54,10 +57,24 @@ def _ranked_decomposition(coefficients, ids):
     return coefficients, ids
 
 
+def remove_db_and_files(settings):
+    """clean up database and data files (leaves settings object)"""
+
+    if type(settings) is str:
+        settings = CrossmapSettings(settings)
+    db = CrossmapDB(settings)
+    info("Removing database: " + db.db_name)
+    db.remove()
+    info("Removing directory: " + settings.prefix)
+    if exists(settings.prefix):
+        with suppress(OSError):
+            rmtree(settings.prefix)
+
+
 class Crossmap:
 
     def __init__(self, settings):
-        """declare a minimal crossmap object.
+        """a standard crossmap object.
 
         :param settings: a CrossmapSettings object, or a path to a
             configuration file
@@ -79,13 +96,12 @@ class Crossmap:
         self.diff_tokenizer = CrossmapDiffusionTokenizer(settings)
         self.diffuser = None
         # determine a default dataset for querying
-        try:
-            self.default_label = list(settings.data_files.keys())[0]
-        except IndexError:
+        self.default_label = settings.data.default
+        if self.default_label is None:
             if len(self.db.datasets):
                 self.default_label = list(self.db.datasets.keys())[0]
             else:
-                raise Exception("could not determine default dataset label")
+                raise Exception("could not determine default dataset")
 
     @property
     def valid(self):
@@ -126,7 +142,7 @@ class Crossmap:
         :return: an integer signaling
         """
 
-        if dataset in self.settings.data_files:
+        if dataset in self.settings.data.collections:
             raise Exception("cannot add to file-based datasets")
         label_status = self.db.validate_dataset_label(dataset)
         if label_status < 0:
@@ -354,7 +370,8 @@ def _action_file(action, filepath, **kw):
     with open_file(filepath, "rt") as f:
         for id, doc in yaml_document(f):
             if type(doc) is not dict:
-                raise Exception("invalid document type: "+str(id))
+                error("invalid document type: "+str(id))
+                break
             result.append(action(doc, **kw, query_name=id))
     return result
 

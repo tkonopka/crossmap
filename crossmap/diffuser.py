@@ -99,7 +99,7 @@ class CrossmapDiffuser:
     def build(self):
         """populate count tables based on all data files"""
 
-        for label in self.settings.data_files.keys():
+        for label in self.settings.data.collections.keys():
             if label not in self.db.datasets:
                 self.db.register_dataset(label)
             self._build_counts(label)

@@ -95,7 +95,7 @@ class CrossmapDecomposeBatchTests(unittest.TestCase):
     def test_decompose_documents(self):
         """exact document matches should produce short decomposition vectors"""
 
-        targets_file = self.crossmap.settings.data_files["targets"]
+        targets_file = self.crossmap.settings.data.collections["targets"]
         result = self.crossmap.decompose_file(targets_file, "targets", 2)
         for i in range(len(result)):
             iresult = result[i]

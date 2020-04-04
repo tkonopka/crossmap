@@ -8,13 +8,15 @@ RUN python3.7 -m pip install --no-binary :all: nmslib
 RUN python3.7 -m pip install pymongo django
 RUN curl -sL https://deb.nodesource.com/setup_13.x  | bash -
 RUN apt-get -y install nodejs
+RUN npm install -g serve
 
 # set up directories for this project
 RUN mkdir /crossmap
+RUN mkdir /crossmap/data
 WORKDIR /crossmap
 COPY . /crossmap/
 
 # install project-specific packages
 RUN python3.7 -m pip install -r requirements.txt
 RUN npm --prefix ./crosschat/ install ./crosschat/
-
+RUN npm run build --prefix crosschat/

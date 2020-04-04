@@ -138,8 +138,9 @@ class CrossmapSearchBatchTests(unittest.TestCase):
     def test_file_targets(self):
         """target documents should map onto themselves"""
 
-        target_file = self.crossmap.settings.data_files["targets"]
-        result = self.crossmap.search_file(target_file, "targets", 2)
+        crossmap = self.crossmap
+        target_file = crossmap.settings.data.collections["targets"]
+        result = crossmap.search_file(target_file, "targets", 2)
         # all items should match the raw data and map onto themselves
         self.assertEqual(len(result), len(dataset_docs))
         for i in range(len(result)):
@@ -149,8 +150,9 @@ class CrossmapSearchBatchTests(unittest.TestCase):
     def test_file_documents(self):
         """documents should map onto targets"""
 
-        docs_file = self.crossmap.settings.data_files["documents"]
-        result = self.crossmap.search_file(docs_file, "targets", 2)
+        crossmap = self.crossmap
+        docs_file = crossmap.settings.data.collections["documents"]
+        result = crossmap.search_file(docs_file, "targets", 2)
         for i in range(len(result)):
             if len(result[i]["targets"]) > 0:
                 self.assertTrue(result[i]["targets"][0] in dataset_docs)
@@ -160,7 +162,7 @@ class CrossmapSearchBatchTests(unittest.TestCase):
     def test_complains_improper_filed(self):
         """should raise if data file has improper content"""
 
-        with self.assertRaises(Exception) as cm:
+        with self.assertLogs(level="ERROR") as cm:
             self.crossmap.search_file(bad_file, "targets", 2)
-        self.assertTrue("title" in str(cm.exception))
+        self.assertTrue("title" in str(cm.output))
 
