@@ -12,6 +12,13 @@ body {
 }
 
 /** History list and controller **/
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+
+/** History list and controller **/
 #init-message {
   min-width: 200px;
   text-align: center;

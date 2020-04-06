@@ -47,6 +47,7 @@ class CrossmapMongoDB:
                              password="crossmap")
         # set up connection to the db, and to collections
         self._db = client[self.db_name]
+        self._docs = self._db["docs"]
         self._features = self._db["features"]
         self._datasets = self._db["datasets"]
         self._data = self._db["data"]
@@ -111,6 +112,7 @@ class CrossmapMongoDB:
     def remove(self):
         """remove database"""
         self._db.client.drop_database(self.db_name)
+        self._docs = None
         self._data = None
         self._features = None
         self._counts = None
@@ -233,32 +235,47 @@ class CrossmapMongoDB:
                                     {"$set": {"data": i_bytes}})
 
     @valid_dataset
-    def add_data(self, dataset, data, ids, titles=None, indexes=None):
+    def add_data(self, dataset, data, ids, idxs=None):
         """insert rows into the 'data' table
 
         :param dataset: string or int, dataset identifier
         :param data: list with vectors
         :param ids: list with string-like identifiers
-        :param titles: list with string-like descriptions
-        :param indexes: list with integer identifiers
+        :param idxs: list with integer identifiers
         :return: list of indexes used for the new documents
         """
 
         self.data_cache.clear()
-        self.titles_cache.clear()
-        if indexes is None:
+        if idxs is None:
             current_size = self.dataset_size(dataset)
-            indexes = [current_size + _ for _ in range(len(ids))]
-        if titles is None:
-            titles = [""]*len(ids)
+            idxs = [current_size + _ for _ in range(len(ids))]
 
         data_array = []
         for i in range(len(ids)):
-            data_array.append({"dataset": dataset, "id": ids[i],
-                               "idx": indexes[i], "title": titles[i],
+            data_array.append({"dataset": dataset,
+                               "id": ids[i],
+                               "idx": idxs[i],
                                "data": csr_to_bytes(data[i])})
         self._data.insert_many(data_array)
-        return indexes
+        return idxs
+
+    @valid_dataset
+    def add_docs(self, dataset, docs, ids, idxs):
+        """insert rows into the 'docs' table
+
+        :param dataset: string or int, dataset identifier
+        :param docs: list with objects
+        :param ids: list with string-like identifiers
+        :param idxs: list with integer identifiers
+        """
+
+        data_array = []
+        for i in range(len(ids)):
+            doc = docs[i]
+            title = doc["title"] if "title" in doc else ""
+            data_array.append({"dataset": dataset, "id": ids[i],
+                               "idx": idxs[i], "title": title, "doc": doc})
+        self._docs.insert_many(data_array)
 
     @valid_dataset
     def get_counts_arrays(self, dataset, idxs):
@@ -396,7 +413,7 @@ class CrossmapMongoDB:
         if len(missing) == 0:
             return result
         # fetch the rest from the db
-        find = self._data.find
+        find = self._docs.find
         for row in find({"dataset": dataset, column: {"$in": missing}},
                         {"_id": 0, "id": 1, "idx": 1, "title": 1}):
             result[row[column]] = row["title"]
@@ -449,3 +466,11 @@ class CrossmapMongoDB:
         for row in self._data.find({"dataset": dataset}, {"idx": 1, "id": 1}):
             result[row["idx"]] = row["id"]
         return result
+
+    @valid_dataset
+    def get_document(self, dataset, id):
+        """retrieve entire document with an id"""
+
+        result = self._docs.find_one({"dataset": dataset, "id": id}, {"_id":0})
+        return result["doc"]
+

@@ -11,7 +11,7 @@ def comments(term):
     """helper to get a string with the comment string for an obo term"""
     if term.data is None or "comment" not in term.data:
         return []
-    return term.data["comment"]
+    return list(term.data["comment"])
 
 
 def synonyms(term):

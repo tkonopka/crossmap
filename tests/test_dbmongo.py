@@ -130,14 +130,16 @@ class CrossmapMongoDBAddGetTests(unittest.TestCase):
         cls.vec_a = [0.0, 0.0, 1.0, 0.0]
         cls.vec_b = [0.0, 2.0, 0.0, 0.0]
         data = [csr_matrix(cls.vec_a), csr_matrix(cls.vec_b)]
-        db.add_data("documents", data, ids, indexes=idxs,
-                    titles=["A title", "B title"])
+        db.add_data("documents", data, ids, idxs=idxs)
+        db.add_docs("documents", [dict(title="A title"), dict(title="B title")],
+                    ids, idxs)
         # add data to targets
         ids = ["x"]
         idxs = [0]
         cls.vec_x = [0.0, 0.0, 0.0, 0.5]
         data = [csr_matrix(cls.vec_x)]
-        db.add_data("targets", data, ids, indexes=idxs, titles=["X title"])
+        db.add_data("targets", data, ids, idxs=idxs)
+        db.add_docs("targets", [dict(title="X title")], ids, idxs)
         cls.db = db
 
     @classmethod
@@ -233,8 +235,8 @@ class CrossmapMongoDBQueriesTests(unittest.TestCase):
         doc_ids = [_ + "_doc" for _ in ["a", "b"]]
         data = [csr_matrix([0.0, 1.0]),
                 csr_matrix([1.0, 0.0])]
-        cls.db.add_data("targets", data, target_ids, indexes=[0,1])
-        cls.db.add_data("documents", data, doc_ids, indexes=[0,1])
+        cls.db.add_data("targets", data, target_ids, idxs=[0, 1])
+        cls.db.add_data("documents", data, doc_ids, idxs=[0, 1])
 
     @classmethod
     def tearDownClass(self):

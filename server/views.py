@@ -9,14 +9,14 @@ from crossmap.settings import CrossmapSettings
 from os import environ
 from django.http import HttpResponse
 from logging import info
-
+import yaml
 
 # load the crossmap object based on configuration saved in an OS variable
 config_path = environ.get('DJANGO_CROSSMAP_CONFIG_PATH')
 settings = CrossmapSettings(config_path, require_data_files=False)
 crossmap = Crossmap(settings)
 crossmap.load()
-info("dbs "+str(crossmap.db._db.list_collection_names()))
+info("database collections: "+str(crossmap.db._db.list_collection_names()))
 
 
 def get_or_default(data, k, default=None):
@@ -90,6 +90,7 @@ def process_search_decompose(request, process_function):
     targets = result["targets"]
     target_titles = crossmap.db.get_titles(dataset, ids=targets)
     result["titles"] = [target_titles[_] for _ in targets]
+    result["dataset"] = dataset
     return result
 
 
@@ -133,7 +134,7 @@ def add(request):
     """add a new data item into the db
 
     :param request:
-    :return: dictionary with success status of add
+    :return: dictionary with new integer ids (idx)
     """
 
     doc = parse_add_request(request)
@@ -150,4 +151,12 @@ def add(request):
         return dict(dataset=dataset, idx=[])
     idx = crossmap.add(dataset, doc, id, metadata=metadata)
     return dict(dataset=dataset, idx=idx)
+
+
+@access_http_response
+def document(request):
+    """process an http request to map a document onto nearest targets"""
+    data = loads(request.body)
+    result = crossmap.db.get_document(data["dataset"], data["id"])
+    return yaml.dump(result)
 

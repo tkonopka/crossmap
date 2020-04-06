@@ -13,22 +13,19 @@ import sys
 import yaml
 from os import getcwd
 from os.path import join
-from crossmap.tools import concise_exception_handler
-from crossprep.obo.build import build_obo_dataset
-from crossprep.opentargets.build import build_opentargets_dataset
-from crossprep.orphanet.build import build_orphanet_dataset
-from crossprep.pubmed.baseline import download_pubmed_baseline
-from crossprep.pubmed.build import build_pubmed_dataset
-from crossprep.genesets.build import build_gmt_dataset
-from crossprep.wikipedia.download import download_wikipedia_exintros
-from crossprep.wikipedia.build import build_wikipedia_dataset
-from crossprep.wiktionary.build import build_wiktionary_dataset
+from obo.build import build_obo_dataset
+from opentargets.build import build_opentargets_dataset
+from orphanet.build import build_orphanet_dataset
+from pubmed.baseline import download_pubmed_baseline
+from pubmed.build import build_pubmed_dataset
+from genesets.build import build_gmt_dataset
+from wikipedia.download import download_wikipedia_exintros
+from wikipedia.build import build_wikipedia_dataset
+from wiktionary.build import build_wiktionary_dataset
 
 # this is a command line utility
 if __name__ != "__main__":
     sys.exit()
-
-sys.excepthook = concise_exception_handler
 
 
 # ############################################################################
@@ -156,6 +153,22 @@ def missing_arguments(argnames):
     if len(missing) > 0:
         logging.error("missing required arguments: " + ", ".join(missing))
     return len(missing) > 0
+
+
+def concise_exception_handler(exception_type, exception, traceback):
+    """custom print function for exceptions, which avoid writing traceback
+
+    this is meant to be used to redefine sys.excepthook
+    """
+
+    # the function signature has three objects because that is what
+    # is used for sys.excepthook. This concise handler ignores
+    # the non-essential elements to log only a brief message.
+
+    logging.error(exception)
+
+
+sys.excepthook = concise_exception_handler
 
 
 # ############################################################################

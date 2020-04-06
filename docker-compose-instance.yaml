@@ -37,6 +37,7 @@ services:
     image: crossmap
     environment:
       - PORT=8099
+      - REACT_APP_API_URL=server:8098
     command: serve -s crosschat/build
     depends_on:
       - server

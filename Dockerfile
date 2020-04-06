@@ -19,4 +19,3 @@ COPY . /crossmap/
 # install project-specific packages
 RUN python3.7 -m pip install -r requirements.txt
 RUN npm --prefix ./crosschat/ install ./crosschat/
-RUN npm run build --prefix crosschat/

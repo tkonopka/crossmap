@@ -64,12 +64,10 @@ class CrossmapIndexer:
         if self.db.has_id(dataset, id):
             raise Exception("item id already exists: " + str(id))
 
-        titles = None
-        if "title" in doc:
-            titles = [doc["title"]]
         v = self.encoder.document(doc)
         size = self.db.dataset_size(dataset)
-        idxs = self.db.add_data(dataset, [v], [id], titles, indexes=[size])
+        idxs = self.db.add_data(dataset, [v], [id], idxs=[size])
+        self.db.add_docs(dataset, [doc], [id], idxs=[size])
         if rebuild:
             self.rebuild_index(dataset)
         return idxs[0]
@@ -91,27 +89,28 @@ class CrossmapIndexer:
         batch_size = self.settings.logging.progress
 
         # internal helper to save a batch of data into the index and db
-        def add_batch(items, ids, titles, offset):
-            if len(items) == 0:
+        def add_batch(ids, docs, encodings, offset):
+            if len(ids) == 0:
                 return 0
-            self.db.add_data(dataset, items, ids, titles=titles,
-                             indexes=[offset+_ for _ in range(len(items))])
-            return len(items)
+            idxs = [offset + _ for _ in range(len(ids))]
+            self.db.add_data(dataset, encodings, ids, idxs)
+            self.db.add_docs(dataset, docs, ids, idxs)
+            return len(ids)
 
-        items, ids, titles, offset = [], [], [], 0
-        for _tokens, _id, _title in self.encoder.documents(files):
-            if all_zero(_tokens.toarray()[0]):
+        ids, docs, encodings, offset = [], [], [], 0
+        for _id, _doc, _data in self.encoder.documents(files):
+            if all_zero(_data.toarray()[0]):
                 warning("Skipping item: " + str(_id))
                 continue
-            items.append(_tokens)
+            encodings.append(_data)
             ids.append(_id)
-            titles.append(_title)
-            if len(items) >= batch_size:
-                offset += add_batch(items, ids, titles, offset)
+            docs.append(_doc)
+            if len(ids) >= batch_size:
+                offset += add_batch(ids, docs, encodings, offset)
                 info("Progress: " + str(offset))
-                items, ids, titles = [], [], []
+                ids, docs, encodings = [], [], []
         # force a batch save at the end of reading data
-        offset += add_batch(items, ids, titles, offset)
+        offset += add_batch(ids, docs, encodings, offset)
 
         summary_fun = warning if offset == 0 else info
         summary_fun("Number of items: " + str(offset))

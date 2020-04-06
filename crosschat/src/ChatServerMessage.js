@@ -1,5 +1,6 @@
 import React from 'react';
 import Box from '@material-ui/core/Box';
+import Link from '@material-ui/core/Link';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -50,20 +51,31 @@ class HitsMessage extends ChatMessage {
     }
 
     render() {
-        let targets = this.props.data["targets"];
-        let titles = this.props.data["titles"];
-        let values = this.props.data[this.state.value_column];
+        let data = this.props.data;
+        let dataset = data["dataset"];
+        let targets = data["targets"];
+        let titles = data["titles"];
+        let values = data[this.state.value_column];
         let header = <TableRow>
             <TableCell>ID</TableCell>
             <TableCell>Title</TableCell>
             <TableCell>{this.state.value_header}</TableCell>
         </TableRow>;
         let content = values.map(function(x, i) {
-            return (<TableRow key={i}>
-                <TableCell><Typography color={"secondary"}>{targets[i]}</Typography></TableCell>
-                <TableCell><Typography color={"primary"}>{titles[i]}</Typography></TableCell>
-                <TableCell className="chat-td-numeric"><Typography color={"secondary"}>{x.toPrecision(4)}</Typography></TableCell>
-            </TableRow>)
+            let url = "/document/" + dataset + "/" + targets[i];
+            return (
+                <TableRow key={i}>
+                    <TableCell>
+                        <Link href={url} target="_blank" color={"secondary"}>{targets[i]}</Link>
+                    </TableCell>
+                    <TableCell>
+                        <Typography color={"primary"}>{titles[i]}</Typography>
+                    </TableCell>
+                    <TableCell className="chat-td-numeric">
+                        <Typography color={"secondary"}>{x.toPrecision(4)}</Typography>
+                    </TableCell>
+                </TableRow>
+            )
         });
         return (
             <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
@@ -237,7 +249,7 @@ class ChatServerMessage extends React.Component {
     };
     setHeader = function(x) {
         this.setState({header: x})
-    }
+    };
 
     render() {
         let type = this.props.data["_type"];

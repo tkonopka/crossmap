@@ -195,5 +195,7 @@ if action == "server":
 
 if action == "gui":
     environ.setdefault('PORT', str(settings.server.ui_port))
+    api_address = "0.0.0.0:"+str(settings.server.api_port)
+    environ.setdefault('REACT_APP_API_URL', api_address)
     cmd = "npm start --prefix " + join(dirname(__file__), "crosschat")
     system(cmd)

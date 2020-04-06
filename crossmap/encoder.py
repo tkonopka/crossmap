@@ -34,8 +34,7 @@ class CrossmapEncoder:
 
         :param filepaths: paths to yaml documents
         :param tokenizer: Kmerizer, if None defaults to self.tokenizer
-        :return: array with encoded  matrix and a dict mapping ids
-            associated with each matrix row array with one string
+        :return: 3-tuple with id, entire document, and an encoding
         """
 
         encode_document = self.document
@@ -49,7 +48,8 @@ class CrossmapEncoder:
                 for id, doc in yaml_document(f):
                     result = encode_document(doc, tokenizer)
                     title = doc["title"] if "title" in doc else ""
-                    yield result, id, title
+                    yield id, doc, result
+                    #yield result, id, title
 
     def document(self, doc, tokenizer=None):
         """encode one document into a vector"""

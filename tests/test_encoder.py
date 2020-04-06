@@ -65,11 +65,10 @@ class CrossmapEncoderTests(unittest.TestCase):
     def test_encode_documents(self):
         """process several documents on disk"""
 
-        result, ids, titles = [], [], []
-        for _d, _id, _title in self.encoder.documents([dataset_file]):
-            result.append(_d)
+        result, ids = [], []
+        for _id, _doc, _encoding in self.encoder.documents([dataset_file]):
+            result.append(_encoding)
             ids.append(_id)
-            titles.append(_title)
         self.assertEqual(len(ids), 6,
                          "dataset.yaml has six documents")
         self.assertEqual(sorted(ids), ["A", "B", "C", "D", "U", "ZZ"],
