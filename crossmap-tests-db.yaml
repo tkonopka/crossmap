@@ -1,0 +1,11 @@
+version: '3.7'
+services:
+  db:
+    image: mongo:4.2.5
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: crossmap
+      MONGO_INITDB_ROOT_PASSWORD: crossmap
+    ports:
+      - 8097:27017
+    volumes:
+      - ./tests/mongodb:/data/db

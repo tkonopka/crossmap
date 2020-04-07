@@ -1,47 +1,54 @@
 # crossmap
 
-crossmap
+`crossmap` is an application for general-purpose data exploration that can
+ adapt to user preferences. It implements algorithms based on nearest-neighbor
+  search, data decomposition, and diffusion to provide advanced data querying
+   capabilities.
+
+The [documentation](docs/README.md) pages provide an overview of topics
+: setup, data-preparation, querying, and the graphical-user interface.  
 
 
-Intro - to do
+## Summary
 
-[Documentation](docs/README.md)
+TO DO
 
 
+## Installation and development
 
-docker
-
-# Setting up docker
-
-After install docker and docker-compose.
-
+`crossmap` is written in python (3.7) and javascript. It relies on a
+ connection to a mongodb instance. 
+ 
+A minimal installation procedure is as follows. 
+ 
 ```
-# create a group docker (it may already exist)
-sudo groupadd docker
-# add a username to the group
-usermod -a -G docker [USERNAME]
-# log out and log in to allow the group membership changes to take effect
-```
-
-After logging in
-
-```
-sudo service docker start
-```
-
-To start the mongodb instance
-
-```
-docker-compose up -d
+# clone the repository source
+git clone https://github.com/tkonopka/crossmap.git
+cd crossmap
+# install required python packages
+pip install -f requirements.txt
+# install required javascript packages
+npm --prefix ./crosschat/ install ./crosschat/
 ```
 
-To cleanup
-
+If the installation was successful, all tests in the test suite should
+ execute cleanly.
+ 
 ```
-docker-compose down
+# launch a database instance
+docker-compose -f crossmap-tests-db.yaml up -d
+# execute the unit tests
+python -m unittest
+# stop the databse instances
+docker-compose -f crossmap-tests-db.yaml down
 ```
 
+Additional comments on the installation and usage are available in the
+ [documentation](docs/README.md)
 
 
+## Contributing
 
+Comments and contributions are welcome. Please raise an issue on the github
+ repository or send email.
 

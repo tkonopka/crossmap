@@ -19,16 +19,17 @@ Beyond the python interpreter, the software requires a number of packages
 . These can be installed using the package manager `pip`.
 
 ```
-pip install sqlite3 numpy scipy numba nmslib pymongo yaml
+pip install numpy scipy numba nmslib pymongo requests yaml
 ```
 
 Some of these, in particular nmslib, have bindings to libraries for high
 -performance numerical computations. They can exploit hardware-specific
  features such as CPU instruction sets to maximize running speed. As a result
  , the default installations via `pip` may output messages or warnings that
-  the default installation may be sub-optimal and provide hints on how to
-   compile the packages from sources. It is recommended to follow those hints
-    and re-install the packages if needed. 
+  the default installation may be sub-optimal. If this is the case, the
+   warnings will provide hints on how to compile the packages from sources. 
+   It is recommended to follow those hints and re-install the packages if
+    needed. 
 
 After installing `python` and the required packages, the `crossmap` utility
  should be ready to run. As a diagnostic, the utility should be able to display
@@ -38,8 +39,9 @@ After installing `python` and the required packages, the `crossmap` utility
 python crossmap.py --help
 ``` 
 
-This should display several lines with short descriptions of the arguments
-. Practical use-cases are covered in the documentation of the [command-line interface](cli.md).
+This should display several lines with short descriptions of the arguments. 
+Practical use-cases are covered in the documentation of the 
+[command-line interface](cli.md).
 
 
 
@@ -64,7 +66,7 @@ The front-end is implemented as a [React](https://reactjs.org/) application
 npm --version
 ```
 
-Development is carried out using version 6.9 and it is best to use this
+Development is carried out using version 6.13 and it is best to use this
  version (or later). If you don't have `npm`, installation is described on
   the [node home page](https://nodejs.org/). 
 
@@ -77,6 +79,6 @@ npm install
 cd ..
 ```
 
-The `npm` command downloads several components relevant for this application
-. Its output should summarize the steps and success status. 
+The `npm` command downloads several components relevant for this application. 
+Its output should summarize the steps and success status. 
 

@@ -4,12 +4,11 @@ Constructing feature sets for a Crossmap analysis
 
 import csv
 from collections import Counter
-from logging import info, error
+from logging import info
 from math import log2
-from os.path import exists, basename
+from os.path import basename
 from sys import maxsize
 from .tokenizer import CrossmapTokenizer
-#from .dbsqlite import CrossmapSqliteDB as CrossmapDB
 from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .tools import read_dict
 

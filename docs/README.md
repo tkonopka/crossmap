@@ -5,4 +5,4 @@
  - [Preparing configuration files](configurations.md)
  - [Querying on the command line](cli.md)
  - [Graphical user interface](gui.md)
-
+ - [Using docker](docker.md)

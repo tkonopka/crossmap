@@ -9,7 +9,6 @@ from os import remove
 from os.path import exists
 from logging import info, warning, error
 from scipy.sparse import csr_matrix, vstack
-#from .dbsqlite import CrossmapSqliteDB as CrossmapDB
 from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .tokenizer import CrossmapTokenizer
 from .encoder import CrossmapEncoder
