@@ -160,15 +160,14 @@ def _feature_map(settings):
 
 class CrossmapFeatures:
 
-    def __init__(self, settings, features=None):
+    def __init__(self, settings, features=None, db=None):
         """initialize indexes and their links with the crossmap db
 
         :param settings:  CrossmapSettings object
         :param features:  list with feature items (used for testing)
         """
 
-        db = CrossmapDB(settings)
-        db.build()
+        db = db if db is not None else CrossmapDB(settings)
         self.map = db.get_feature_map()
         if len(self.map) == 0:
             self.map = feature_map(settings, features)

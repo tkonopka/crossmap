@@ -25,7 +25,6 @@ class CrossmapInfo(Crossmap):
         logging.getLogger().setLevel("ERROR")
         super().__init__(settings)
         self.load()
-
         # set up a conversion from indexes into feature strings
         encoder = self.indexer.encoder
         self.feature_map = encoder.feature_map

@@ -52,6 +52,7 @@ class CrossmapMongoDB:
         self._datasets = self._db["datasets"]
         self._data = self._db["data"]
         self._counts = self._db["counts"]
+        self.feature_map = None
 
         # set up cache objects (uses sloppy cache by default)
         self.n_features = self._features.count_documents({})
@@ -186,10 +187,14 @@ class CrossmapMongoDB:
     def get_feature_map(self):
         """construct a feature map"""
 
+        if self.feature_map is not None and len(self.feature_map):
+            return self.feature_map.copy()
         result = dict()
-        for row in self._features.find({}):
+        for row in self._features.find({}, {"_id": 0}):
             result[row["id"]] = (row["idx"], row["weight"])
-        return result
+        self.feature_map = result
+        self.n_features = len(result)
+        return result.copy()
 
     def set_feature_map(self, feature_map):
         """add content into the feature map table"""
@@ -200,6 +205,7 @@ class CrossmapMongoDB:
         self._features.delete_many({})
         self._features.insert_many(feature_list)
         self.n_features = len(feature_map)
+        self.feature_map = feature_map.copy()
 
     @valid_dataset
     def set_counts(self, dataset, data):

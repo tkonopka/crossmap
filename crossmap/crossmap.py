@@ -89,7 +89,8 @@ class Crossmap:
             return
         if not exists(settings.prefix):
             mkdir(settings.prefix)
-        self.indexer = CrossmapIndexer(settings)
+        self.db = CrossmapDB(settings)
+        self.indexer = CrossmapIndexer(settings, db=self.db)
         self.db = self.indexer.db
         # two encoders - for the primary encoding and for diffusion weights
         self.encoder = self.indexer.encoder
@@ -129,7 +130,7 @@ class Crossmap:
         """load indexes from prepared files"""
 
         self.indexer.load()
-        self.diffuser = CrossmapDiffuser(self.settings, self.indexer.db)
+        self.diffuser = CrossmapDiffuser(self.settings, self.db)
 
     def add(self, dataset, doc, id, metadata=None, rebuild=True):
         """add a new item into the db

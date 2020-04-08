@@ -28,7 +28,7 @@ almost_sqrt2 = floor(sqrt2*1e7)/1e7
 class CrossmapIndexer:
     """Indexing data for crossmap"""
 
-    def __init__(self, settings):
+    def __init__(self, settings, db=None):
         """initialize indexes and their links with the crossmap db
 
         :param settings:  CrossmapSettings object
@@ -36,11 +36,11 @@ class CrossmapIndexer:
         """
 
         self.settings = settings
-        features = CrossmapFeatures(settings)
+        CrossmapFeatures(settings, db=db)
         tokenizer = CrossmapTokenizer(settings)
-        self.db = CrossmapDB(self.settings)
-        self.db.build()
-        self.encoder = CrossmapEncoder(features.map, tokenizer)
+        self.db = db if db is not None else CrossmapDB(settings)
+        features_map = self.db.get_feature_map()
+        self.encoder = CrossmapEncoder(features_map, tokenizer)
         self.indexes = dict()
         self.index_files = dict()
         # cache holding string identifiers for items in the db

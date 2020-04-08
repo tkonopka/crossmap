@@ -120,3 +120,7 @@ After the image is build, the next steps involve preparing a configuration
     ```
     docker-compose -f crossmap-my-instance.yaml down
     ```
+
+*Note:* the startup procedure for the GUI in the docker container includes a
+ complication step. This is not instantaneous, so it may take 30s or more for
+  the web application to become accessible in a web browser.
