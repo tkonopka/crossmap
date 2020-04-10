@@ -117,7 +117,7 @@ class CsrMultiplicationTests(unittest.TestCase):
         arr = array([1.0, 2.0, 3.0, 4.0, 5.0])
         a = csr_matrix([0.5, 0.0, 0.5, 0.0, 1.0])
         result = harmonic_multiply_sparse(arr, a.data, a.indices, 2.0)
-        expected = [0.5*(2/3), 0.5*(6/5), 1.0*(10/7)]
+        expected = [2*0.5*(2/3), 2*0.5*(6/5), 2*1.0*(10/7)]
         self.assertListEqual(list(result), expected)
 
     def test_max_simple(self):

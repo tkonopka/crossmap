@@ -91,8 +91,9 @@ class CrossmapDiffuser:
             if total % progress == 0:
                 info("Progress: " + str(total))
         # replace dictionaries by csr_matrix (in place to save memory)
+        threshold2 = threshold / 10
         for _ in range(nf):
-            result[_] = result[_].to_csr(nf)
+            result[_] = result[_].to_csr(nf, threshold2)
         self.db.set_counts(dataset, result)
 
     def build(self):
@@ -150,16 +151,26 @@ class CrossmapDiffuser:
 
         # fetch counts data from db, then re-use in multiple passes
         v_indexes = [int(_) for _ in v.indices]
+        #print(str(len(v_indexes))+ " max: "+str(max(v.data))+" min: "+str(min(v.data)))
+        #print(str(v.data))
         counts = dict()
         for corpus in strength.keys():
             counts[corpus] = self.db.get_counts_arrays(corpus, v_indexes)
+        #print("starting diffusion with")
+        #cf = CrossmapFeatures(self.settings)
+        #fm = cf.map
+        #inv_fm = cf.inv_feature_map()
+        #print_top(result, inv_fm, 0.2)
+        #z = "nerve"
+        #idx_z = fm["nerve"][0]
 
         num_passes = self.num_passes
         f_weights = self.feature_weights
         hms = harmonic_multiply_sparse
         for pass_weight in _pass_weights(num_passes):
             last_result = result.copy()
-            for corpus, value in strength.items():
+            for corpus, corpus_weight in strength.items():
+                #print(str(corpus))
                 diffusion_data = counts[corpus]
                 for di, ddata in diffusion_data.items():
                     # ddata[0] - values from a sparse vector
@@ -178,8 +189,21 @@ class CrossmapDiffuser:
                     # multiplier = min(1.0, (w_dense[di]/v_dense[di]))
                     multiplier = w_dense[di]/v_dense[di]
                     multiplier *= last_result[di] / row_norm
-                    data *= pass_weight * value * multiplier
+                    data *= pass_weight * corpus_weight * multiplier
+                    #if inv_fm[di] == "fsh" or inv_fm[di]=="lh":
+                    #    print("before hormon")
+                    #    print_top(result, inv_fm, 0.1)
+                    #    print("cells: "+str(round(result[idx_cells], 3)))
                     result = add_sparse(result, data, ddata[1])
+                    #if inv_fm[di] == "fsh" or inv_fm[di]=="lh":
+                    #    print("after hormon")
+                    #    print_top(result, inv_fm, 0.1)
+                    #    print("cells: "+str(round(result[idx_cells], 3)))
+                    #    print("")
+                    #print("after "+inv_fm[di]+"\t " + z + ": "+str(result[idx_z]))
+            #print("after pass")
+            #print_top(result, inv_fm, 0.2)
+
         return normalize_csr(csr_matrix(result))
 
 

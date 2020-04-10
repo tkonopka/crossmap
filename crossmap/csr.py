@@ -160,12 +160,12 @@ def harmonic_multiply_sparse(factors, data, indices, harmonic_factor):
         multiplication.
     :return: array consisting of factors*data in sparse format.
         When a harmonic factor is present, the multiplication is by
-        (factors*harmonic_factor)/(factors+harmonic_factor)
+        (2*factors*harmonic_factor)/(factors+harmonic_factor)
     """
 
     for i in range(len(indices)):
         fi = factors[indices[i]]
-        data[i] *= (fi * harmonic_factor / (fi + harmonic_factor))
+        data[i] *= 2.0 * fi * harmonic_factor / (fi + harmonic_factor)
     return data
 
 

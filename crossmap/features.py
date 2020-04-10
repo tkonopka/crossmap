@@ -175,3 +175,10 @@ class CrossmapFeatures:
             info("Saving feature map")
             write_feature_map(self.map, settings)
 
+    def inv_feature_map(self):
+        """construct an inverse feature map"""
+
+        result = [''] * len(self.map)
+        for k, v in self.map.items():
+            result[v[0]] = k
+        return result

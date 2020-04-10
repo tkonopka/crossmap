@@ -66,17 +66,27 @@ class Sparsevector:
             data[i] += d*multiplier
         return self
 
-    def to_csr(self, n):
+    def to_csr(self, n, threshold=None):
         """create a csr vector representation of the dictionary
 
         :param n: dimension of the output object
+        :param threshold: real number, only entries greater in absolute value
+            are preserved in the output
         :return: csr_matrix object
         """
 
         indices, data = [], []
-        for i, d in self.data.items():
-            indices.append(i)
-            data.append(d)
+        if threshold is None or threshold == 0.0:
+            for i, d in self.data.items():
+                indices.append(i)
+                data.append(d)
+        else:
+            if len(self.data):
+                threshold *= max(self.data.values())
+            for i, d in self.data.items():
+                if abs(d) > threshold:
+                    indices.append(i)
+                    data.append(d)
         return csr_matrix((data, indices, (0, len(data))), shape=(1, n))
 
     def __str__(self):

@@ -6,3 +6,5 @@ crosschat/build
 docs
 docker-data
 docker-compose*
+tests/mongodb
+mongodb*

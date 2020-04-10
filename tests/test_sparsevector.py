@@ -64,6 +64,20 @@ class SparsevectorTests(unittest.TestCase):
         self.assertEqual(result_dense[1], 1.0)
         self.assertEqual(result_dense[5], 2.5)
 
+    def test_to_csr_threshold(self):
+        """convert dictionary to a csr_representation, with a threshold"""
+
+        temp = Sparsevector()
+        temp.add_csr(csr_matrix([0, 2, 0, 0.3, 0, 1, 0.5, 0.1]))
+        result = temp.to_csr(8, 0.2)
+        result_dense = (result.toarray())[0]
+        self.assertEqual(len(result_dense), 8)
+        self.assertEqual(result_dense[0], 0.0)
+        self.assertEqual(result_dense[1], 2.0)
+        self.assertEqual(result_dense[3], 0.0)
+        self.assertEqual(result_dense[6], 0.5)
+        self.assertEqual(result_dense[7], 0.0)
+
     def test_to_str(self):
         """write out a string representation"""
 
