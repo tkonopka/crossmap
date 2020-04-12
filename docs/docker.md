@@ -28,7 +28,12 @@ The first step toward running `crossmap` in docker containers is to ensure
 
     ```
     sudo service docker start
+    # or
+    sudo dockerd &
     ```
+    
+    
+    
 
 
 ## Database-only
