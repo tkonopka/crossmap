@@ -6,6 +6,7 @@ This container/parser only supports a few of the data types in an obo term.
 (This file is derived/modified from another project: phenoscoring)
 """
 
+from logging import warning
 
 # ##################################################################
 # Container for an ontology term
@@ -116,7 +117,7 @@ class OboTerm(MinimalOboTerm):
         """Add a definition of a synonym to this object."""
         
         if self.name is None:
-            raise Exception("Error parsing synonym; term name is not set")
+            warning("parsing synonym, but term name is not set")
         
         # Extract value between quotes
         secondq = synonym.find('"', 2)
