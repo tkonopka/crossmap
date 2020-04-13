@@ -48,6 +48,7 @@ def: largest integer smaller than zero
 is_a: int:3
 synonym: "negative unity" EXACT
 
+
 [Typedef]
 id: is_a
 name: is_a

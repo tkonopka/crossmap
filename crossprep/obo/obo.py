@@ -211,7 +211,7 @@ def parse_obo(filename, OboTermClass=OboTerm):
             if state != "[Term]":
                 continue
             if line == "" and newterm is not None:
-                if newterm.valid():                           
+                if newterm.valid():
                     result[newterm.id] = newterm
                     newterm = None
                     continue
@@ -220,9 +220,11 @@ def parse_obo(filename, OboTermClass=OboTerm):
             if line == "[Term]":                
                 newterm = OboTermClass()
                 continue
+            if line == "":
+                continue
              
             # add information into the term
             newterm.parse(line)
-                                                       
+
     return result
 
