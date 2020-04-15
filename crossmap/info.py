@@ -247,22 +247,24 @@ class CrossmapInfo(Crossmap):
             result.append(dict(feature=k, index=v[0], weight=v[1]))
         return result
 
-    def summary(self, digits=4):
+    def summary(self, digits=6):
         """prepare an ad-hoc summary of the contents of the configuration"""
 
-        def stats(x):
+        def stats(x, collection=""):
             temp = dict(min=min(x), mean=sum(x)/len(x), max=max(x))
-            return {k: round(v, digits) for k, v in temp.items()}
+            result = {"collection": collection}
+            for k,v in temp.items():
+                result[k] = round(v, digits)
+            return result
 
         db = self.db
         datasets = []
         for dataset in db.datasets:
             size = db.dataset_size(dataset)
-            counts_sparsity = stats(db.sparsity(dataset, "counts"))
-            data_sparsity = stats(db.sparsity(dataset, "data"))
+            counts_sparsity = stats(db.sparsity(dataset, "counts"), "counts")
+            data_sparsity = stats(db.sparsity(dataset, "data"), "data")
             datasets.append(dict(label=dataset, size=size,
-                                 counts_sparsity=counts_sparsity,
-                                 data_sparsity=data_sparsity))
+                                 sparsity=[counts_sparsity, data_sparsity])),
 
         return dict(name=self.settings.name,
                     dir=self.settings.dir,
