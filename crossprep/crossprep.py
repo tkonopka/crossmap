@@ -8,12 +8,14 @@ Usage: python crossprep.py command
 
 import argparse
 import gzip
+from json import dumps
 import logging
 import sys
 import yaml
 from os import getcwd
 from os.path import join
 from obo.build import build_obo_dataset
+from obo.summarize import summarize_obo
 from opentargets.build import build_opentargets_dataset
 from orphanet.build import build_orphanet_dataset
 from pubmed.baseline import download_pubmed_baseline
@@ -34,7 +36,8 @@ if __name__ != "__main__":
 parser = argparse.ArgumentParser(description="crossprep")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["obo", "opentargets", "orphanet", "pubmed",
+                    choices=["obo", "obo_summary",
+                             "opentargets", "orphanet", "pubmed",
                              "pubmed_baseline", "genesets", "wikipedia",
                              "wiktionary"])
 
@@ -182,8 +185,6 @@ logging.basicConfig(format='[%(asctime)s] %(message)s',
 logging.info("Starting " + config.action + " - " + str(config.name) )
 
 
-
-
 # set a nontrivial output file name
 if config.name is None or config.name == "":
     config.name = config.action
@@ -198,6 +199,13 @@ if config.action == "obo":
     with gzip.open(result_file, "wt") as f:
         build_obo_dataset(config.obo, config.obo_root,
                           aux=config.obo_aux, out=f)
+
+elif config.action == "obo_summary":
+    if missing_arguments(["obo"]):
+        sys.exit()
+    summary_file = join(config.outdir, config.name + "-sumary.json.gz")
+    with gzip.open(summary_file, "wt") as f:
+        f.write(dumps(summarize_obo(config.obo), indent=2))
 
 elif config.action == "pubmed_baseline":
     download_pubmed_baseline(config)

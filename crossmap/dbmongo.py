@@ -393,10 +393,9 @@ class CrossmapMongoDB:
         """
 
         n_features = self.n_features
-        for row in self._data.find({"dataset": dataset}):
-            result = dict(id=row["id"], idx=row["idx"],
-                          data=bytes_to_csr(row["data"], n_features))
-            yield result
+        for row in self._data.find({"dataset": dataset}, {"_id": 0}):
+            yield dict(id=row["id"], idx=row["idx"],
+                       data=bytes_to_csr(row["data"], n_features))
 
     @valid_dataset
     def get_titles(self, dataset, idxs=None, ids=None):

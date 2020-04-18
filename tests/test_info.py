@@ -48,7 +48,7 @@ class CrossmapInfoTests(unittest.TestCase):
         self.assertTrue("weight" in features[0])
 
     def test_info_summary(self):
-        """info formats a summary of the instances"""
+        """info summarizes counts and sparsite of all datasets"""
 
         summary = self.crossinfo.summary(3)
         # summary should have some keys

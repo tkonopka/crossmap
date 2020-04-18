@@ -1,5 +1,5 @@
 """
-Build a dataset of crossmap using obo files.
+Build a dataset for crossmap using obo files.
 """
 
 import sys
@@ -180,7 +180,7 @@ def build_obo_dataset(obo_file, root_id=None, aux="none", out=sys.stdout):
         out.write(dump({item_id: item}))
 
 
-def build_obo_dataset_dict(obo_file, root_id=None, aux="none", out=sys.stdout):
+def build_obo_dataset_dict(obo_file, root_id=None, aux="none"):
     """transfer data from an obo into a dictionary
 
     :param obo_file: path to obo file

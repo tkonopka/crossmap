@@ -9,6 +9,7 @@ import yaml
 from os.path import join
 from crossprep.obo.build import build_obo_dataset, build_obo_dataset_dict
 from crossprep.obo.obo import Obo
+from crossprep.obo.summarize import summarize_obo
 
 
 data_dir = join("crossprep", "tests", "testdata")
@@ -16,7 +17,7 @@ int_file = join(data_dir, "integers.obo")
 
 
 class BuildOboDatasetTests(unittest.TestCase):
-    """Configuring pubmed baseline downloads."""
+    """Test functions for transferign data from obo files."""
 
     @classmethod
     def setUp(cls):
@@ -132,3 +133,18 @@ class BuildOboDatasetTests(unittest.TestCase):
         result = build_obo_dataset_dict(int_file, aux="ancestors")
         self.assertTrue("integer" in str(result["int:5"]["data_pos"]))
         self.assertTrue("root" in str(result["int:5"]["data_pos"]))
+
+
+class SummarizeOboTests(unittest.TestCase):
+    """Counting fields in obo files"""
+
+    @classmethod
+    def setUp(cls):
+        cls.obo = Obo(int_file)
+        cls.summary = summarize_obo(int_file)
+
+    def test_length(self):
+        """summary should be a list with one items per obo id"""
+
+        self.assertTrue(type(self.summary) is list)
+        self.assertEqual(len(self.summary), 7)
