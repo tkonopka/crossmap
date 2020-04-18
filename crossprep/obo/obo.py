@@ -23,6 +23,7 @@ class MinimalObo:
 
         self.terms = parse_obo(filepath, MinimalOboTerm)
         self.parents_cache = dict()
+        self.children_cache = dict()
         self.ancestors_cache = dict()
         self.descendants_cache = dict()
         self.clear_cache()
@@ -31,6 +32,7 @@ class MinimalObo:
 
     def clear_cache(self):
         self.parents_cache = dict()
+        self.children_cache = dict()
         self.ancestors_cache = dict()
         self.descendants_cache = dict()
 
@@ -80,7 +82,11 @@ class MinimalObo:
     def children(self, key):
         """Retrieve all the children of a term."""
 
-        return get_by_relation(self, key, "parent_of")
+        if key in self.children_cache:
+            return self.children_cache[key]
+        result = get_by_relation_recursive(self, key, "parent_of")
+        self.children_cache[key] = result
+        return self.children_cache[key]
 
     def descendants(self, key):
         """Retrieve all children down to leaves (uses cache)"""
@@ -94,13 +100,9 @@ class MinimalObo:
     def siblings(self, key):
         """Retrieve siblings of a given term."""
 
-        # look for siblings by going up one, down one in tree
-        parents = self.parents(key)
         result = set()
-        for p in parents:
-            for sibling in self.children(p):
-                result.add(sibling)
-        # remove itself (the if condition should always be positive)
+        for p in self.parents(key):
+            result.update(self.children(p))
         if key in result:
             result.remove(key)
         return tuple(result)
@@ -157,8 +159,8 @@ def get_by_relation(obo, key, relation):
     
     term = obo.terms[key]
     result = set()
-    for type, target in term.relations:
-        if type == relation and obo.valid(target):                
+    for relation_type, target in term.relations:
+        if relation_type == relation and obo.valid(target):
             result.add(target)        
     return tuple(result)            
 

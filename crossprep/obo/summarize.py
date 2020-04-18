@@ -17,17 +17,17 @@ def summarize_obo(obo_file):
     obo = Obo(obo_file)
     for id in obo.ids():
         term = obo.terms[id]
-        item = dict(id=id, name=term.name)
+        item = dict(id=id,
+                    name=term.name,
+                    is_obsolete=term.obsolete,
+                    num_parents=len(obo.parents(id)),
+                    num_siblings=len(obo.siblings(id)),
+                    num_children=len(obo.children(id)),
+                    num_synonyms=len(term.synonyms),
+                    chars_def=0,
+                    num_comments=0,
+                    chars_comments=0)
         result.append(item)
-        item["is_obsolete"] = term.obsolete
-        item["num_parents"] = len(obo.parents(id))
-        item["num_siblings"] = len(obo.siblings(id))
-        item["num_children"] = len(obo.children(id))
-        item["num_synonyms"] = len(term.synonyms)
-        # keys that are filled from the term.data
-        item["chars_def"] = 0
-        item["num_comments"] = 0
-        item["chars_comments"] = 0
         if term.data is None:
             continue
         if "def" in term.data:
