@@ -203,7 +203,7 @@ if config.action == "obo":
 elif config.action == "obo_summary":
     if missing_arguments(["obo"]):
         sys.exit()
-    summary_file = join(config.outdir, config.name + "-sumary.json.gz")
+    summary_file = join(config.outdir, config.name + "-summary.json.gz")
     with gzip.open(summary_file, "wt") as f:
         f.write(dumps(summarize_obo(config.obo), indent=2))
 

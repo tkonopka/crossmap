@@ -2,8 +2,6 @@
 Summarize an obo - terms and misc counts
 """
 
-import sys
-from yaml import dump
 from .obo import Obo
 
 
@@ -11,8 +9,6 @@ def summarize_obo(obo_file):
     """summarize content from an obo into a list
 
     :param obo_file: path to obo file
-    :param root_id: character, id of root node. This can be used to
-        build a dataset for an ontology branch
     :return: dictionary mapping ids to objects with
         data, aux_pos, aux_neg components
     """
