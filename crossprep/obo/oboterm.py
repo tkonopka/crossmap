@@ -47,7 +47,9 @@ class MinimalOboTerm():
             if tokens[1] == "true":
                 self.obsolete = True
             else:
-                raise Exception("Unknown value for field is_obsolete")
+                id_str = "(id: "+str(self.id) + ")"
+                warning("Unknown value in field is_obsolete " + id_str)
+                self.obsolete = True
             return
         if tokens[0] == "is_a":
             self.add_relation(tokens[1], "is_a")
@@ -62,7 +64,7 @@ class MinimalOboTerm():
     def __str__(self):
         """a quick summary of this term."""
         obs = str(self.obsolete)
-        return "OboTerm: "+ self.id+", obsolete: "+obs
+        return "OboTerm: " + self.id + ", obsolete: " + obs
 
 
 class OboTerm(MinimalOboTerm):
