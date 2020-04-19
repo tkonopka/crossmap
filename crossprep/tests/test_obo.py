@@ -137,7 +137,7 @@ class BuildOboDatasetTests(unittest.TestCase):
         self.assertTrue("root" in str(result["int:5"]["data_pos"]))
 
 
-class SummarizeOboTests(unittest.TestCase):
+class OboTests(unittest.TestCase):
     """Counting fields in obo files"""
 
     @classmethod
@@ -145,8 +145,24 @@ class SummarizeOboTests(unittest.TestCase):
         cls.obo = Obo(int_file)
         cls.summary = summarize_obo(int_file)
 
-    def test_length(self):
+    def test_depth_root(self):
+        """depth of root node is zero"""
+
+        self.assertEqual(self.obo.depth("int:0"), 0)
+
+    def test_depth_first_child(self):
+        """depth of first-level child is 1"""
+
+        self.assertEqual(self.obo.depth("int:1"), 1)
+        self.assertEqual(self.obo.depth("int:2"), 1)
+
+    def test_depth_multiple_paths(self):
+        """depth of term with multiple paths to root reports minimal depth"""
+
+        self.assertEqual(self.obo.depth("int:11"), 2)
+
+    def test_summary(self):
         """summary should be a list with one items per obo id"""
 
         self.assertTrue(type(self.summary) is list)
-        self.assertEqual(len(self.summary), 7)
+        self.assertEqual(len(self.summary), 8)

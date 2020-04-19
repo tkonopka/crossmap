@@ -28,7 +28,7 @@ class MinimalObo:
         self.descendants_cache = dict()
         self.clear_cache()
         if infer_children:
-            add_parent_of(self)
+            _add_parent_of(self)
 
     def clear_cache(self):
         self.parents_cache = dict()
@@ -62,7 +62,7 @@ class MinimalObo:
 
         if key in self.parents_cache:
             return self.parents_cache[key]
-        result = get_by_relation(self, key, "is_a")
+        result = _get_by_relation(self, key, "is_a")
         self.parents_cache[key] = result
         return result
 
@@ -84,7 +84,7 @@ class MinimalObo:
 
         if key in self.children_cache:
             return self.children_cache[key]
-        result = get_by_relation(self, key, "parent_of")
+        result = _get_by_relation(self, key, "parent_of")
         self.children_cache[key] = result
         return self.children_cache[key]
 
@@ -106,6 +106,11 @@ class MinimalObo:
         if key in result:
             result.remove(key)
         return tuple(result)
+
+    def depth(self, key):
+        """compute the depth of a given term"""
+
+        return _get_depth(self, key)
 
     def sim_jaccard(self, key1, key2):
         """Compute similarity of two terms using ancestors. """
@@ -136,7 +141,7 @@ class Obo(MinimalObo):
         self.terms = parse_obo(filepath, OboTerm)
         self.clear_cache()
         if infer_children:
-            add_parent_of(self)
+            _add_parent_of(self)
 
     def name(self, key):
         """Retrieve the name associated with an id/key."""
@@ -151,12 +156,9 @@ class Obo(MinimalObo):
 # Helper functions for this module
 
 
-def get_by_relation(obo, key, relation):
+def _get_by_relation(obo, key, relation):
     """Identify all hits for a relation type."""
-            
-    if key not in obo.terms:
-        raise Exception("key "+str(key)+" not present in ontology")
-    
+
     term = obo.terms[key]
     result = set()
     for relation_type, target in term.relations:
@@ -177,16 +179,31 @@ def get_by_relation_recursive(obo, key, relation):
             return
         result.add(x)
         visited.add(x)                        
-        for hit in get_by_relation(obo, x, relation):
+        for hit in _get_by_relation(obo, x, relation):
             get_recursive(hit)
         
     result, visited = set(), set()    
     get_recursive(key)
     result.remove(key)    
-    return tuple(result)      
+    return tuple(result)
 
 
-def add_parent_of(obo):
+def _get_depth(obo, key, current_depth=0):
+    """depth of a term in the ontology graph
+
+    :param obo: Obo object
+    :param key: character, obo term id
+    :param current_depth: integer, used during recursion
+    :return: integer depth along the shortest path to root
+    """
+
+    result = [_get_depth(obo, _, current_depth) for _ in obo.parents(key)]
+    if len(result) == 0:
+        return 0
+    return min(result) + 1
+
+
+def _add_parent_of(obo):
     """Augment the relations in an Obo to include 'parent_of'."""
     
     for child in obo.ids():

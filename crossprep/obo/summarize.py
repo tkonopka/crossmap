@@ -21,6 +21,7 @@ def summarize_obo(obo_file):
                     name=term.name,
                     chars_name=len(term.name),
                     is_obsolete=term.obsolete,
+                    depth=obo.depth(id),
                     num_parents=len(obo.parents(id)),
                     num_ancestors=len(obo.ancestors(id)),
                     num_siblings=len(obo.siblings(id)),

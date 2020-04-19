@@ -48,6 +48,12 @@ def: largest integer smaller than zero
 is_a: int:3
 synonym: "negative unity" EXACT
 
+[Term]
+id: int:11
+name: one squared
+def: one squared
+is_a: int:1
+is_a: int:5
 
 [Typedef]
 id: is_a
