@@ -84,7 +84,7 @@ class MinimalObo:
 
         if key in self.children_cache:
             return self.children_cache[key]
-        result = get_by_relation_recursive(self, key, "parent_of")
+        result = get_by_relation(self, key, "parent_of")
         self.children_cache[key] = result
         return self.children_cache[key]
 
@@ -189,7 +189,7 @@ def get_by_relation_recursive(obo, key, relation):
 def add_parent_of(obo):
     """Augment the relations in an Obo to include 'parent_of'."""
     
-    for child in obo.ids(True):            
+    for child in obo.ids():
         for parent in obo.parents(child):
             obo.terms[parent].add_relation(child, "parent_of")
 
