@@ -5,6 +5,10 @@ Summarize an obo - terms and misc counts
 from .obo import Obo
 
 
+def f(x):
+    return f(x+1)
+
+
 def summarize_obo(obo_file):
     """summarize content from an obo into a list
 

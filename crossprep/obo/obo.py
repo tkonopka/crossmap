@@ -4,6 +4,7 @@ Parsing ontologies from obo files on disk.
 (This file is copied from another project: phenoscoring)
 """
 
+from logging import warning
 from .oboterm import OboTerm, MinimalOboTerm
 
 
@@ -110,7 +111,12 @@ class MinimalObo:
     def depth(self, key):
         """compute the depth of a given term"""
 
-        return _get_depth(self, key)
+        try:
+            result = _get_depth(self, key)
+        except RecursionError:
+            warning("Error finding depth, possible inconsistency: "+str(key))
+            result = None
+        return result
 
     def sim_jaccard(self, key1, key2):
         """Compute similarity of two terms using ancestors. """
