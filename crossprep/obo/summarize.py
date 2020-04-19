@@ -19,6 +19,7 @@ def summarize_obo(obo_file):
         term = obo.terms[id]
         item = dict(id=id,
                     name=term.name,
+                    chars_name=len(term.name),
                     is_obsolete=term.obsolete,
                     num_parents=len(obo.parents(id)),
                     num_ancestors=len(obo.ancestors(id)),
