@@ -16,10 +16,12 @@ def summarize_obo(obo_file):
     result = []
     obo = Obo(obo_file)
     for id in obo.ids():
+        print(str(id))
         term = obo.terms[id]
+        term_name = term.name if term.name is not None else ""
         item = dict(id=id,
-                    name=term.name,
-                    chars_name=len(term.name),
+                    name=term_name,
+                    chars_name=len(term_name),
                     is_obsolete=term.obsolete,
                     depth=obo.depth(id),
                     num_parents=len(obo.parents(id)),
