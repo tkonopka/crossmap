@@ -55,13 +55,11 @@ class CrossmapDiffuser:
         info("Setting empty diffusion index: " + dataset)
         nf = len(self.feature_map)
         empty = csr_matrix([0.0]*nf)
-        result = [empty.copy() for _ in range(nf)]
+        result = [empty for _ in range(nf)]
         self.db.set_counts(dataset, result)
 
     def _build_counts(self, dataset=""):
         """construct co-occurrence records for one dataset
-
-        (This version uses building from database)
 
         :param dataset: string, identifier for dataset in db
         """
@@ -104,7 +102,7 @@ class CrossmapDiffuser:
                 self.db.register_dataset(label)
             self._build_counts(label)
 
-    def update(self, dataset, data_idxs=[]):
+    def update(self, dataset, data_idxs=()):
         """augment counts based on vectors from the data table
 
         :param dataset: string, dataset identifier
