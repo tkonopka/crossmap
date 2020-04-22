@@ -23,10 +23,9 @@ class CrossmapMongoDBBuildEmptyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         settings = CrossmapSettings(config_plain, create_dir=True)
-        with cls.assertLogs(cls, level="INFO"):
-            db = CrossmapMongoDB(settings)
-            db.register_dataset("targets")
-            db.register_dataset("documents")
+        db = CrossmapMongoDB(settings)
+        db.register_dataset("targets")
+        db.register_dataset("documents")
         cls.db = db
 
     @classmethod

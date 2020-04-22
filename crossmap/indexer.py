@@ -96,20 +96,25 @@ class CrossmapIndexer:
             self.db.add_docs(dataset, docs, ids, idxs)
             return len(ids)
 
-        ids, docs, encodings, offset = [], [], [], 0
+        # book-keeping lists of objects (will re-use over several batches)
+        ids = [""]*batch_size
+        docs, encodings = [None]*batch_size, [None]*batch_size
+        offset, batch_i = 0, 0
+        # scan the documents, transfer data in chunks
         for _id, _doc, _data in self.encoder.documents(files):
-            if all_zero(_data.toarray()[0]):
+            if len(_data.data) == 0:
                 warning("Skipping item: " + str(_id))
                 continue
-            encodings.append(_data)
-            ids.append(_id)
-            docs.append(_doc)
-            if len(ids) >= batch_size:
+            encodings[batch_i] = _data
+            ids[batch_i] = _id
+            docs[batch_i] = _doc
+            batch_i += 1
+            if batch_i >= batch_size:
                 offset += add_batch(ids, docs, encodings, offset)
                 info("Progress: " + str(offset))
-                ids, docs, encodings = [], [], []
-        # force a batch save at the end of reading data
-        offset += add_batch(ids, docs, encodings, offset)
+                batch_i = 0
+        # force a batch save at the end
+        offset += add_batch(ids[:batch_i], docs, encodings, offset)
 
         summary_fun = warning if offset == 0 else info
         summary_fun("Number of items: " + str(offset))

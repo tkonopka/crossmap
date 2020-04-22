@@ -149,6 +149,7 @@ class Crossmap:
         if label_status < 0:
             raise Exception("invalid dataset label: " + str(dataset))
         if label_status:
+            info("Registering dataset: " + str(dataset))
             self.db.register_dataset(dataset)
 
         # update the db structures (indexing and diffusion)

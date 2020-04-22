@@ -89,22 +89,24 @@ class CrossmapIndexerBuildTests(unittest.TestCase):
 
 
 class CrossmapIndexerSkippingTests(unittest.TestCase):
-    """Building indexing and skipping over items that have null features vectors"""
+    """Building index should skip items that have null features vectors"""
 
-    limited_features = ["alice", "bob", "catherine", "daniel", "starts", "unique", "file",
+    limited_features = ["alice", "bob", "catherine", "daniel", "starts",
+                        "unique", "file",
                         "a", "b", "c", "d", "e"]
 
     def tearDown(self):
         remove_crossmap_cache(data_dir, "crossmap_simple")
 
     def test_skip_certain_docs(self):
+        """docs do not have any of the limited features should be omitted"""
         settings = CrossmapSettings(config_plain, create_dir=True)
         settings.tokens.k = 10
         CrossmapFeatures(settings, features=self.limited_features)
         indexer = CrossmapIndexer(settings)
         with self.assertLogs(level="WARNING") as cm:
             indexer.build()
-        self.assertTrue("item" in str(cm.output))
+        self.assertTrue("Skipping item" in str(cm.output))
 
 
 class CrossmapIndexerNeighborTests(unittest.TestCase):

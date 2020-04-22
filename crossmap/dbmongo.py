@@ -4,7 +4,7 @@ Interface to a specialized db (implemented as monogodb)
 
 from pymongo import MongoClient
 from functools import wraps
-from logging import info, warning, error
+from logging import warning, error
 from scipy.sparse import csr_matrix
 from .csr import csr_to_bytes, bytes_to_csr, bytes_to_arrays
 from .cache import CrossmapCache
@@ -152,7 +152,6 @@ class CrossmapMongoDB:
         if label in self.datasets:
             error("dataset label already exists")
             return
-        info("Registering dataset: " + str(label))
         self._datasets.insert_one({"dataset": len(self.datasets),
                                    "label": label,
                                    "title": title})
@@ -177,7 +176,6 @@ class CrossmapMongoDB:
     def index(self, collection):
         """create indexes on existing tables in the database"""
 
-        info("Indexing " + collection)
         if collection == "data":
             self._data.create_index([("dataset", 1), ("id", 1)])
             self._data.create_index([("dataset", 1), ("idx", 1)])
@@ -220,10 +218,11 @@ class CrossmapMongoDB:
 
         self.counts_cache.clear()
         self._clear_table(dataset, "counts")
-        data_array = []
-        for i in range(len(data)):
-            i_bytes = csr_to_bytes(data[i])
-            data_array.append({"dataset": dataset, "idx": i, "data": i_bytes})
+        n = len(data)
+        data_array = [None]*n
+        for i in range(n):
+            data_array[i] = {"dataset": dataset, "idx": i,
+                             "data": csr_to_bytes(data[i])}
         self._counts.insert_many(data_array)
 
     @valid_dataset
@@ -252,16 +251,17 @@ class CrossmapMongoDB:
         """
 
         self.data_cache.clear()
+        n = len(ids)
         if idxs is None:
             current_size = self.dataset_size(dataset)
-            idxs = [current_size + _ for _ in range(len(ids))]
+            idxs = [current_size + _ for _ in range(n)]
 
-        data_array = []
-        for i in range(len(ids)):
-            data_array.append({"dataset": dataset,
-                               "id": ids[i],
-                               "idx": idxs[i],
-                               "data": csr_to_bytes(data[i])})
+        data_array = [None]*n
+        for i in range(n):
+            data_array[i] = {"dataset": dataset,
+                             "id": ids[i],
+                             "idx": idxs[i],
+                             "data": csr_to_bytes(data[i])}
         self._data.insert_many(data_array)
         return idxs
 
@@ -275,12 +275,13 @@ class CrossmapMongoDB:
         :param idxs: list with integer identifiers
         """
 
-        data_array = []
-        for i in range(len(ids)):
+        n = len(ids)
+        data_array = [None]*n
+        for i in range(n):
             doc = docs[i]
             title = doc["title"] if "title" in doc else ""
-            data_array.append({"dataset": dataset, "id": ids[i],
-                               "idx": idxs[i], "title": title, "doc": doc})
+            data_array[i] = {"dataset": dataset, "id": ids[i],
+                             "idx": idxs[i], "title": title, "doc": doc}
         self._docs.insert_many(data_array)
 
     @valid_dataset

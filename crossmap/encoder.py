@@ -6,7 +6,7 @@ import gzip
 from math import log2
 from numpy import zeros
 from scipy.sparse import csr_matrix
-from .vectors import normalize_vec
+from .csr import normalize_csr
 from .tools import yaml_document
 
 
@@ -47,9 +47,7 @@ class CrossmapEncoder:
             with open_fn(filepath, "rt") as f:
                 for id, doc in yaml_document(f):
                     result = encode_document(doc, tokenizer)
-                    title = doc["title"] if "title" in doc else ""
                     yield id, doc, result
-                    #yield result, id, title
 
     def document(self, doc, tokenizer=None):
         """encode one document into a vector"""
@@ -64,11 +62,12 @@ class CrossmapEncoder:
         values = dict()
         parse = tokenizer.parse
         for k, v in doc["values"].items():
+            v_float = float(v)
             features = parse(k)
             for f in features.keys():
                 if f not in values:
                     values[f] = 0
-                values[f] += float(v) * features.data[f]
+                values[f] += v_float * features.data[f]
         return self._encode(tokens, values)
 
     def _encode(self, tokens, values=None):
@@ -80,14 +79,16 @@ class CrossmapEncoder:
         """
 
         feature_map = self.feature_map
-        data = _text_to_vec(tokens, "data", feature_map)
+        data = zeros(len(feature_map), dtype=float)
+        if "data" in tokens:
+            data += _text_to_vec(tokens, "data", feature_map)
         if "data_pos" in tokens:
             data += _text_to_vec(tokens, "data_pos", feature_map)
         if "data_neg" in tokens:
             data -= _text_to_vec(tokens, "data_neg", feature_map)
         if values is not None:
             data += _vector_to_vec(values, feature_map)
-        return csr_matrix(normalize_vec(data))
+        return normalize_csr(csr_matrix(data))
 
 
 def _text_to_vec(tokens, component, feature_map):
@@ -100,13 +101,12 @@ def _text_to_vec(tokens, component, feature_map):
     """
 
     result = zeros(len(feature_map), dtype=float)
-    if component not in tokens:
-        return result
-    component_data = tokens[component]
-    for k, v in component_data.data.items():
-        c = component_data.count[k]
+    component_data = tokens[component].data
+    component_counts = tokens[component].count
+    for k, v in component_data.items():
+        c = component_counts[k]
         try:
-            fm = feature_map[k]
+            k_index, k_weight = feature_map[k]
         except KeyError:
             # skips tokens that are not in the feature map
             # the try/except construct is faster than
@@ -115,9 +115,9 @@ def _text_to_vec(tokens, component, feature_map):
         # these two branches are equivalent, but the first branch is a shortcut
         # for a common case
         if c == 1:
-            result[fm[0]] = fm[1] * v
+            result[k_index] = k_weight * v
         else:
-            result[fm[0]] = fm[1] * (v/c) * (1 + log2(c))
+            result[k_index] = k_weight * (v/c) * (1 + log2(c))
     return result
 
 

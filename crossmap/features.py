@@ -54,8 +54,8 @@ def _count_tokens(tokenizer, files, progress_interval=10000):
     counts = Counter()
     num_items = 0
     for label, f in files.items():
-        info("Extracting features: " + label + " (" + basename(f)+")")
-        for id, doc in tokenizer.tokenize_path(f):
+        info("Extracting features: " + label + " (" + basename(f) + ")")
+        for _, doc in tokenizer.tokenize_path(f):
             num_items += 1
             if num_items % progress_interval == 0:
                 info("Progress: "+str(num_items))
