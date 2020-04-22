@@ -60,6 +60,18 @@ def normalize_csr(v):
     return v
 
 
+@numba.jit
+def threshold_csr_arrays(data, indices, threshold):
+    """helper to threshold_csr"""
+    result_data, result_indices = [], []
+    for i in range(len(data)):
+        d = data[i]
+        if abs(d) > threshold:
+            result_data.append(d)
+            result_indices.append(indices[i])
+    return result_data, result_indices
+
+
 def threshold_csr(v, threshold=0.001):
     """set elements in v below a threshold to zero
 
@@ -68,13 +80,8 @@ def threshold_csr(v, threshold=0.001):
     :return: new csr vector with some elements set to zero
     """
 
-    data = []
-    indices = []
-    for d, i in zip(v.data, v.indices):
-        if abs(d) > threshold:
-            data.append(d)
-            indices.append(i)
-    return csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
+    data, indices = threshold_csr_arrays(v.data, v.indices, threshold)
+    return csr_matrix((data, indices, (0, len(indices))), shape=v.shape)
 
 
 def cap_csr(v, cap=0.1):
@@ -187,3 +194,31 @@ def max_multiply_sparse(factors, data, indices, max_factor):
     for i in range(len(indices)):
         result[i] = data[i] * min(max_factor, factors[indices[i]])
     return result
+
+
+@numba.jit
+def csr_data_indices(arr):
+    """extract data and indices arrays from a dense vector
+
+    :param arr: dense array
+    :return: arrays with nonzero data elements, and corresponding indices
+    """
+
+    data, indices = [], []
+    for i in range(len(arr)):
+        if arr[i] != 0.0:
+            data.append(arr[i])
+            indices.append(i)
+    return data, indices
+
+
+def csr_vector(arr):
+    """create a one-row csr_matrix object from a dense array
+
+    :param arr: numpy array
+    :return: csr matrix with one row
+    """
+
+    data, indices = csr_data_indices(arr)
+    return csr_matrix((data, indices, (0, len(data))), shape=(1, len(arr)))
+

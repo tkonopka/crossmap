@@ -5,8 +5,7 @@ Encoding documents into feature vectors
 import gzip
 from math import log2
 from numpy import zeros
-from scipy.sparse import csr_matrix
-from .csr import normalize_csr
+from .csr import normalize_csr, csr_vector
 from .tools import yaml_document
 
 
@@ -88,7 +87,7 @@ class CrossmapEncoder:
             data -= _text_to_vec(tokens, "data_neg", feature_map)
         if values is not None:
             data += _vector_to_vec(values, feature_map)
-        return normalize_csr(csr_matrix(data))
+        return normalize_csr(csr_vector(data))
 
 
 def _text_to_vec(tokens, component, feature_map):

@@ -6,6 +6,8 @@ is to have decent space efficiency and allow quicker addition than csr_matrix.
 """
 
 from scipy.sparse import csr_matrix
+from numpy import array
+from .csr import threshold_csr_arrays
 
 
 class Sparsevector:
@@ -27,17 +29,15 @@ class Sparsevector:
 
         :param v: csr vector
         :param multiplier: numeric, multiplier for values in v
-        :return: self to allow concatenating command
         """
 
-        return self.add(v.indices, v.data, multiplier)
+        self.add(v.indices, v.data, multiplier)
 
     def add_dense(self, v, multiplier=1.0):
         """add a dense vector
 
         :param v: array or list
         :param multiplier: numeric, multiplier for values in v
-        :return: self to allow concatentating command
         """
 
         data = self.data
@@ -47,8 +47,7 @@ class Sparsevector:
                 continue
             if i not in data:
                 data[i] = 0.0
-            data[i] += d*multiplier
-        return self
+            data[i] += d * multiplier
 
     def add(self, indices, values, multiplier=1.0):
         """add a small set of sparse data to this object
@@ -56,15 +55,13 @@ class Sparsevector:
         :param indices: list of indices (integers)
         :param values: list of numeric values to match indices
         :param multiplier: numeric, multiplier for values in data
-        :return: self to allow concatenating command
         """
 
         data = self.data
         for i, d in zip(indices, values):
             if i not in data:
                 data[i] = 0.0
-            data[i] += d*multiplier
-        return self
+            data[i] += d * multiplier
 
     def to_csr(self, n, threshold=None):
         """create a csr vector representation of the dictionary
@@ -75,19 +72,14 @@ class Sparsevector:
         :return: csr_matrix object
         """
 
-        indices, data = [], []
-        if threshold is None or threshold == 0.0:
-            for i, d in self.data.items():
-                indices.append(i)
-                data.append(d)
-        else:
-            if len(self.data):
-                threshold *= max(self.data.values())
-            for i, d in self.data.items():
-                if abs(d) > threshold:
-                    indices.append(i)
-                    data.append(d)
+        self_data = self.data
+        indices = array(list(self_data.keys()))
+        data = array([self_data[_] for _ in indices])
+        if len(data) and threshold is not None and threshold != 0.0:
+            threshold *= max(data)
+            data, indices = threshold_csr_arrays(data, indices, threshold)
         return csr_matrix((data, indices, (0, len(data))), shape=(1, n))
 
     def __str__(self):
         return str(self.data)
+

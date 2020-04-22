@@ -8,6 +8,7 @@ from scipy.sparse import csr_matrix
 from crossmap.csr import \
     bytes_to_csr, \
     csr_to_bytes, \
+    csr_vector, \
     normalize_csr, \
     threshold_csr, \
     cap_csr, \
@@ -154,3 +155,24 @@ class CsrDimensionalCollapseTests(unittest.TestCase):
         self.assertEqual(result_dense[4], 0.0)
         self.assertGreater(result_dense[1], 0.1)
 
+
+class CsrVectorTests(unittest.TestCase):
+    """Construct a csr matrix representing one vector"""
+
+    def test_csr_vector(self):
+        """simple csr matrix with one row"""
+
+        arr = array([0.0, 2.0, 3.0, 4.0, 0.0])
+        result = csr_vector(arr)
+        expected = csr_matrix(arr)
+        self.assertListEqual(list(result.data), list(expected.data))
+        self.assertListEqual(list(result.indices), list(expected.indices))
+
+    def test_csr_vector_zeros(self):
+        """simple csr matrix from vector with zeros"""
+
+        arr = array([0.0, 0.0, 0.0, 0.0, 0.0])
+        result = csr_vector(arr)
+        expected = csr_matrix(arr)
+        self.assertListEqual(list(result.data), list(expected.data))
+        self.assertListEqual(list(result.indices), list(expected.indices))
