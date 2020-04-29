@@ -59,6 +59,9 @@ parser.add_argument("--obo_root", action="store",
 parser.add_argument("--obo_aux", action="store",
                     help="types of auxiliary data to include",
                     default="parents,comments")
+parser.add_argument("--obo_only_meta", action="store_true",
+                    help="output only metadata")
+
 
 # settings for opentargets
 parser.add_argument("--opentargets_associations", action="store",
@@ -198,7 +201,8 @@ if config.action == "obo":
         sys.exit()
     with gzip.open(result_file, "wt") as f:
         build_obo_dataset(config.obo, config.obo_root,
-                          aux=config.obo_aux, out=f)
+                          aux=config.obo_aux, only_meta=config.obo_only_meta,
+                          out=f)
 
 elif config.action == "obo_summary":
     if missing_arguments(["obo"]):

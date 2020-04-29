@@ -162,7 +162,8 @@ class OboBuilder:
             yield id, obj
 
 
-def build_obo_dataset(obo_file, root_id=None, aux="none", out=sys.stdout):
+def build_obo_dataset(obo_file, root_id=None, aux="none", only_meta=False,
+                      out=sys.stdout):
     """transfer data from an obo into a dictionary
 
     :param obo_file: path to obo file
@@ -170,6 +171,7 @@ def build_obo_dataset(obo_file, root_id=None, aux="none", out=sys.stdout):
         build a dataset for an ontology branch
     :param aux: character, the type of data to include in
         aux_pos and aux_neg fields
+    :param only_meta: logical, only include metadata
     :param out: stream, for output
     :return: dictionary mapping ids to objects with
         data, aux_pos, aux_neg components
@@ -177,6 +179,8 @@ def build_obo_dataset(obo_file, root_id=None, aux="none", out=sys.stdout):
 
     builder = OboBuilder(obo_file, root_id, aux)
     for item_id, item in builder.build():
+        if only_meta:
+            item = {"metadata": item["metadata"]}
         out.write(dump({item_id: item}))
 
 
