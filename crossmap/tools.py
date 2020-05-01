@@ -6,6 +6,7 @@ import csv
 import gzip
 import yaml
 import pickle
+import re
 from json import dumps
 from logging import error
 from yaml import CBaseLoader
@@ -200,16 +201,73 @@ def concise_exception_handler(exception_type, exception, traceback):
     error(exception)
 
 
-def pretty_print(x, pretty=False):
-    """helper to print something and terminate"""
-    if pretty:
-        x = dumps(x, indent=2)
-    else:
-        x = dumps(x)
+def print_pipesafe(x):
+    """print an object in a way that is safe with pipes"""
     # this try/except is necessary for some platforms
     # it allows the user to pipe output to head on command line
     try:
         print(x)
     except BrokenPipeError:
         pass
+
+
+def pretty_print(x, pretty=False):
+    """print an object as a json string, with pretty printing"""
+    if pretty:
+        x = dumps(x, indent=2)
+    else:
+        x = dumps(x)
+    print_pipesafe(x)
+
+
+def _max_depth(z):
+    """get maximal length of lists stored in a dictionary"""
+    depth = 0
+    for _, v in z.items():
+        if type(v) is list or type(v) is tuple:
+            depth = max(depth, len(v))
+    return depth
+
+
+def _tsv_one(x, keys, sep="\t"):
+    """convert an object into lines of a tsv"""
+    depth = _max_depth(x)
+    result = []
+    if depth == 0:
+        item = []
+        for k in keys:
+            xk = x[k]
+            if type(xk) is list or type(xk) is tuple:
+                item.append("")
+            else:
+                item.append(str(xk))
+        result.append(sep.join(item))
+    for i in range(depth):
+        item = []
+        for k in keys:
+            xk = x[k]
+            if type(xk) is list or type(xk) is tuple:
+                item.append(str(xk[i]))
+            else:
+                item.append(str(xk))
+        result.append(sep.join(item))
+    return result
+
+
+def tsv_print(x, remove_s=True, sep="\t"):
+    """print an array as a table
+
+    :param x: array
+    :param remove_s: logical, set True to remove final 's' in header
+    :param sep: separator character
+    """
+    keys = list(x[0].keys())
+    header = keys.copy()
+    if remove_s:
+        header = [re.sub("s$", "", _) for _ in keys]
+    print(sep.join(header))
+    for xi in x:
+        result = _tsv_one(xi, keys, sep=sep)
+        for _ in result:
+            print(_)
 

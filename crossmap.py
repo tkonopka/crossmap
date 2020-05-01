@@ -17,7 +17,7 @@ from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap, validate_dataset_label
 from crossmap.crossmap import remove_db_and_files
 from crossmap.info import CrossmapInfo
-from crossmap.tools import concise_exception_handler, pretty_print
+from crossmap.tools import concise_exception_handler, pretty_print, tsv_print
 
 # this is a command line utility
 if __name__ != "__main__":
@@ -58,6 +58,8 @@ parser.add_argument("--factors", action="store",
                     help="comma-separated ids for decomposition")
 parser.add_argument("--pretty", action="store_true",
                     help="pretty-print JSON outputs for human readability")
+parser.add_argument("--tsv", action="store_true",
+                    help="output results in a table format")
 
 # manual investigation/debugging
 parser.add_argument("--ids", action="store",
@@ -132,7 +134,10 @@ if action in {"search", "decompose"}:
     result = action_fun(config.data, config.dataset,
                         n=config.n, diffusion=config.diffusion,
                         factors=factors)
-    pretty_print(result, config.pretty)
+    if config.tsv:
+        tsv_print(result)
+    else:
+        pretty_print(result, config.pretty)
 
 if action == "add":
     crossmap.load()
