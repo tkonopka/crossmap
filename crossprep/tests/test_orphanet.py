@@ -26,16 +26,17 @@ class BuildOrphanetDatasetTests(unittest.TestCase):
     def test_disorders_length(self):
         """dataset has three disorders"""
 
-        # two disorder are defined in phenotypes file,
+        # two disorder are defined in nomenclature2 file,
         # one additional one in genes file
-        self.assertEqual(len(self.dataset), 3)
+        # final output should have those two in nomenclature file
+        self.assertEqual(len(self.dataset), 2)
 
     def test_disorder_ids(self):
-        """dataset has two disorders labeled 1, 2, 3"""
+        """dataset has two disorders labeled 1, 2"""
 
         result = list(self.dataset.keys())
         # two ORPHA ids from HPO file, one new one from gene file
-        self.assertEqual(sorted(result), ["ORPHA:1", "ORPHA:2", "ORPHA:3"])
+        self.assertEqual(sorted(result), ["ORPHA:1", "ORPHA:2"])
 
     def test_disorder_names(self):
         """dataset has two disorders, their names have an integer in name"""
@@ -104,16 +105,6 @@ class BuildOrphanetDatasetTests(unittest.TestCase):
         self.assertTrue("ENSG00000166813" in str(meta_1))
         self.assertTrue("HGNC:318" in str(meta_2))
         self.assertTrue("ENSG00000038002" in str(meta_2))
-
-    def test_disorder_names_from_genes_file(self):
-        """gene dataset contains a disorder that is not in HPO file"""
-
-        result = self.dataset
-        data = str(result["ORPHA:3"]["data"])
-        meta = str(result["ORPHA:3"]["metadata"])
-        self.assertTrue("kinesin" in str(data))
-        self.assertTrue("HGNC:30497" in str(meta))
-        self.assertTrue("Disorder name" in str(data))
 
     def test_disorder_descriptions(self):
         """dataset should contain descriptions"""

@@ -122,12 +122,15 @@ class OrphanetDisorder:
         self.id = 0
         self.name = ""
         self.description = []
+        self.status = None
 
         for child in node:
             if child.tag == "OrphaNumber":
                 self.id = child.text
             if child.tag == "Name":
                 self.name = child.text
+            if child.tag == "Totalstatus":
+                self.status = child.text
             elif child.tag == "TextualInformationList":
                 self._parse_textinfo_list(child)
 
@@ -169,9 +172,9 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
     """
 
     # create blank entries for all disorders
-    all_ids = list(phen_data.keys())
-    all_ids.extend(gene_data.keys())
-    all_ids.extend(disorder_data.keys())
+    all_ids = list(disorder_data.keys())
+    #all_ids.extend(gene_data.keys())
+    #all_ids.extend(disorder_data.keys())
     result = dict()
     for id in all_ids:
         result[orpha_id(id)] = dict(title="",
@@ -179,9 +182,12 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
                                               description="",
                                               genes=[], phenotypes=[]),
                                     metadata=dict(id=orpha_id(id)))
+    all_ids = set(all_ids)
 
     # transfer information about phenotypes and genes
     for disorder in phen_data.values():
+        if disorder.id not in all_ids:
+            continue
         terms = [_[1] for _ in disorder.phenotypes]
         ids = [_[0] for _ in disorder.phenotypes]
         data = result["ORPHA:" + str(disorder.id)]
@@ -189,6 +195,8 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
         data["data"]["phenotypes"].extend(terms)
         data["metadata"]["phenotype_ids"] = ids
     for disorder in gene_data.values():
+        if disorder.id not in all_ids:
+            continue
         genes = [_[0] + " - " + _[1] for _ in disorder.genes]
         data = result["ORPHA:" + str(disorder.id)]
         if data["title"] == "":
@@ -240,6 +248,7 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
             continue
         for disorder in n1:
             data = OrphanetDisorder(disorder)
-            nomenclature_data[data.id] = data
+            if data.status == "Active":
+                nomenclature_data[data.id] = data
     return combine_phenotypes_genes(phen_data, gene_data, nomenclature_data)
 
