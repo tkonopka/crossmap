@@ -98,13 +98,12 @@ class CrossmapSearchTests(unittest.TestCase):
         doc = {"values": {"A": -1, "B": -1}}
         result = self.crossmap.search(doc, "documents", n=2)
         # targets should avoid database targets with A and B
-        self.assertEqual(len(result["targets"]), 2)
         self.assertFalse("U:A" in set(result["targets"]))
         self.assertFalse("U:B" in set(result["targets"]))
 
 
-class CrossmapSearchNoDocsTests(unittest.TestCase):
-    """Mapping new objects onto targets without documents"""
+class CrossmapSearchSingleTests(unittest.TestCase):
+    """Mapping new objects onto targets, config with a single collection"""
 
     @classmethod
     def setUpClass(cls):
@@ -121,6 +120,15 @@ class CrossmapSearchNoDocsTests(unittest.TestCase):
         result = self.crossmap.search(A, "targets", n=3)
         result_str = dumps(result)
         self.assertTrue("A" in result_str)
+
+    def test_search_avoids_no_match_outputs(self):
+        """search should avoid reporting items that are distance=1"""
+
+        doc = dict(data="Daniel")
+        # doc has a feature that is present in just one data item
+        result = self.crossmap.search(doc, "targets", n=4)
+        # so output should contain only one hit, even if n>1
+        self.assertEqual(len(result["targets"]), 1)
 
 
 class CrossmapSearchBatchTests(unittest.TestCase):

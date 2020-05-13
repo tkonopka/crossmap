@@ -15,9 +15,11 @@ config_single = join(data_dir, "config-single.yaml")
 config_featuremap = join(data_dir, "config-featuremap.yaml")
 dataset_file = join(data_dir, "dataset.yaml")
 # not features for feature map should be in lowercase!
-test_features = ["alice", "bob", "catherine", "daniel", "starts", "unique", "file",
+test_features = ["alice", "bob", "catherine", "daniel",
+                 "starts", "unique", "file",
                  "alpha", "bravo", "charlie", "delta", "echo",
-                 "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
+                 "a", "b", "c", "d", "e", "f", "g",
+                 "h", "i", "j", "k", "l", "m"]
 
 
 class CrossmapIndexerBuildTests(unittest.TestCase):
@@ -192,8 +194,7 @@ class CrossmapIndexerNeighborTests(unittest.TestCase):
         v = self.indexer.encode_document(doc)
         nns, distances = self.indexer.suggest(v, "targets", 2)
         # without any help from the documents, there should be no hits
-        self.assertEqual(len(distances), 2)
-        self.assertAlmostEqual(distances[0], distances[1], places=5)
+        self.assertEqual(len(distances), 0)
 
 
 class CrossmapIndexerNeighborNoDocsTests(unittest.TestCase):

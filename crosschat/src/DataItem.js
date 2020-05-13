@@ -37,7 +37,7 @@ class DataItem extends React.Component {
             return (<Box>Fetching data: {params.id} ({params.dataset})</Box>)
         }
         return(
-            <Box>
+            <Box className="data-item">
                 <Box>Dataset: {params.dataset}</Box>
                 <Box>ID: {params.id}</Box>
                 <SyntaxHighlighter language="yaml" style={docco}>{doc}</SyntaxHighlighter>

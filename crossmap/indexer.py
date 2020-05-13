@@ -22,7 +22,9 @@ logging.getLogger('nmslib').setLevel(logging.WARNING)
 
 # special constant for maximal distance between normalized vectors
 sqrt2 = sqrt(2.0)
-almost_sqrt2 = floor(sqrt2*1e7)/1e7
+
+# maximal distance to report
+max_distance = 1 - (1e-6)
 
 
 class CrossmapIndexer:
@@ -264,7 +266,8 @@ class CrossmapIndexer:
         # Two entirely different unit vectors have a distance of sqrt(2)
         # The division below transforms output to [0, 1]
         distances = [float(_)/sqrt2 for _ in distances]
-        return suggestions, distances
+        distances = [_ for _ in distances if _ < max_distance]
+        return suggestions[:len(distances)], distances
 
     @property
     def valid(self):

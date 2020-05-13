@@ -125,3 +125,12 @@ td.column-dataset {
   text-align: center;
   padding: 1em;
 }
+
+
+/** detail view of a data item **/
+.data-item pre {
+  height: 400px;
+  resize: vertical;
+  overflow: scroll;
+}
+
