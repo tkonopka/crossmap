@@ -16,7 +16,6 @@ class Controller extends React.Component {
         super(props);
         this.handleChangeAction = this.handleChangeAction.bind(this);
         this.showSearchView = this.showSearchView.bind(this);
-        this.showState = this.showState.bind(this);
         this.showSettingsView = this.showSettingsView.bind(this);
         this.handleStateUpdate = this.handleStateUpdate.bind(this);
         this.cloneFromQuery = this.cloneFromQuery.bind(this);
@@ -71,9 +70,6 @@ class Controller extends React.Component {
             return {[group]: obj};
         })
     };
-    showState = function() {
-        alert("controller state: " + JSON.stringify(this.state));
-    };
     composeAndSend = function() {
         let dataset = this.state.dataset;
         if (dataset === "") {
@@ -126,7 +122,8 @@ class Controller extends React.Component {
                                                    settings={this.state}
                                                    update={this.handleStateUpdate}/>)
         }
-        return(<div width={1} id="chat-controller" ref={(divElement) => this.controllerElement = divElement}>
+        return(<div width={1} id="chat-controller"
+                    ref={(divElement) => this.controllerElement = divElement}>
             <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
                 <Grid item xs={2}>
                     <TextField select id="controller-action" variant="filled" label="Action"
@@ -159,11 +156,6 @@ class Controller extends React.Component {
                     <Box m={1}>
                         <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
                     </Box>
-                    <Box><Button>
-                        <img src="icons/robot.svg" alt="showState"
-                             className="controller-icon"
-                             onClick={this.showState}/>
-                    </Button></Box>
                 </Grid>
             </Grid></div>);
     }

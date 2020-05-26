@@ -1,4 +1,5 @@
-# crossmap configuration
+Configurations
+==============
 
 Each crossmap instance is configured via a yaml file. The settings determine
  how data are stored internally. Many of the settings affect the build stage
@@ -9,18 +10,17 @@ Each crossmap instance is configured via a yaml file. The settings determine
  
 A representative configuration might be as follows: 
 
-```yaml
-name: crossmap-name
-comment: short comment
-data:
-  primary: path-to-primary.yaml.gz
-  secondary: path-to-secondary.yaml.gz
-tokens:
-  k: 6
-features:
-  max_number: 20000
-  weighting: [0, 1]
-```
+.. code:: yaml
+    name: crossmap-name
+    comment: short comment
+    data:
+      primary: path-to-primary.yaml.gz
+      secondary: path-to-secondary.yaml.gz
+    tokens:
+      k: 6
+    features:
+      max_number: 20000
+      weighting: [0, 1]
 
 Among the key-value pairs in this example, only *name* and *data" are
  required. The other fields fine-tune how data is stored in the back-end
@@ -51,11 +51,11 @@ The purpose of the `data` subgroup is to specify the locations of data to be
 
 Example:
 
-```yaml
-data:
-  primary: path-to-primary.yaml.gz
-  secondary: path-to-secondary.yaml.gz
-``` 
+.. code:: yaml
+    data:
+      primary: path-to-primary.yaml.gz
+      secondary: path-to-secondary.yaml.gz
+
 
 In this example, the labels *primary* and *secondary* are not keywords, but
  rather user-specified labels. Thus, it is possible to use labels 'A' and 'B' instead, or any other label that is compatible with yaml.
@@ -74,11 +74,11 @@ Settings in the 'tokens' determine how raw data are partitioned into smaller
  
 Example:
  
- ```yaml
-tokens:
-  k: 6
-  alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ
-```
+.. code:: yaml
+    tokens:
+      k: 6
+      alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+
  
 
 ### `features`  
@@ -106,20 +106,19 @@ Settings in the `features` subgroup control how tokens parsed out of the raw
 
 Example (for identifying features from data files)
 
-```yaml
-features:
-  max_number: 20000
-  min_count: 2
-  weighting: [0, 1]
-```
+.. code:: yaml
+    features:
+      max_number: 20000
+      min_count: 2
+      weighting: [0, 1]
+
 
 Example (for using pre-specified features)
 
-```yaml
-features:
-  map: path-to-features.tsv.gz
+.. code:: yaml
+    features:
+      map: path-to-features.tsv.gz
 
-```
 
 ### `cache`
 
@@ -136,13 +135,12 @@ The `cache` settings are not used during the build stage, but rather affect
 
 Example:
 
-```yaml
-cache:
-  counts: 20000
-  ids: 10000
-  titles: 50000
-  data: 20000
-```
+.. code:: yaml
+    cache:
+      counts: 20000
+      ids: 10000
+      titles: 50000
+      data: 20000
 
 
 ### `logging`
@@ -157,11 +155,10 @@ cache:
  
  Example:
  
- ```yaml
- logging:
-  level: INFO
-  progress: 50000
-```
+.. code:: yaml
+    logging:
+      level: INFO
+      progress: 50000
  
   
 ### `server`
@@ -175,9 +172,9 @@ When crossmap is run in server mode, there are additional parameters that
 
 Example
 
-```yaml
-server:
-  api_port: 8098
-  ui_port: 8099
-```
+.. code:: yaml
+    server:
+      api_port: 8098
+      ui_port: 8099
+
  

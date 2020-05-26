@@ -1,8 +1,16 @@
 # Documentation
 
- - [Installation](install.md)
- - [Preparing datasets using crossprep](crossprep.md)
- - [Preparing configuration files](configurations.md)
- - [Querying on the command line](cli.md)
- - [Graphical user interface](gui.md)
- - [Using docker](docker.md)
+The documentation is prepared using sphinx and hosted on 
+[readthedocs](https://readthedocs.org/).
+
+To generate a local version of the documentation, first install `sphinx`.
+
+```
+pip install sphinx
+```
+
+To compile the source files into html documents, run the following command.
+
+```
+make html
+```

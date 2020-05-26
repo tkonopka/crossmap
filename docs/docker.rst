@@ -1,4 +1,5 @@
-# Docker
+Docker
+======
 
 This section describes how to run `crossmap` instances using the 
 [docker](www.docker.com) container framework.

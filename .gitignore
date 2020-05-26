@@ -35,9 +35,10 @@ manage.py
 # ignore content of data directory
 data/*
 
+# ignore compile documentation
+docs/_build
 
 # development files for chat user interface
-
 crosschat/node_modules
 crosschat/build
 crosschat/.pnp*

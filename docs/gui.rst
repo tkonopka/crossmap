@@ -1,4 +1,5 @@
-# Chat user interface
+Chat history
+============
 
 The graphical user interface (GUI) consists of two separate servers working
  together. In order to launch these servers, monitor their state, and be able
@@ -6,9 +7,10 @@ The graphical user interface (GUI) consists of two separate servers working
 
 In a first console, launch the back-end server,
 
-```
-python crossmap.py server --config path-to-config.yaml
-```
+.. code:: bash
+
+    python crossmap.py server --config path-to-config.yaml
+
 
 The command requires access to a configuration file in order to identify what
  databases and indexes should be made available for querying. The command
@@ -16,9 +18,10 @@ The command requires access to a configuration file in order to identify what
 
 In a second console, launch the front-end server,
 
-```
-python crossmap.py gui --config path-to-config.yaml
-```
+.. code:: bash
+
+    python crossmap.py gui --config path-to-config.yaml
+
 
 This command should also provide output on status. 
 
