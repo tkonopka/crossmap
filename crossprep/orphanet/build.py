@@ -248,7 +248,7 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
             continue
         for disorder in n1:
             data = OrphanetDisorder(disorder)
-            if data.status == "Active":
+            if data.status == "Active" and len(data.description) > 0:
                 nomenclature_data[data.id] = data
     return combine_phenotypes_genes(phen_data, gene_data, nomenclature_data)
 
