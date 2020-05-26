@@ -1,17 +1,19 @@
 Configurations
 ==============
 
-Each crossmap instance is configured via a yaml file. The settings determine
- how data are stored internally. Many of the settings affect the build stage
-  and it is important that they remain unchanged at all subsequent stages. 
+Each crossmap instance is configured via a ``yaml`` file. The settings determine
+how data are stored internally. Many of the settings affect the build stage
+and it is important that they remain unchanged at all subsequent stages.
 
 
-## Representative configuration
+Concise configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
-A representative configuration might be as follows: 
+A concise configuration might be as follows:
 
 .. code:: yaml
-    name: crossmap-name
+
+    name: instance-name
     comment: short comment
     data:
       primary: path-to-primary.yaml.gz
@@ -22,159 +24,202 @@ A representative configuration might be as follows:
       max_number: 20000
       weighting: [0, 1]
 
-Among the key-value pairs in this example, only *name* and *data" are
- required. The other fields fine-tune how data is stored in the back-end
- . While those fields are not strictly required - crossmap can fill in
-  default values - it is nonethless informative to include them to summarize
-   how the data is represented in the back-end. 
+For a line-by-line description of these settings, refer to the complete
+settings guide below. Despite some caveats involved with some the settings,
+the configuration specifies a ``name`` for the instance, two ``data`` sources,
+that data should be parsed into 6-mers, and there will be maximum of 20,000 unique
+k-mers used in the data representations.
+
+Of the settings shown in the concise representation, only ``name`` and
+``data`` are strictly required. ``crossmap`` can fill in default values
+for all the others. Nonetheless, including some of the settings can make
+explicit how data will be represented in the back-end.
 
 
-## Complete configuration
+Complete configuration
+~~~~~~~~~~~~~~~~~~~~~~
 
-Some settings are specified at the root level of the configuration yaml file
-, while others are grouped into sublevels.
+Configuration files can control many more settings than those in
+the concise example. A small group of settings are defined at the root level
+of the configuration file, and the remainder are grouped into headings.
 
-Core settings are present at the root level of the configuration yaml file. 
+The sections below describe each group and each setting individually. Each
+section starts with a complete list of settings and representative values.
+The setting are then described individually.
 
- - *name* - string distinguishing one crossmap instance from another. Used as
-  the directory name where instance files are stored.
- - *comment* - string. Used only for human readability of the configuration
-  file to give the purpose of the instance.
- 
-Other settings are organized into subgroups.  
- 
 
-### `data` 
- 
-The purpose of the `data` subgroup is to specify the locations of data to be
- included in the crossmap database. The configuration also specified names, or labels, for each of the datasets.
+Core settings
+^^^^^^^^^^^^^
+
+Core settings appear at the top of a configuration file, without a category.
 
 Example:
 
 .. code:: yaml
+
+    name: instance-name
+    comment: brief description of the instance
+
+
+Description:
+
+- ``name`` [string] - an identifier that distinguishes one crossmap instance
+  from another. This name is used as a database name as well as in the directory
+  name where instance files are stored. It cannot include spaces or special
+  characters.
+
+- ``comment`` [string] - a brief description of the crossmap
+  instance. This string is only for human readability; it is not used in any
+  computations.
+
+
+``data``
+^^^^^^^^
+ 
+The ``data`` subgroup specifies the locations of data files to be included in
+the crossmap database.
+
+Example:
+
+.. code:: yaml
+
     data:
       primary: path-to-primary.yaml.gz
       secondary: path-to-secondary.yaml.gz
 
+Description:
 
-In this example, the labels *primary* and *secondary* are not keywords, but
- rather user-specified labels. Thus, it is possible to use labels 'A' and 'B' instead, or any other label that is compatible with yaml.
+- Each line under ``data`` consists of a label and value pair. In the example,
+  the labels are `primary` and `secondary`. However, the labels can be
+  arbitrary. Each label is used to identify a dataset. The ``data`` group must
+  specify at least one dataset label; there is no upper limit.
  
  
  
-### `tokens` 
+``tokens``
+^^^^^^^^^^
  
-Settings in the 'tokens' determine how raw data are partitioned into smaller
-  components. The algorithm essentially splits text into k-mers.
- 
-  - *k* - integer, length of kmers
-  - *alphabet* - string without spaces. Used to specify the characters that
-   are allowed to exist in tokens. Other characters are removed. Defaults to
-    alphanumeric characters.
- 
+Settings in the 'tokens' group determine how raw data are partitioned into smaller
+components, called tokens or k-mers.
+
 Example:
- 
+
 .. code:: yaml
+
     tokens:
       k: 6
       alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ
 
- 
+Descriptions:
 
-### `features`  
+- ``k`` [integer] - length of kmers.
+- ``alphabet`` [string] - the character set that are allowed to exist in
+  tokens. Other characters are removed. The default alphanet consists of
+  alphanumeric characters, plus some punctuation like hyphens.
+
+
+``features``
+^^^^^^^^^^^^
 
 Settings in the `features` subgroup control how tokens parsed out of the raw
- data are used to build a representation of the original data. Roughly, each
-  token type can constitute one feature in the data model, but there is some
-   control about the weighting of the features and other aspects of the
-    ensembl of features.
-
- - *max_number* - integer. The total number of features is estimated from the
-  contents of the data files. The number of features, however, is capped at
-   this threshold. Defaults to 0, interpreted as an unlimited number of features.
- - *min_count* - integer. Used to discard some features observed in very few
-  data items. Defaults to 0. 
- - *weighting* - array of two numbers, `[a, b]`. Used to determine the weight
-  of each feature with a linear formula, `weight = a + b * IC`, where `IC` is
-   the information content of the feature (logarithm of inverse frequency in the datasets). The weighting array defaults to [0, 1].
- - *map* - path to a file with a tab-separated table of features and weights
- . When specified, the features listed in the file are used as-is. This
-  settings overrides de-novo feature discovery and overrides other settings
-   in this group. Defaults to None/null, which indicates that features should
-    be extracted and weighted using the datasets in the `data` group.
-
-
-Example (for identifying features from data files)
-
-.. code:: yaml
-    features:
-      max_number: 20000
-      min_count: 2
-      weighting: [0, 1]
-
-
-Example (for using pre-specified features)
-
-.. code:: yaml
-    features:
-      map: path-to-features.tsv.gz
-
-
-### `cache`
-
-The `cache` settings are not used during the build stage, but rather affect
- runtime during subsequent stages (prediction, decomposition, server mode
- ). The settings specify how many objects from the disk database can be
-  cached in memory, and thus provide a means to speed up execution at the
-   cost of increasing memory use. All the items in this group are integers.
-
- - *counts* - integer, number of database rows pertaining to diffusion
- - *ids* - integer, number of integer/string mappings
- - *titles* -integer, number of item titles
- - *data* - integer, number of data items 
+data are used to build a numerical representation of the data.
 
 Example:
 
 .. code:: yaml
+
+    features:
+      map: path-to-features.tsv.gz
+      max_number: 20000
+      min_count: 2
+      weighting: [0, 1]
+
+Description:
+
+- ``map`` [file path] - path to a file with a tab-separated table of
+  features and weights. When specified, the features listed in the file are
+  used as-is. This settings overrides de-novo feature discovery and overrides
+  other settings in this group. Defaults to None/null, which indicates that
+  features should be extracted and weighted using the datasets in the `data` group.
+- ``max_number`` [integer] - total number of features is estimated from the
+  contents of the data files. The number of features, however, is capped at
+  this threshold. Defaults to 0, interpreted as an unlimited number of features.
+- ``min_count`` [integer] - used to discard some features observed in very few
+  data items. Defaults to 0.
+- ``weighting`` [array of two numbers] - Used to determine the weight
+  of each feature with a linear formula, `weight = a + b * IC`, where `IC` is
+  the information content of the feature (logarithm of inverse frequency in the
+  datasets). The weighting array defaults to [0, 1].
+
+
+
+``cache``
+^^^^^^^
+
+The ``cache`` settings are not used during the build stage, but rather affect
+runtime during subsequent stages (prediction, decomposition, server mode).
+The settings specify how many objects from the disk database can be
+cached in memory, and thus provide a means to speed up execution at the
+cost of increasing memory use.
+
+Example:
+
+.. code:: yaml
+
     cache:
       counts: 20000
       ids: 10000
       titles: 50000
       data: 20000
 
+Description:
 
-### `logging`
+- ``counts`` [integer] - number of database rows pertaining to diffusion
+- ``ids`` [integer] - number of mappings between internal identifiers and
+  user-specified object ids
+- ``titles`` [integer] - number of object titles
+- ``data`` [integer] - number of data items
 
-`logging` settings control the amount of information that is output by the
- crossmap at runtime. 
 
- - *level* - string, one of ('INFO', 'WARNING', 'ERROR'); determines standard
-  logging level; can be over-ridden by a command line argument
- - *progress* - integer, determines interval at which progress messages are
-  displayed during tbe build stage
- 
- Example:
- 
+``logging``
+^^^^^^^^^^^
+
+``logging`` settings control the amount of information that is output to
+the log / console at runtime.
+
+Example:
+
 .. code:: yaml
+
     logging:
       level: INFO
       progress: 50000
+
+Description:
+
+- ``level`` [string] -  one of 'INFO', 'WARNING', 'ERROR'; determines
+  logging level; can be over-ridden by a command line argument
+- ``progress`` [integer] - interval at which progress messages are
+  displayed during tbe build stage
  
-  
-### `server`
+
+``server``
+^^^^^^^^^^
 
 When crossmap is run in server mode, there are additional parameters that
- determine who the program communicates with the network.
+determine who the program communicates with the network.
 
- - *api_port* - integer; the network port on localhost that accepts requests
- - *ui_port* - integer; the network port on localhost that displays the
-  graphical user interface
-
-Example
+Example:
 
 .. code:: yaml
+
     server:
       api_port: 8098
       ui_port: 8099
 
- 
+Description:
+
+- ``api_port`` [integer] - the network port on localhost that accepts requests
+- ``ui_port`` [integer] - the network port on localhost that displays the
+  graphical user interface
+

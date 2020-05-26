@@ -1,34 +1,59 @@
-.. crossmap documentation master file, created by
-   sphinx-quickstart on Tue May 26 07:51:43 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 crossmap documentation
 ======================
+
+``crossmap`` is proof-of-concept software for the exploration of heterogeneous
+datasets. The software manages a database and indexes of nearest neighbors to enable
+searching data via unstructured queries and to enable tuning through
+user-driven learning.
+
+
+Paradigm
+~~~~~~~~
+
+
+
+
+Features
+~~~~~~~~
+
+The software is designed to facilitate exploration of any text-based data.
+Its feature set, however, is strongly motivated by data challenges in the life
+sciences.
+
+ - **Querying heterogeneous data**. ``crossmap`` can manage multiple datasets at once. It can query each dataset individually, or use a diffusion process to utilize informationin one dataset to adjust queries against another.
+
+ - **User-driven learning**. ``crossmap`` can manage small, user-maintained, data repositories and use these data to fine-tune search results. This allows users to train the search mechanism in real-time.
+
+ - **Interactive user interface**. The software provides a graphical user interface for interactive data exploration. The interface is based on chat and is accessible via a web browser.
+
+
+
+
 
 .. toctree::
    :maxdepth: 2
    :caption: User's guide:
 
    install
-   docker
    configurations
    cli
-
+   gui
+   deployment
 
 .. toctree::
    :maxdepth: 2
-   :caption: Datasets:
+   :caption: Preparing datasets:
 
    data_format
    crossprep
 
-
 .. toctree::
    :maxdepth: 2
-   :caption: Graphical User Interface:
+   :caption: Interactive use:
 
-   gui
+   chat
+   controller
+
 
 
 Indices and tables

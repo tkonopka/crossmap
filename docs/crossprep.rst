@@ -1,46 +1,45 @@
-Building datasets from other format
-===================================
+Converting data from other formats
+==================================
 
-Crossprep is a suite of scripts that parse raw data files and prepare the
-contents into a format that can be loaded into a crossmap instance.
+Like many programs ``crossmap`` requires input in a certain file format.
+At the same time, it is meant to integrate many types of data. To reconcile
+these two factors, the repository provides a suite of scripts to convert data in existing formats into a form that can be loaded into ``crossmap`` instances.
 
-The suite contains several components. 
-
- - [obo](#obo)
- - [pubmed](#pubmed)
- - [genesets](#genesets)
- - [orphanet](#orphanet)
- - [wiktionary](#wiktionary)
- 
-Each component is launched with a common syntax,
+The suite is implemented in file ``crossprep.py``, which is located in directory
+``crossprep`` in the source repository. A template command to prepare a dataset is
+as follows.
 
 .. code:: bash
 
     python crossprep.py COMPONENT [...]
 
-
-Here, `COMPONENT` is one of the components listed and `[...]` are arguments
+Here, ``COMPONENT`` is a type of dataset to prepare and  ``[...]`` are arguments
 that pertain to that component.
 
 
+Ontology definitions
+~~~~~~~~~~~~~~~~~~~~
 
-obo
-~~~
+Ontologies store concept definitions that are relevant to a domain, along with
+relations between them. A common file format to encode ontology data is `obo`.
 
-`crossprep obo` is a utility for parsing ontology definition files in `obo`
-format and preparing their contents for loading into a crossmap build.
+``crossprep obo`` is a utility for parsing `obo` files and preparing their
+contents for loading into a crossmap build.
 
-Ontology files must be downloaded separately, for example from the [obo foundry](http://www.obofoundry.org/). The utility can then process the local file,
+Ontology files must be downloaded separately, for example from the
+`obo foundry <http://www.obofoundry.org/>`_. The utility can then process the
+local file,
 
 .. code:: bash
 
     python crossprep.py obo --obo file.obo --name obo
 
 
-There are two optional settings that tune the output. One of these,
-`---obo_root`, sets the root node for the output dataset. By default, the
-utility processes the whole ontology hierarchy, but this setting can create
-a dataset focused on any sub-branch.
+Optional settings can tune the data transfered from the ``obo`` file to
+the ``crossmap`` data file. One of these, ``---obo_root``, sets the root node
+for the output dataset. By default, the utility processes the whole
+ontology hierarchy. Using this argument can create a dataset focused on a
+sub-branch.
 
 .. code:: bash
 
@@ -57,35 +56,37 @@ as follows
 
 .. code:: bash
 
-    python crossprep.py obo --obo file.obo --name obo_parents_siblings \
+    python crossprep.py obo --obo file.obo \
+                        --name obo_parents_siblings \
                         --obo_aux parents,siblings
 
 
 Pubmed abstracts
 ~~~~~~~~~~~~~~~~
 
+`Pubmed <https://pubmed.ncbi.nlm.nih.gov/>`_ is an
+`NCBI <https://www.ncbi.nlm.nih.gov/>`_ service that indexes scientific
+articles published in the life sciences.
 
-`crossprep pubmed_baseline` is a utility for downloading article data from
- [pubmed](https://www.nlm.nih.gov/databases/download/pubmed_medline.html), and `crossprep pubmed` is an associated utility for processing that
-  data.
+``crossprep pubmed_baseline`` is a utility for downloading article data from
+`pubmed <https://www.nlm.nih.gov/databases/download/pubmed_medline.html>`_,
+and ``crossprep pubmed`` is an associated utility for processing that data.
 
 The first utility downloads 'baseline' article data. An example call to this
- utility is as follows:
+utility is as follows:
 
 .. code:: bash
 
     python crossprep.py pubmed_baseline --outdir /output/dir
 
-
-This create an output directory and a subdirectory `baseline`, then attempts
+This creates an output directory and a subdirectory ``baseline``, then attempts
 to download all baseline files from the NCBI servers. It is possible to
 restrict the downloads via file indexes, e.g.
 
 .. code:: bash
 
-    python crossprep.py baseline --outdir /output/dir --baseline_indexes 1-10
-
-
+    python crossprep.py baseline --outdir /output/dir \
+                        --baseline_indexes 1-10
 
 The `crossprep pubmed` utility scans the downloaded baseline files and builds
 yaml datasets.
@@ -94,53 +95,60 @@ yaml datasets.
 
     python crossprep.py pubmed --outdir /output/dir --name pubmed-all
 
-
 It is possible to tune the output dataset using year ranges, pattern matches,
 and size thresholds, e.g.
 
 .. code:: bash
 
-    python crossprep.py pubmed --outdir /output/dir --name pubmed-recent-human \
-         --pubmed_year 2010-2019 --pubmed_pattern humam --pubmed_length 500
+    python crossprep.py pubmed --outdir /output/dir \
+                        --name pubmed-recent-human \
+                        --pubmed_year 2010-2019 \
+                        --pubmed_pattern human \
+                        --pubmed_length 500
 
-
-This will create a dataset holding articles from the years 2010-2019
-, containing the text pattern 'human' and containing at least 500 characters
+This will create a dataset holding articles from the years 2010-2019,
+containing the text pattern 'human' and containing at least 500 characters
 in the title and abstract fields.
 
 
 Gene sets
 ~~~~~~~~~
 
-The `genesets` utility converts sets of genes in [gmt format](http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29)
-- a format that uses text files to define one gene set per line - into a dataset for crossmap.
-The utility performs some filtering by default
+There are many file formats used to convey sets of genes. One of the simplest
+is the `gmt format <http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29>`_.
+This stores sets 'horizontally', with each set occupying one line in a file,
+and the set constituents separated by tabs.
+
+The `crossprep genesets` utility converts sets of genes in the gmt format into
+a dataset for crossmap. The utility can be used to filter gene sets by size.
 
 .. code:: bash
 
-    python crossprep.py genesets --outdir /output/dir --name geneset \
-                             --gmt path-to-gmt.gmt.gz \
-                             --gmt_min_size 5 --gmt_max_size 100
+    python crossprep.py genesets --outdir /output/dir \
+                        --name geneset \
+                        --gmt path-to-gmt.gmt.gz \
+                        --gmt_min_size 5 --gmt_max_size 100
 
-
-This will read gene sets specified on the second line and create a dataset
-`geneset.yaml.gz`. The ouput will contain genesets of size in the range
+This will read gene sets specified via argument ``--gmt`` create a dataset
+`geneset.yaml.gz`. The output will contain genesets of size in the range
 given by `--gmt_min_size` and `--gmt_max_size`.
 
 
 Orphanet diseases
 ~~~~~~~~~~~~~~~~~
 
-[Orphanet](http://www.orphadata.org/) is a curated knowledge-base on diseases
+`Orphanet <http://www.orphadata.org/>`_ is a curated knowledge-base on diseases
 , including their phenotypes and associated genetic causes. Parts of their
-database are available for download as xml files. The `orphanet` utility can
-parse these files and prepare summaries suitable for `crossmap`.
+database are available for download as xml files.
+
+The ``orphanet`` utility parses these files and prepare diseases summaries.
 
 .. code:: bash
 
-    python crossprep.py orphanet --outdir /output/dir --name orphanet \
-                             --orphanet_phenotypes en_product4_HPO.xml \
-                             --orphanet_genes en_product6.xml
+    python crossprep.py orphanet --outdir /output/dir \
+                        --name orphanet \
+                        --orphanet_phenotypes en_product4_HPO.xml \
+                        --orphanet_genes en_product6.xml
 
 
 
@@ -148,23 +156,25 @@ parse these files and prepare summaries suitable for `crossmap`.
 Wiktionary
 ~~~~~~~~~~
 
-[Wiktionary](http://www.wiktionary.org) is an online dictionary that is part
-of [wikimedia](http://www.wikimedia.org). It provides bulk downloads of all
-the word definitions in its database. The `wiktionary` utility parses the
-definitions and constructs files that are suitable for `crossmap`.
+`Wiktionary <http://www.wiktionary.org>`_ is an online dictionary that is part
+of `Wikimedia <http://www.wikimedia.org>`_. It provides bulk downloads of all
+the word definitions in its database.
+
+The ``wiktionary`` utility parses the definitions and constructs files that
+are suitable for ``crossmap``.
 
 .. code:: bash
 
-    python crossprep.py wiktionary --outdir /output/dir --name wiktionary \
-                       --wiktionary enwiktionary-pages-articles.xml.bz2 \
-                       --wiktionary_length 10
+    python crossprep.py wiktionary --outdir /output/dir \
+                  --name wiktionary \
+                  --wiktionary enwiktionary-pages-articles.xml.bz2 \
+                  --wiktionary_length 10
 
-
-This command taks as input `xml.bz2` compressed files, as provided by the
+This command processes compressed xml files, as provided by the
 wiktionary download page. The second argument is numerical factor that
 instructs the utility to skip over some words and the definitions. The
 utility looks at the length (number of characters) of words and their
 definitions. If the ratio of lengths for the definition and the word is
-smaller than the threshold, the word is omitted from the ouput.
+smaller than the threshold, the word is omitted from the output.
 
  
