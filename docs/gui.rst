@@ -1,6 +1,9 @@
 Graphical user interface
 ========================
 
+*This page describes how to set up / launch the graphical user interface.
+For documentation on how to use the GUI, see pages on 'Interactive use'.*
+
 The graphical user interface (GUI) consists of two separate servers working
 together. In order to launch these servers, monitor their state, and be able
 to shut them down, it is recommended to use two separate consoles.

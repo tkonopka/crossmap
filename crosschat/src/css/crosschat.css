@@ -66,6 +66,10 @@ img.controller-icon {
 td.column-dataset {
   width: 25%;
 }
+td.diffusion-slider {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
 
 
 /** History panel **/
@@ -77,6 +81,7 @@ td.column-dataset {
   margin: 0.2em 1em;
   border-radius: 5px;
   border: solid 1px #4d243d;
+  min-width: 24em;
 }
 .chat-user {
   padding: 0.5em 1em 0em 1em;
@@ -86,7 +91,6 @@ td.column-dataset {
 .chat-response {
   padding: 0.5em 1em 0em 1em;
   background-color: #ffffff;
-  min-width: 20%;
   float: left;
 }
 .chat-response-toggle {

@@ -7,7 +7,7 @@ and it is important that they remain unchanged at all subsequent stages.
 
 
 Concise configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
  
 A concise configuration might be as follows:
 
@@ -152,9 +152,53 @@ Description:
   datasets). The weighting array defaults to [0, 1].
 
 
+``indexing``
+^^^^^^^^^^^^
+
+``indexing`` settings determine the quality of the nearest-neighbor
+index.
+
+Example:
+
+.. code:: yaml
+
+    indexing:
+      build_quality: 500
+      search_quality: 200
+
+Description:
+
+- Both ``build_quality`` and ``search_quality`` are integers passed to the
+  ``nmslib`` library. Higher values indicate a more precise calculation of
+  nearest neighbors, but at the cost of a slower running time. Lower values
+  can increase speed, but lead to more searches returning imperfect outcomes.
+
+
+``diffusion``
+^^^^^^^^^^^^
+
+``diffusion`` settings help to optimize the diffusion process.
+
+Example:
+
+.. code:: yaml
+
+    diffusion:
+      threshold: 0.0
+      num_passes: 2
+
+Description:
+
+- ``threshold`` [floating point number] - determines whether thresholding
+  can be applied to limit the number of imputed features.
+- ``num_passes`` [integer] - number of diffusion rounds applied on
+  each vector. Multiple passes allow coupling diffusion processes driven
+  by several data collections.
+
+
 
 ``cache``
-^^^^^^^
+^^^^^^^^^
 
 The ``cache`` settings are not used during the build stage, but rather affect
 runtime during subsequent stages (prediction, decomposition, server mode).

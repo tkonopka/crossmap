@@ -9,11 +9,6 @@ The [documentation](docs/README.md) pages provide an overview of topics
 : setup, data-preparation, querying, and the graphical-user interface.  
 
 
-## Summary
-
-TO DO
-
-
 ## Installation and development
 
 `crossmap` is written in python (3.7) and javascript. It relies on a
@@ -39,12 +34,9 @@ If the installation was successful, all tests in the test suite should
 docker-compose -f crossmap-tests-db.yaml up -d
 # execute the unit tests
 python -m unittest
-# stop the databse instances
+# stop the database instances
 docker-compose -f crossmap-tests-db.yaml down
 ```
-
-Additional comments on the installation and usage are available in the
- [documentation](docs/README.md)
 
 
 ## Contributing

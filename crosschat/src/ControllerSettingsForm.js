@@ -35,7 +35,7 @@ class ControllerSettingsForm extends React.Component {
                 <TableCell component="td" scope="row" className={"column-dataset"}>
                     {row.label}
                 </TableCell>
-                <TableCell>
+                <TableCell className={"diffusion-slider"}>
                     <Slider
                         value={settings.diffusion[row.label]}
                         getAriaValueText={floatValueText}
@@ -49,7 +49,7 @@ class ControllerSettingsForm extends React.Component {
         });
 
         return(<Grid container spacing={2}>
-                <Grid item xs={8}>
+                <Grid item xs={10} md={10} lg={6}>
                     <Typography variant="h5">Search space</Typography>
                     <Table><TableBody><TableRow >
                         <TableCell component="td" scope="row" className={"column-dataset"}>
@@ -81,7 +81,7 @@ class ControllerSettingsForm extends React.Component {
                     </TableRow>
                     </TableBody></Table>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={10} md={10} lg={6}>
                     <Typography variant="h5">Diffusion</Typography>
                     <Table><TableBody>{diffusion_sliders}</TableBody></Table>
                 </Grid>

@@ -52,7 +52,7 @@ sciences.
    :caption: Interactive use:
 
    chat
-   controller
+   training
 
 
 

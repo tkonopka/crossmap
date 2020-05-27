@@ -68,14 +68,12 @@ class UserQueryMessage extends ChatMessage {
         });
         return (
             <div className="chat-user" onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
-                <Typography variant={"h5"}>Query</Typography>
-                <Table>
+                <Table size={"small"}>
                     <TableBody>
                         {rows}
                     </TableBody>
                 </Table>
-                <Box display={this.state.extended ? "block": "none"} className={"chat-user-settings"}>
-                    <Typography variant={"h5"}>Settings</Typography>
+                <Box mt={1} display={this.state.extended ? "block": "none"} className={"chat-user-settings"}>
                     <Table size={"small"}>
                         <colgroup>
                             <col style={{width: '35%'}}/>

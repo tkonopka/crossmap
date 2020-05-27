@@ -55,7 +55,8 @@ def parse_def(definition_text):
         return ""
 
     # sections that contribute bulk content
-    hit_sections = {"===Noun===", "===Verb===", "===Adjective==="}
+    hit_sections = {"===Noun===", "===Verb===", "===Adjective===",
+                    "====Noun====", "====Verb====", "====Adjective===="}
     # section that contain links (to be copied)
     link_sections = {"===Related terms===", "====Related terms===="}
 
