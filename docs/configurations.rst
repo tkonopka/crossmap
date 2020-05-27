@@ -175,7 +175,7 @@ Description:
 
 
 ``diffusion``
-^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 ``diffusion`` settings help to optimize the diffusion process.
 

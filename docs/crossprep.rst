@@ -1,9 +1,11 @@
 Converting data from other formats
 ==================================
 
-Like many programs ``crossmap`` requires input in a certain file format.
+Like many programs ``crossmap`` requires input in a certain format.
 At the same time, it is meant to integrate many types of data. To reconcile
-these two factors, the repository provides a suite of scripts to convert data in existing formats into a form that can be loaded into ``crossmap`` instances.
+these two factors, the repository provides a suite of scripts to convert
+data in existing formats into a form that can be loaded into ``crossmap``
+instances.
 
 The suite is implemented in file ``crossprep.py``, which is located in directory
 ``crossprep`` in the source repository. A template command to prepare a dataset is
@@ -27,7 +29,7 @@ relations between them. A common file format to encode ontology data is `obo`.
 contents for loading into a crossmap build.
 
 Ontology files must be downloaded separately, for example from the
-`obo foundry <http://www.obofoundry.org/>`_. The utility can then process the
+`OBO Foundry <http://www.obofoundry.org/>`__. The utility can then process the
 local file,
 
 .. code:: bash
@@ -64,12 +66,12 @@ as follows
 Pubmed abstracts
 ~~~~~~~~~~~~~~~~
 
-`Pubmed <https://pubmed.ncbi.nlm.nih.gov/>`_ is an
-`NCBI <https://www.ncbi.nlm.nih.gov/>`_ service that indexes scientific
+`Pubmed <https://pubmed.ncbi.nlm.nih.gov/>`__ is an
+`NCBI <https://www.ncbi.nlm.nih.gov/>`__ service that indexes scientific
 articles published in the life sciences.
 
 ``crossprep pubmed_baseline`` is a utility for downloading article data from
-`pubmed <https://www.nlm.nih.gov/databases/download/pubmed_medline.html>`_,
+`pubmed <https://www.nlm.nih.gov/databases/download/pubmed_medline.html>`__,
 and ``crossprep pubmed`` is an associated utility for processing that data.
 
 The first utility downloads 'baseline' article data. An example call to this
@@ -115,7 +117,7 @@ Gene sets
 ~~~~~~~~~
 
 There are many file formats used to convey sets of genes. One of the simplest
-is the `gmt format <http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29>`_.
+is the `gmt format <http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29>`__.
 This stores sets 'horizontally', with each set occupying one line in a file,
 and the set constituents separated by tabs.
 
