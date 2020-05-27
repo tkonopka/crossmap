@@ -16,7 +16,7 @@ interpreted. For example, to see a list of all possible arguments:
     cd crossmap
     python crossmap.py --help
 
-In practice, however, a first attempt to execute the above command may
+In practice, a first attempt to execute the above command may
 generate errors signaling missing dependencies. Furthermore, practical
 calculations require set up of a database and the graphical interface
 requires further libraries.
@@ -114,7 +114,7 @@ Docker setup
 ^^^^^^^^^^^^
 
 The first step toward running ``crossmap`` in docker containers is to ensure
- that docker itself is installed, configured, and running on the host machine.
+that docker itself is installed, configured, and running on the host machine.
 
 - Install `docker <https://docs.docker.com/get-docker/>`_ and
   `docker-compose <https://docs.docker.com/compose/install/>`_ following the official

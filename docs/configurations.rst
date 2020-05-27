@@ -73,8 +73,8 @@ Description:
   computations.
 
 
-``data``
-^^^^^^^^
+data
+^^^^
  
 The ``data`` subgroup specifies the locations of data files to be included in
 the crossmap database.
@@ -96,8 +96,8 @@ Description:
  
  
  
-``tokens``
-^^^^^^^^^^
+tokens
+^^^^^^
  
 Settings in the 'tokens' group determine how raw data are partitioned into smaller
 components, called tokens or k-mers.
@@ -118,8 +118,8 @@ Descriptions:
   alphanumeric characters, plus some punctuation like hyphens.
 
 
-``features``
-^^^^^^^^^^^^
+features
+^^^^^^^^
 
 Settings in the `features` subgroup control how tokens parsed out of the raw
 data are used to build a numerical representation of the data.
@@ -152,8 +152,8 @@ Description:
   datasets). The weighting array defaults to [0, 1].
 
 
-``indexing``
-^^^^^^^^^^^^
+indexing
+^^^^^^^^
 
 ``indexing`` settings determine the quality of the nearest-neighbor
 index.
@@ -174,8 +174,8 @@ Description:
   can increase speed, but lead to more searches returning imperfect outcomes.
 
 
-``diffusion``
-^^^^^^^^^^^^^
+diffusion
+^^^^^^^^^
 
 ``diffusion`` settings help to optimize the diffusion process.
 
@@ -197,8 +197,8 @@ Description:
 
 
 
-``cache``
-^^^^^^^^^
+cache
+^^^^^
 
 The ``cache`` settings are not used during the build stage, but rather affect
 runtime during subsequent stages (prediction, decomposition, server mode).
@@ -225,8 +225,8 @@ Description:
 - ``data`` [integer] - number of data items
 
 
-``logging``
-^^^^^^^^^^^
+logging
+^^^^^^^
 
 ``logging`` settings control the amount of information that is output to
 the log / console at runtime.
@@ -247,8 +247,8 @@ Description:
   displayed during tbe build stage
  
 
-``server``
-^^^^^^^^^^
+server
+^^^^^^
 
 When crossmap is run in server mode, there are additional parameters that
 determine who the program communicates with the network.
