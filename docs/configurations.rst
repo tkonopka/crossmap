@@ -258,11 +258,15 @@ Example:
 .. code:: yaml
 
     server:
+      db_host: 127.0.0.1
+      db_port: 8097
       api_port: 8098
       ui_port: 8099
 
 Description:
 
+- ``db_host`` [character] - url to a mongodb database server. **Note:** A value for ``db_host`` can also be provided via an environment variable ``MONGODB_HOST``.
+- ``db_port`` [integer] - the network port for the mongodb database. **Note:** A value for ``db_port`` can also be provided via an environment variable ``MONGODB_PORT``.
 - ``api_port`` [integer] - the network port on localhost that accepts requests
 - ``ui_port`` [integer] - the network port on localhost that displays the
   graphical user interface

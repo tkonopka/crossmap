@@ -9,7 +9,7 @@ However, this data format is actually quite accommodating.
 
 Data files are expected to be lists mapping item identifiers to
 associated data. As an example, assuming we have two data items with
-identifiers ``item:1`` and ``item:2``, a minimal dataset file might look
+identifiers ``item:1`` and ``item:2``, a dataset file might look
 as follows:
 
 .. code:: yaml
@@ -29,8 +29,7 @@ Metadata
 
 Each item can be associated with a metadata field. The content of this field
 is recorded in the ``crossmap`` database but is not used for any calculations.
-The field thus serves to capture comments, either for human readability, or
-for secondary analysis.
+The field can serve to enhance readability, or for secondary analysis.
 
 Examples:
 
@@ -40,12 +39,14 @@ Examples:
       data: A B C
       metadata:
         id: item:3
-        source:
+        source: item source
     item:4:
       data: D E F
       metadata: description for item 4
 
-There are no constraints on the form or the content of metadata.
+There are no constraints on the form or the content of metadata. One of the
+examples above, for example, uses a dictionary to organize the metadata into
+key/value pairs.
 
 
 Structured and nested data
@@ -67,23 +68,22 @@ Examples:
     item:array:
       data: [value1, value2]
 
-Specifying data as a dictionary can be particularly useful to aid
-human-readability. It is important that when a ``data`` field is a dictionary,
-its keys are not transferred into the object representations.
-Thus, searching the above data collection for the string 'key1' would not
+It is important that when ``data`` is a dictionary, its keys are not transferred
+into the object representations. Thus, searching the above data collection for
+the string 'key1' would not
 produce a hit. However, nested objects are stringified and thus keys in
-nested objects become part of the object representations. Thus, searching for
-the string 'key4' would match ''item:nested''.
+nested objects become part of the object representations. Thus, searching for the
+string 'key4' would match ``item:nested``.
 
 
 Weighting of text-based data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Text under the ``data`` fields are weighted according to a centralized
-k-mer-weighting strategy. However, there is some flexibility to increase or
-decrease the weight associated with certain k-mers or features. Increase
-can be achieved through repetition, and some features can be assigned
-a negative weight through a ``data_neg`` field.
+Text under the ``data`` fields is split into k-mers, and each k-mer is
+weighted according to a strategy determined during the instance build process.
+However, there is some flexibility to increase or
+decrease the weight associated with certain features. Weights can be increased
+through repetition. Negative weights can be assigned through a ``data_neg`` field.
 
 Examples:
 
@@ -107,8 +107,8 @@ feature ``B``.
 Numeric weighting
 ~~~~~~~~~~~~~~~~~
 
-To achieve more control over the weighting of certain feature, the
-items can be specified through a field ``value`` instead of ``data``.
+To achieve more control over the feature weighting, items
+can be specified through a field ``value`` instead of ``data``.
 
 Examples:
 
@@ -127,7 +127,7 @@ Examples:
       value:
         X: 2.0
 
-Specifying values for each feature gives explicit control over the relative
+Specifying values for each feature gives full control over the relative
 weighting between features.
 
 Note that whereas text under ``data`` is parsed automatically into k-mers
@@ -135,6 +135,8 @@ and then used to to construct a numeric representation, features
 under ``value`` are used as-is.
 
 Note that the ``data`` and ``value`` fields can be specified together.
-However, it is not clear from the data file how these two components will be
-weighted.
+``crossmap`` will then use both fields to construct a joint numeric
+representation of the items. This representation will arise from a
+deterministic procedure, but the relative weighting of the various
+features will not be obvious from the data file alone.
 

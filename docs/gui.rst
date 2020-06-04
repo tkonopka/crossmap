@@ -1,12 +1,11 @@
 Graphical user interface
 ========================
 
-*This page describes how to set up / launch the graphical user interface.
+*This page describes how to launch the graphical user interface (GUI).
 For documentation on how to use the GUI, see pages on 'Interactive use'.*
 
 The graphical user interface (GUI) consists of two separate servers working
-together. In order to launch these servers, monitor their state, and be able
-to shut them down, it is recommended to use two separate consoles.
+together. It is recommended to use two separate consoles in order to launch these servers. This will allow you to monitor their state and to shut them down at the end.
 
 In a first console, launch the back-end server,
 
@@ -31,4 +30,6 @@ This command should also provide output on status.
 If both components launch correctly, a new tab should open in your default
 web browser. The content of that tab will be a chat-like interface, with the
 first message displaying the datasets available to query.
+
+To shut down the services, press ``Ctrl+C`` in each of the two consoles.
 

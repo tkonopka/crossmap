@@ -2,29 +2,24 @@ crossmap documentation
 ======================
 
 ``crossmap`` is proof-of-concept software for the exploration of heterogeneous
-datasets. The software manages a database and indexes of nearest neighbors to enable
-searching data via unstructured queries and to enable tuning through
-user-driven learning.
-
-
-Paradigm
-~~~~~~~~
-
-
+datasets that are composed of text.
 
 
 Features
 ~~~~~~~~
 
-The software is designed to facilitate exploration of any text-based data.
-Its feature set, however, is strongly motivated by data challenges in the life
-sciences.
+The software is designed for use with any text-based data.
+It manages a database and indexes of nearest neighbors to enable
+searching via unstructured queries and to enable tuning through
+user-driven learning.
 
- - **Querying heterogeneous data**. ``crossmap`` can manage multiple datasets at once. It can query each dataset individually, or use a diffusion process to utilize informationin one dataset to adjust queries against another.
+ - **Querying heterogeneous data**. ``crossmap`` can manage multiple datasets at once. It can query each dataset individually, or use a diffusion process to utilize information in one dataset to adjust queries against another.
 
- - **User-driven learning**. ``crossmap`` can manage small, user-maintained, data repositories and use these data to fine-tune search results. This allows users to train the search mechanism in real-time.
+ - **User-driven learning**. ``crossmap`` can manage and update user-maintained repositories and use these data to fine-tune search results. This allows users to train the search mechanism in real-time.
 
  - **Interactive user interface**. The software provides a graphical user interface for interactive data exploration. The interface is based on chat and is accessible via a web browser.
+
+ - **Programmatic interface**. ``crossmap`` can also be used through a command-line interface suitable for batch processing.
 
 
 
