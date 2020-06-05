@@ -276,7 +276,7 @@ class Crossmap:
             else:
                 target, _ = suggest(q_residual, dataset, 1)
             # residual mapped back onto an existing hit? quit early
-            if target[0] in ids:
+            if len(target) == 0 or target[0] in ids:
                 break
             target_data = get_data(dataset, ids=target)
             ids.append(target[0])

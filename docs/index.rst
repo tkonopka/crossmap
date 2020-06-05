@@ -1,26 +1,35 @@
 crossmap documentation
 ======================
 
-``crossmap`` is proof-of-concept software for the exploration of heterogeneous
-datasets that are composed of text.
+`Crossmap <https://github.com/tkonopka/crossmap>`_  is proof-of-concept
+software for the exploration of text-based datasets.
+
+The software manages a database and indexes of nearest neighbors, and
+provides protocols for querying data using unstructured queries. It can be
+used with any text-based data, but its feature set is influenced by the needs
+in terms of data exploration in the biological sciences.
 
 
 Features
 ~~~~~~~~
 
-The software is designed for use with any text-based data.
-It manages a database and indexes of nearest neighbors to enable
-searching via unstructured queries and to enable tuning through
-user-driven learning.
+- **Querying heterogeneous data**. crossmap can manage multiple datasets at
+  once. Queries can be performed against each dataset individually. Protocols
+  includes classical search and data decomposition.
 
- - **Querying heterogeneous data**. ``crossmap`` can manage multiple datasets at once. It can query each dataset individually, or use a diffusion process to utilize information in one dataset to adjust queries against another.
+- **Data diffusion**. Data diffusion uses information in one dataset to
+  adjust queries against another dataset.
 
- - **User-driven learning**. ``crossmap`` can manage and update user-maintained repositories and use these data to fine-tune search results. This allows users to train the search mechanism in real-time.
+- **User-driven learning**. crossmap can record data items from users (in batch
+  and using an interactive interface) and use these data to fine-tune search
+  results. This allows users to train the search mechanism in real-time.
 
- - **Interactive user interface**. The software provides a graphical user interface for interactive data exploration. The interface is based on chat and is accessible via a web browser.
+- **Interactive user interface**. The software provides a graphical user
+  interface for interactive data exploration. The interface is based on chat
+  and is accessible via a web browser.
 
- - **Programmatic interface**. ``crossmap`` can also be used through a command-line interface suitable for batch processing.
-
+- **Programmatic interface**. crossmap can also be used through a command-line
+  interface suitable for batch processing.
 
 
 
@@ -29,6 +38,7 @@ user-driven learning.
    :maxdepth: 2
    :caption: User's guide:
 
+   overview
    install
    configurations
    cli
