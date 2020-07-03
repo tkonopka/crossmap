@@ -1,7 +1,7 @@
 # Documentation
 
 The documentation is prepared using sphinx and hosted on 
-[readthedocs](https://readthedocs.org/).
+[readthedocs](https://diffusion-map.readthedocs.io/en/latest/).
 
 To generate a local version of the documentation, first install `sphinx`.
 

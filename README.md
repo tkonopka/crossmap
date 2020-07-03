@@ -1,12 +1,14 @@
 # crossmap
 
-`crossmap` is an application for general-purpose data exploration that can
- adapt to user preferences. It implements algorithms based on nearest-neighbor
-  search, data decomposition, and diffusion to provide advanced data querying
-   capabilities.
+`crossmap` is an application for general-purpose data exploration that can 
+adapt to user preferences. It implements algorithms based on nearest-neighbor
+search, data decomposition, and diffusion to provide advanced data querying
+capabilities.
 
-The [documentation](docs/README.md) pages provide an overview of topics
-: setup, data-preparation, querying, and the graphical-user interface.  
+The documentation pages ([sources](docs/), 
+[readthedocs](https://diffusion-map.readthedocs.io/en/latest/)) provide 
+information on setup, data-preparation, querying, and the graphical-user 
+interface.
 
 
 ## Installation and development
