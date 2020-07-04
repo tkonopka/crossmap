@@ -133,6 +133,14 @@ parser.add_argument("--wiktionary", action="store", type=str,
 parser.add_argument("--wiktionary_length", action="store", type=float,
                     help="minimal ratio of definition to word",
                     default=6)
+parser.add_argument("--wiktionary_separate", action="store_true",
+                    help="split nouns/verbs/adjectives into separate entries")
+parser.add_argument("--wiktionary_singles", action="store_true",
+                    help="restrict to single-word titles")
+parser.add_argument("--wiktionary_minraw", action="store", type=int,
+                    help="minimal characters in raw definition",
+                    default=0)
+
 
 
 # ############################################################################

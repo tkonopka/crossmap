@@ -48,11 +48,18 @@ quotes = re.compile("'+")
 curly_pipe = re.compile("{{.+\|")
 
 
-def parse_def(definition_text):
-    """create a short string from a long wikitionary definition field"""
+def clean_def(s):
+    """clean a string using global regular experssions"""
 
-    if definition_text is None:
-        return ""
+    result = s
+    for x in ref:
+        result = x.sub("", result)
+    result = quotes.sub("'", result)
+    return result.replace("  ", " ").strip()
+
+
+def parse_def(definition_text):
+    """create short strings from a long wikitionary definition field"""
 
     # sections that contribute bulk content
     hit_sections = {"===Noun===", "===Verb===", "===Adjective===",
@@ -60,10 +67,9 @@ def parse_def(definition_text):
     # section that contain links (to be copied)
     link_sections = {"===Related terms===", "====Related terms===="}
 
-    result = []
-    hit_section = False
-    link_section = False
-    language = False
+    result = dict(noun=[], verb=[], adjective=[], related=[])
+    language, hit_section, link_section = False, False, False
+    hit_type = ""
     for line in definition_text.split("\n"):
         # assess/update the location of the line in the document
         if line.startswith("="):
@@ -72,29 +78,44 @@ def parse_def(definition_text):
                 language = (line == "==English==")
             if level == 3 or level == 4:
                 hit_section = (line in hit_sections)
+                if hit_section:
+                    hit_type = line.replace("=", "").lower()
                 link_section = (line in link_sections)
+                if link_section:
+                    hit_type = "related"
         # decide whether to transfer the line into the result
         if hit_section and language and line.startswith("# "):
             data = line[2:].replace("[[", "").replace("]]", "")
             data = double_curly.sub("", data)
-            result.append(data.strip())
+            data = clean_def(data.strip())
+            if len(data) > 1:
+                result[hit_type].append(data)
         if link_section and language and line.startswith("* "):
             data = line[2:].replace("}}", "")
             data = curly_pipe.sub("", data)
-            result.append(data.strip())
+            data = clean_def(data.strip())
+            if len(data) > 1:
+                result[hit_type].append(data)
 
-    # clean up some common artifacts
-    result = (" ".join(result))
-    for x in ref:
-        result = x.sub("", result)
-    result = quotes.sub("'", result)
-    return result.replace("  ", " ").strip()
+    return result
 
 
-def build_wiktionary_item(page_text):
+def merge_dicts(a, b):
+    """combine two dictionaries, assuming components are arrays"""
+
+    result = a
+    for k, v in b.items():
+        if k not in result:
+            result[k] = []
+        result[k].extend(v)
+    return result
+
+
+def build_wiktionary_item(page_text, config):
     """create an id and a crossmap item from an xml string"""
 
-    id, term, definition = "", "", ""
+    min_raw = config.wiktionary_minraw
+    id, term, definitions = "", "", dict()
     root = ET.fromstring(page_text.strip())
     for child in root:
         if child.tag == "title":
@@ -104,9 +125,17 @@ def build_wiktionary_item(page_text):
         elif child.tag == "revision":
             for subchild in child:
                 if subchild.tag == "text":
-                    definition += parse_def(subchild.text) + "; "
-    result = dict(term=term, definition=definition)
-    return "WIKTIONARY:"+str(id), dict(title=term, data=result)
+                    if subchild.text is None:
+                        continue
+                    if len(subchild.text) < min_raw:
+                        continue
+                    definitions = merge_dicts(definitions,
+                                              parse_def(subchild.text))
+    definitions["term"] = term
+    for k in list(definitions.keys()):
+        if len(definitions[k]) == 0:
+           definitions.pop(k)
+    return "WIKTIONARY:"+str(id), dict(title=term, data=definitions)
 
 
 def build_wiktionary_dataset(config):
@@ -128,16 +157,25 @@ def build_wiktionary_dataset(config):
     len_ratio = config.wiktionary_length
     with gzip.open(out_file, "wt") as f:
         for page_str in wiktionary_page(wiktionary_file):
-            id, data = build_wiktionary_item(page_str)
-            definition = data["data"]["definition"]
-            title = data["title"]
-            if definition == "":
+            id, data = build_wiktionary_item(page_str, config)
+            definitions = data["data"]
+            if len(definitions) <= 1:
                 continue
+            definition = str(definitions)
+            title = data["title"]
             if title == title.upper():
                 continue
             if len(definition) < len_ratio * len(title):
                 continue
+            if config.wiktionary_singles and len(title.split(" ")) > 1:
+                continue
             item = dict()
-            item[id] = data
+            if config.wiktionary_separate:
+                definitions.pop("term")
+                for k, v in definitions.items():
+                    item_k = dict(title=title, data={"term": title, k: v})
+                    item[id + "." + k] = item_k
+            else:
+                item[id] = data
             f.write(yaml.dump(item))
 
