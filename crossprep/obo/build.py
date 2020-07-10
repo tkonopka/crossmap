@@ -64,12 +64,14 @@ class OboBuilder:
             self.hits.add(root_id)
             self.top = set(self.obo.children(root_id))
 
+        self.aux_emphasis = ("emphasis" in aux)
         self.aux_comments = ("comments" in aux)
         self.aux_synonyms = ("synonyms" in aux)
         self.aux_parents = ("parents" in aux)
         self.aux_ancestors = ("ancestors" in aux)
         self.aux_siblings = ("siblings" in aux)
         self.aux_children = ("children" in aux)
+        self.aux_def = ("nodef" not in aux)
         self.aux_top = ("top" in aux)
 
     def content(self, term, extras=True):
@@ -78,7 +80,7 @@ class OboBuilder:
         result = dict(name=term.name)
         if term.data is None:
             return result
-        if "def" in term.data:
+        if "def" in term.data and self.aux_def:
             defstr = "".join(term.data["def"])
             defstr = (defstr.split("["))[0].strip()
             if defstr.startswith('"') and defstr.endswith('"'):
@@ -111,15 +113,17 @@ class OboBuilder:
         content, flat_content = self.content, self.flat_content
         aux_parents, aux_ancestors = self.aux_parents, self.aux_ancestors
         aux_synonyms, aux_children = self.aux_synonyms, self.aux_children
-        aux_siblings = self.aux_siblings
+        aux_emphasis, aux_siblings = self.aux_emphasis, self.aux_siblings
         aux_top, aux_comments = self.aux_top, self.aux_comments
+        aux_def = self.aux_def
 
         for id in obo.ids():
             if id not in hits:
                 continue
             term = obo.terms[id]
             data_pos = self.content(term, extras=False)
-            data_pos["emphasis"] = term.name
+            if aux_emphasis and aux_def:
+                data_pos["emphasis"] = term.name
             data_neg = dict()
             # always put id and parent ids into the metadata
             metadata = dict(id=id, parents=list(obo.parents(id)))
