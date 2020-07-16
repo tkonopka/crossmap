@@ -129,6 +129,8 @@ Example:
 .. code:: yaml
 
     features:
+      data:
+        documents: path-to-documents.yaml.gz
       map: path-to-features.tsv.gz
       max_number: 20000
       min_count: 2
@@ -136,11 +138,16 @@ Example:
 
 Description:
 
+- ``data`` [dictionary with key:file path pairs] - dictionary with file paths
+  to auxiliary yaml files with documents. These documents are scanned and
+  parsed just like the documents in the `data` group, but are not entered
+  into the database.
 - ``map`` [file path] - path to a file with a tab-separated table of
   features and weights. When specified, the features listed in the file are
   used as-is. This settings overrides de-novo feature discovery and overrides
   other settings in this group. Defaults to None/null, which indicates that
-  features should be extracted and weighted using the datasets in the `data` group.
+  features should be extracted and weighted using the datasets in the `data`
+  group and in the `data` dictionary under `features`.
 - ``max_number`` [integer] - total number of features is estimated from the
   contents of the data files. The number of features, however, is capped at
   this threshold. Defaults to 0, interpreted as an unlimited number of features.
