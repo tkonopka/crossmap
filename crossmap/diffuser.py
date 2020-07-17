@@ -7,10 +7,10 @@ the diffusion spreads is controlled via connections stored in a db.
 """
 
 from logging import info, warning, error
-from scipy.sparse import csr_matrix
+#from scipy.sparse import csr_matrix
 from numpy import array, sign
 from .dbmongo import CrossmapMongoDB as CrossmapDB
-from .csr import normalize_csr, threshold_csr
+from .csr import FastCsrMatrix, normalize_csr, threshold_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
 from .vectors import sparse_to_dense, ceiling_vec, sign_norm_vec
@@ -54,7 +54,7 @@ class CrossmapDiffuser:
 
         info("Setting empty diffusion index: " + dataset)
         nf = len(self.feature_map)
-        empty = csr_matrix([0.0]*nf)
+        empty = FastCsrMatrix([0.0]*nf)
         result = [empty for _ in range(nf)]
         self.db.set_counts(dataset, result)
 
@@ -180,7 +180,7 @@ class CrossmapDiffuser:
                     data *= pass_weight * corpus_weight * multiplier
                     result = add_sparse(result, data, ddata[1])
 
-        return normalize_csr(csr_matrix(result))
+        return normalize_csr(FastCsrMatrix(result))
 
 
 def _pass_weights(tot):

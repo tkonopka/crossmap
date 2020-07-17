@@ -4,16 +4,17 @@ Indexer of crossmap data for nearest-neighbor search
 
 import logging
 import nmslib
-from math import sqrt, floor
+from math import sqrt
 from os import remove
 from os.path import exists
 from logging import info, warning, error
-from scipy.sparse import csr_matrix, vstack
+from scipy.sparse import vstack
 from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .tokenizer import CrossmapTokenizer
 from .encoder import CrossmapEncoder
 from .features import CrossmapFeatures
-from .vectors import all_zero, sparse_to_dense
+from .csr import FastCsrMatrix
+from .vectors import sparse_to_dense
 from .distance import euc_dist
 
 
@@ -210,7 +211,7 @@ class CrossmapIndexer:
         if dataset not in self.indexes:
             return [], []
         get_nns = self.indexes[dataset].knnQueryBatch
-        temp = get_nns(csr_matrix(v), n)
+        temp = get_nns(FastCsrMatrix(v), n)
         nns, distances = temp[0][0], temp[0][1]
         nns = [int(_) for _ in nns]
         if names:
@@ -259,7 +260,7 @@ class CrossmapIndexer:
         """
 
         self._load_item_ids(dataset)
-        v = csr_matrix(v)
+        v = FastCsrMatrix(v)
         neighbors, distances = self._neighbors(v, dataset, n)
         item_ids = self.item_ids[dataset]
         suggestions = [item_ids[_] for _ in neighbors]

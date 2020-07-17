@@ -8,7 +8,7 @@ from logging import info, warning, error
 from os import mkdir
 from os.path import exists
 from shutil import rmtree
-from scipy.sparse import csr_matrix, vstack
+from scipy.sparse import vstack
 from .settings import CrossmapSettings
 from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .indexer import CrossmapIndexer
@@ -16,7 +16,7 @@ from .tokenizer import CrossmapDiffusionTokenizer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual
 from .vectors import vec_decomposition as vec_decomp
-from .csr import dimcollapse_csr
+from .csr import FastCsrMatrix, dimcollapse_csr
 from .tools import open_file, yaml_document, time
 
 
@@ -289,7 +289,7 @@ class Crossmap:
             coefficients = vec_decomp(q_modeled, basis.toarray())
             if coefficients[-1] == 0:
                 break
-            weights = csr_matrix(coefficients)
+            weights = FastCsrMatrix(coefficients)
             q_residual = csr_residual(q, basis, weights)
 
         # order the coefficients (decreasing size, most important first)

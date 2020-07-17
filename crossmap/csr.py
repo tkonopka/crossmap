@@ -9,6 +9,13 @@ from scipy.sparse import csr_matrix
 from .vectors import normalize_vec, absmax2
 
 
+class FastCsrMatrix(csr_matrix):
+    """a modified csr_matrix class that does not perform checks"""
+
+    def check_format(self, full_check=True):
+        pass
+
+
 def csr_to_bytes(x):
     """Convert a csr vector (one-row matrix) into a bytes-like object
 
@@ -200,6 +207,9 @@ def max_multiply_sparse(factors, data, indices, max_factor):
 def csr_data_indices(arr):
     """extract data and indices arrays from a dense vector
 
+    (this may seem like it may be done faster with np.array.nonzero
+    and similar tools, but this implementation is faster)
+
     :param arr: dense array
     :return: arrays with nonzero data elements, and corresponding indices
     """
@@ -220,5 +230,5 @@ def csr_vector(arr):
     """
 
     data, indices = csr_data_indices(arr)
-    return csr_matrix((data, indices, (0, len(data))), shape=(1, len(arr)))
+    return FastCsrMatrix((data, indices, (0, len(data))), shape=(1, len(arr)))
 

@@ -5,7 +5,8 @@ Interface to a specialized db (implemented as monogodb)
 from pymongo import MongoClient
 from functools import wraps
 from logging import warning, error
-from scipy.sparse import csr_matrix
+#from scipy.sparse import csr_matrix
+from .csr import FastCsrMatrix
 from .csr import csr_to_bytes, bytes_to_csr, bytes_to_arrays
 from .cache import CrossmapCache
 from .subsettings import CrossmapCacheSettings
@@ -327,7 +328,7 @@ class CrossmapMongoDB:
         pre_result = self.get_counts_arrays(dataset, idxs)
         result = dict()
         for k, v in pre_result.items():
-            result[k] = csr_matrix((v[0], v[1], (0, len(v[1]))), shape=shape)
+            result[k] = FastCsrMatrix((v[0], v[1], (0, len(v[1]))), shape=shape)
         return result
 
     @valid_dataset
