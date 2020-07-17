@@ -10,7 +10,7 @@ from os.path import basename
 from sys import maxsize
 from .tokenizer import CrossmapTokenizer
 from .dbmongo import CrossmapMongoDB as CrossmapDB
-from .tools import read_dict
+from .tools import read_dict, open_file
 
 
 # column titles for feature map files
@@ -22,7 +22,7 @@ weight_col = "weight"
 def read_feature_map(filepath):
     """read a feature map from a tsv file."""
     result = dict()
-    with open(filepath, "r") as f:
+    with open_file(filepath) as f:
         r = csv.DictReader(f, delimiter="\t", quotechar="'")
         for line in r:
             index = int(line[index_col])
@@ -36,7 +36,7 @@ def write_feature_map(feature_map, settings):
 
     filepath = settings.tsv_file("feature-map")
     with open(filepath, "wt") as f:
-        f.write(id_col + "\t" + index_col + "\t"+ weight_col+"\n")
+        f.write(id_col + "\t" + index_col + "\t" + weight_col + "\n")
         for k, v in feature_map.items():
             f.write(k + "\t" + str(v[0]) + "\t" + str(v[1]) + "\n")
 
