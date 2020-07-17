@@ -49,7 +49,7 @@ class Sparsevector:
                 data[i] = 0.0
             data[i] += d * multiplier
 
-    def add(self, indices, values, multiplier=1.0):
+    def add_old(self, indices, values, multiplier=1.0):
         """add a small set of sparse data to this object
 
         :param indices: list of indices (integers)
@@ -62,6 +62,21 @@ class Sparsevector:
             if i not in data:
                 data[i] = 0.0
             data[i] += d * multiplier
+
+    def add(self, indices, values, multiplier=1.0):
+        """add a small set of sparse data to this object
+
+        :param indices: list of indices (integers)
+        :param values: list of numeric values to match indices
+        :param multiplier: numeric, multiplier for values in data
+        """
+
+        data = self.data
+        for i, d in zip(indices, values):
+            try:
+                data[i] += d * multiplier
+            except KeyError:
+                data[i] = d * multiplier
 
     def to_csr(self, n, threshold=None):
         """create a csr vector representation of the dictionary
