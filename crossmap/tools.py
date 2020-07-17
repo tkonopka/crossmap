@@ -87,7 +87,7 @@ def read_dict(filepath, id_col="id", value_col="index", value_fun=None):
     """read an id-index map from file."""
 
     result = dict()
-    with open(filepath, "r") as f:
+    with open_file(filepath) as f:
         r = csv.DictReader(f, delimiter="\t", quotechar="'")
         for line in r:
             result[line[id_col]] = line[value_col]
