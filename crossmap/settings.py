@@ -171,7 +171,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
                 error(missing_msg + "'data'")
 
         fmf = self.features.map_file
-        if fmf is not None:
+        if self.require_data_files and fmf is not None:
             result["feature_map"] = query_file(fmf, "feature_map")
 
         result["weighting"] = True
