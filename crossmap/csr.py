@@ -34,7 +34,7 @@ def bytes_to_csr(x, ncol):
     :return: csr_matrix
     """
     raw = loads(x)
-    return csr_matrix((raw[0], raw[1], (0, len(raw[1]))), shape=(1, ncol))
+    return FastCsrMatrix((raw[0], raw[1], (0, len(raw[1]))), shape=(1, ncol))
 
 
 def bytes_to_arrays(x):

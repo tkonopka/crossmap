@@ -7,7 +7,6 @@ the diffusion spreads is controlled via connections stored in a db.
 """
 
 from logging import info, warning, error
-#from scipy.sparse import csr_matrix
 from numpy import array, sign
 from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .csr import FastCsrMatrix, normalize_csr, threshold_csr
