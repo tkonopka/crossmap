@@ -4,8 +4,9 @@ Encoding documents into feature vectors
 
 import gzip
 from math import log2
-from numpy import zeros
+from numpy import array, zeros
 from .csr import normalize_csr, csr_vector
+from .sparsevector import Sparsevector
 from .tools import yaml_document
 
 
@@ -78,16 +79,20 @@ class CrossmapEncoder:
         """
 
         feature_map = self.feature_map
-        data = zeros(len(feature_map), dtype=float)
+        result = Sparsevector()
         if "data" in tokens:
-            data += _text_to_vec(tokens, "data", feature_map)
+            i, v = _text_to_vec(tokens, "data", feature_map)
+            result.add(i, v)
         if "data_pos" in tokens:
-            data += _text_to_vec(tokens, "data_pos", feature_map)
+            i, v = _text_to_vec(tokens, "data_pos", feature_map)
+            result.add(i, v)
         if "data_neg" in tokens:
-            data -= _text_to_vec(tokens, "data_neg", feature_map)
+            i, v = _text_to_vec(tokens, "data_neg", feature_map)
+            result.add(i, v, -1)
         if values is not None:
-            data += _vector_to_vec(values, feature_map)
-        return normalize_csr(csr_vector(data))
+            i, v = _vector_to_vec(values, feature_map)
+            result.add(i, v)
+        return normalize_csr(result.to_csr(len(feature_map)))
 
 
 def _text_to_vec(tokens, component, feature_map):
@@ -96,12 +101,12 @@ def _text_to_vec(tokens, component, feature_map):
     :param tokens: a dict of TokenCounters
     :param component: a key in the tokens dict
     :param feature_map: dictionary mapping from keys to an index and weight
-    :return: an array with dense vector
+    :return: indices and values for a csr object
     """
 
-    result = zeros(len(feature_map), dtype=float)
     component_data = tokens[component].data
     component_counts = tokens[component].count
+    _indices, _values = [], []
     for k, v in component_data.items():
         c = component_counts[k]
         try:
@@ -113,11 +118,12 @@ def _text_to_vec(tokens, component, feature_map):
             continue
         # these two branches are equivalent, but the first branch is a shortcut
         # for a common case
+        _indices.append(k_index)
         if c == 1:
-            result[k_index] = k_weight * v
+            _values.append(k_weight * v)
         else:
-            result[k_index] = k_weight * (v/c) * (1 + log2(c))
-    return result
+            _values.append(k_weight * (v/c) * (1 + log2(c)))
+    return _indices, _values
 
 
 def _vector_to_vec(values, feature_map):
@@ -125,14 +131,15 @@ def _vector_to_vec(values, feature_map):
 
     :param values: a dict mapping features to values
     :param feature_map: dictionary mapping from keys to an index and weight
-    :return: an array with dense vector
+    :return: indices and values for a csr object
     """
 
-    result = zeros(len(feature_map), dtype=float)
+    _indices, _values = [], []
     for k, v in values.items():
         if k not in feature_map:
             continue
         ki, kw = feature_map[k]
-        result[ki] = kw * v
-    return result
+        _indices.append(ki)
+        _values.append(kw*v)
+    return _indices, _values
 

@@ -5,7 +5,6 @@ This class encode sparse vectors as a dictionary. The objective
 is to have decent space efficiency and allow quicker addition than csr_matrix.
 """
 
-#from scipy.sparse import csr_matrix
 from numpy import array
 from .csr import FastCsrMatrix, threshold_csr_arrays
 
@@ -45,20 +44,6 @@ class Sparsevector:
             d = v[i]
             if d == 0.0:
                 continue
-            if i not in data:
-                data[i] = 0.0
-            data[i] += d * multiplier
-
-    def add_old(self, indices, values, multiplier=1.0):
-        """add a small set of sparse data to this object
-
-        :param indices: list of indices (integers)
-        :param values: list of numeric values to match indices
-        :param multiplier: numeric, multiplier for values in data
-        """
-
-        data = self.data
-        for i, d in zip(indices, values):
             if i not in data:
                 data[i] = 0.0
             data[i] += d * multiplier

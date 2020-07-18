@@ -83,6 +83,7 @@ class CrossmapBuildStandardTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        remove_crossmap_cache(data_dir, "crossmap_simple")
         cls.crossmap = Crossmap(config_simple)
         cls.crossmap.build()
         cls.feature_map_file = cls.crossmap.settings.tsv_file("feature-map")
