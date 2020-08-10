@@ -130,6 +130,15 @@ class CrossmapSearchSingleTests(unittest.TestCase):
         # so output should contain only one hit, even if n>1
         self.assertEqual(len(result["targets"]), 1)
 
+    def test_search_can_report_no_match_outputs(self):
+        """search should avoid reporting items that are distance=1"""
+
+        doc = dict(data="Daniel")
+        # doc has a feature that is present in just one data item
+        # non-default behavior can report up to n hits
+        self.crossmap.indexer.trim_search = 0
+        result = self.crossmap.search(doc, "targets", n=4)
+        self.assertEqual(len(result["targets"]), 4)
 
 class CrossmapSearchBatchTests(unittest.TestCase):
     """Mapping new objects onto targets - in batch"""

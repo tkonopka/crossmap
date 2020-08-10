@@ -133,6 +133,8 @@ class CrossmapSettings(CrossmapSettingsDefaults):
                 self.features = CrossmapFeatureSettings(v, self.dir)
             elif k == "server":
                 self.server = CrossmapServerSettings(v)
+            elif k == "indexing":
+                self.indexing = CrossmapIndexingSettings(v)
             elif k == "diffusion":
                 self.diffusion = CrossmapDiffusionSettings(v)
             elif k == "logging":

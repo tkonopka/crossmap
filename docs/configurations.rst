@@ -170,11 +170,15 @@ Example:
 .. code:: yaml
 
     indexing:
+      trim_search: 1
       build_quality: 500
       search_quality: 200
 
 Description:
 
+- ``trim_search`` [integer] - relevant values are 0/1, used to toggle trimming
+  of search results to items with distances < 1-(1e-6). Default setting is 1,
+  which means search results avoid items that have distance near one.
 - Both ``build_quality`` and ``search_quality`` are integers passed to the
   ``nmslib`` library. Higher values indicate a more precise calculation of
   nearest neighbors, but at the cost of a slower running time. Lower values

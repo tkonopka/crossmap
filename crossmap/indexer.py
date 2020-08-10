@@ -48,6 +48,8 @@ class CrossmapIndexer:
         self.index_files = dict()
         # cache holding string identifiers for items in the db
         self.item_ids = dict()
+        # from settings, for easier lookup
+        self.trim_search = self.settings.indexing.trim_search
 
     def clear(self):
         self.indexes = dict()
@@ -267,8 +269,10 @@ class CrossmapIndexer:
         # Two entirely different unit vectors have a distance of sqrt(2)
         # The division below transforms output to [0, 1]
         distances = [float(_)/sqrt2 for _ in distances]
-        distances = [_ for _ in distances if _ < max_distance]
-        return suggestions[:len(distances)], distances
+        if self.trim_search:
+            distances = [_ for _ in distances if _ < max_distance]
+            suggestions = suggestions[:len(distances)]
+        return suggestions, distances
 
     @property
     def valid(self):

@@ -121,6 +121,7 @@ class CrossmapIndexingSettings:
     """Container for settings indexing and search quality"""
 
     def __init__(self, config=None):
+        self.trim_search = 1
         self.build_quality = 200
         self.search_quality = 200
 
@@ -131,10 +132,13 @@ class CrossmapIndexingSettings:
                 self.build_quality = int(val)
             elif key == "search_quality":
                 self.search_quality = int(val)
+            elif key == "trim_search":
+                self.trim_search = int(val)
 
     def __str__(self):
         result = dict(indexing={"build_quality": self.build_quality,
-                                "search_quality": self.search_quality})
+                                "search_quality": self.search_quality,
+                                "trim_search": self.trim_search})
         return dump(result)
 
 
