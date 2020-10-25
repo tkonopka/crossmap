@@ -6,7 +6,6 @@ import unittest
 from scipy.sparse import csr_matrix
 from os.path import join
 from crossmap.crossmap import Crossmap
-from crossmap.csr import FastCsrMatrix
 from crossmap.vectors import sparse_to_dense
 from .tools import remove_crossmap_cache
 
@@ -24,7 +23,7 @@ jl = {"data": "jkl klm lmn"}
 
 def round_list(x, digits=6):
     """helper for approximate tests, round a list"""
-    if type(x) is csr_matrix or type(x) is FastCsrMatrix:
+    if isinstance(x, csr_matrix):
         x = sparse_to_dense(x)
     return [round(_, digits) for _ in list(x)]
 

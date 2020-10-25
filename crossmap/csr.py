@@ -88,7 +88,7 @@ def threshold_csr(v, threshold=0.001):
     """
 
     data, indices = threshold_csr_arrays(v.data, v.indices, threshold)
-    return csr_matrix((data, indices, (0, len(indices))), shape=v.shape)
+    return FastCsrMatrix((data, indices, (0, len(indices))), shape=v.shape)
 
 
 def cap_csr(v, cap=0.1):
@@ -107,7 +107,7 @@ def cap_csr(v, cap=0.1):
             data.append(-cap)
         else:
             data.append(d)
-    return csr_matrix((data, v.indices, [0, len(data)]), shape=v.shape)
+    return FastCsrMatrix((data, v.indices, [0, len(data)]), shape=v.shape)
 
 
 def dimcollapse_csr(v, indexes=(), normalize=True):
@@ -127,7 +127,7 @@ def dimcollapse_csr(v, indexes=(), normalize=True):
             indices.append(i)
     if normalize:
         data = normalize_vec(array(data))
-    result = csr_matrix((data, indices, [0, len(indices)]), shape=v.shape)
+    result = FastCsrMatrix((data, indices, [0, len(indices)]), shape=v.shape)
     return result
 
 

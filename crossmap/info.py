@@ -39,7 +39,7 @@ class CrossmapInfo(Crossmap):
         """
 
         v = doc
-        if type(doc) is not csr_matrix:
+        if not isinstance(doc, csr_matrix):
             v = self.indexer.encode_document(doc)
         if diffusion is not None:
             v = self.diffuser.diffuse(v, diffusion)
