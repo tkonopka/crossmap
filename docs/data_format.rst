@@ -1,16 +1,19 @@
 Data format
 ===========
 
-Data files input to ``crossmap`` during the build stage and also during
-other queries must be prepared in yaml format with particular fields.
-Given that ``crossmap`` is meant for integration of many different types of
-data, it may seem ironic that the software only accepts one data format.
-However, this data format is actually quite accommodating.
+Data files must be prepared in yaml format. Given that ``crossmap`` is meant
+for integration of many different types of data, it may seem ironic that the
+software only accepts one data format. However, this data format is actually
+quite accommodating and content from other file formats can be transferred
+into yaml.
 
-Data files are expected to be lists mapping item identifiers to
-associated data. As an example, assuming we have two data items with
-identifiers ``item:1`` and ``item:2``, a dataset file might look
-as follows:
+
+Primary data
+~~~~~~~~~~~~
+
+Yaml files are expected to be lists mapping item identifiers to associated
+data. As an example, assuming we have two data items with identifiers
+``item:1`` and ``item:2``, a dataset file might look as follows:
 
 .. code:: yaml
 
@@ -19,16 +22,17 @@ as follows:
     item:2:
       data: content for item 2
 
-Each item is linked to a brief description under the ``data`` field.
-The keyword ``data`` instructs ``crossmap`` to convert those
-strings into numerical representations.
+The keywords ``data`` instructs crossmap to convert those strings into
+the primary data associated with the item identifiers. Thus, after loading
+these items into a crossmap instance, it will be possible to retrieve the
+items via queries such as 'item', 'content', or the numbers '1' and '2'.
 
 
 Metadata
 ~~~~~~~~
 
-Each item can be associated with a metadata field. The content of this field
-is recorded in the ``crossmap`` database but is not used for any calculations.
+Each item can be associated with metadata field. The content of this field
+is recorded in the crossmap database but is not used for any calculations.
 The field can serve to enhance readability, or for secondary analysis.
 
 Examples:
@@ -45,7 +49,7 @@ Examples:
       metadata: description for item 4
 
 There are no constraints on the form or the content of metadata. One of the
-examples above, for example, uses a dictionary to organize the metadata into
+examples above, for example, uses a dictionary to organize information into
 key/value pairs.
 
 
@@ -68,12 +72,11 @@ Examples:
     item:array:
       data: [value1, value2]
 
-It is important that when ``data`` is a dictionary, its keys are not transferred
-into the object representations. Thus, searching the above data collection for
-the string 'key1' would not
-produce a hit. However, nested objects are stringified and thus keys in
-nested objects become part of the object representations. Thus, searching for the
-string 'key4' would match ``item:nested``.
+It is important that when ``data`` is a dictionary, its keys are not
+transferred into the object representations. Thus, searching the above data
+collection for the string 'key1' would not produce a hit. However, nested
+objects are stringified and their keys can become part of the object
+representations. Thus, searching for 'key4' would match ``item:nested``.
 
 
 Weighting of text-based data
@@ -81,9 +84,10 @@ Weighting of text-based data
 
 Text under the ``data`` fields is split into k-mers, and each k-mer is
 weighted according to a strategy determined during the instance build process.
-However, there is some flexibility to increase or
-decrease the weight associated with certain features. Weights can be increased
-through repetition. Negative weights can be assigned through a ``data_neg`` field.
+However, there is some flexibility to increase or decrease the weight
+associated with certain features / k-mers. Weights can be increased
+through repetition. Negative weights can be assigned through a ``data_neg``
+field.
 
 Examples:
 
@@ -98,10 +102,9 @@ Examples:
       data_neg: B
 
 In these examples, the numeric representation of ``item:repeated`` will be
-skewed in favor of feature ``B`` compared to the representation of ``item:single``.
-
-The numeric representation of ``item:negative`` will include a negative for
-feature ``B``.
+skewed in favor of feature ``B`` compared to the representation of
+``item:single``. The numeric representation of ``item:negative`` will include
+a negative value for feature ``B``.
 
 
 Numeric weighting

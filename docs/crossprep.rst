@@ -1,15 +1,13 @@
-Converting data from other formats
+Data conversion from other formats
 ==================================
 
-Like many programs ``crossmap`` requires input in a certain format.
-At the same time, it is meant to integrate many types of data. To reconcile
-these two factors, the repository provides a suite of scripts to convert
-data in existing formats into a form that can be loaded into ``crossmap``
-instances.
+crossmap requires input in a specific format. At the same time, it is meant
+to integrate many types of data. To reconcile these two factors, the
+repository provides a suite of scripts to convert data in existing formats
+into a form that can be loaded into crossmap instances.
 
-The suite is implemented in file ``crossprep.py``, which is located in directory
-``crossprep`` in the source repository. A template command to prepare a dataset is
-as follows.
+The suite is implemented as module ``crossprep.py``, which is located in directory
+``crossprep``. This is a script that can be executed with the following pattern.
 
 .. code:: bash
 
@@ -23,10 +21,9 @@ Ontology definitions
 ~~~~~~~~~~~~~~~~~~~~
 
 Ontologies store concept definitions that are relevant to a domain, along with
-relations between them. A common file format to encode ontology data is `obo`.
-
-``crossprep obo`` is a utility for parsing `obo` files and preparing their
-contents for loading into a crossmap build.
+relations between them. A common file format to encode ontology data is 'obo'.
+``crossprep obo`` is a utility for parsing 'obo' files and preparing their
+contents for loading into a crossmap instance.
 
 Ontology files must be downloaded separately, for example from the
 `OBO Foundry <http://www.obofoundry.org/>`__. The utility can then process the
@@ -37,11 +34,11 @@ local file,
     python crossprep.py obo --obo file.obo --name obo
 
 
-Optional settings can tune the data transfered from the ``obo`` file to
-the ``crossmap`` data file. One of these, ``---obo_root``, sets the root node
+Optional settings can tune the data transferred from the 'obo' file to
+the crossmap data file. One of these, ``--obo_root``, sets the root node
 for the output dataset. By default, the utility processes the whole
-ontology hierarchy. Using this argument can create a dataset focused on a
-sub-branch.
+ontology hierarchy. The ``--obo_root`` argument can instead create a dataset
+for a particular branch of the ontology.
 
 .. code:: bash
 
@@ -51,10 +48,10 @@ sub-branch.
 Another setting, `--obo_aux`, determines what kind of information is
 transferred from the ontology definition into the output dataset. The
 allowed values are `parents`, `ancestors`, `children`, `siblings`, or
-combinations thereof. By default, the utility will incorporate data about
-a node's parent within the definition of that node. As an example, to
-incorporate information about parents and siblings, the command would be
-as follows
+combinations thereof (separated by commas). By default, the utility
+incorporates data about a node's parent within the definition of that
+node. As an example, to incorporate information about parents and siblings,
+the command would be:
 
 .. code:: bash
 
@@ -66,15 +63,15 @@ as follows
 Pubmed abstracts
 ~~~~~~~~~~~~~~~~
 
-`Pubmed <https://pubmed.ncbi.nlm.nih.gov/>`__ is an
-`NCBI <https://www.ncbi.nlm.nih.gov/>`__ service that indexes scientific
+`Pubmed <https://pubmed.ncbi.nlm.nih.gov/>`_ is an
+`NCBI <https://www.ncbi.nlm.nih.gov/>`_ service that indexes scientific
 articles published in the life sciences.
 
 ``crossprep pubmed_baseline`` is a utility for downloading article data from
 `pubmed <https://www.nlm.nih.gov/databases/download/pubmed_medline.html>`__,
 and ``crossprep pubmed`` is an associated utility for processing that data.
 
-The first utility downloads 'baseline' article data. An example call to this
+The first utility downloads baseline article data. An example call to this
 utility is as follows:
 
 .. code:: bash
@@ -118,10 +115,9 @@ Gene sets
 
 There are many file formats used to convey sets of genes. One of the simplest
 is the `gmt format <http://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29>`__.
-This stores sets 'horizontally', with each set occupying one line in a file,
-and the set constituents separated by tabs.
+This stores sets 'horizontally', with each set occupying one line of text.
 
-The `crossprep genesets` utility converts sets of genes in the gmt format into
+The `crossprep genesets` utility converts gene sets in the gmt format into
 a dataset for crossmap. The utility can be used to filter gene sets by size.
 
 .. code:: bash
@@ -162,8 +158,8 @@ Wiktionary
 of `Wikimedia <http://www.wikimedia.org>`_. It provides bulk downloads of all
 the word definitions in its database.
 
-The ``wiktionary`` utility parses the definitions and constructs files that
-are suitable for ``crossmap``.
+The ``wiktionary`` utility parses the word definitions and constructs data
+files for crossmap.
 
 .. code:: bash
 
@@ -173,10 +169,8 @@ are suitable for ``crossmap``.
                   --wiktionary_length 10
 
 This command processes compressed xml files, as provided by the
-wiktionary download page. The second argument is numerical factor that
-instructs the utility to skip over some words and the definitions. The
-utility looks at the length (number of characters) of words and their
-definitions. If the ratio of lengths for the definition and the word is
-smaller than the threshold, the word is omitted from the output.
+wiktionary download page. The last argument is a numerical factor that
+instructs the utility to skip some words if the length of the definition
+(measured in characters) is not longer than 10 times the length of the word
+itself; this is a mechanism to skip stub entries in the dictionary.
 
- 
