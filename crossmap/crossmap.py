@@ -5,7 +5,7 @@ Crossmap class
 from contextlib import suppress
 from yaml import dump
 from logging import info, warning, error
-from os import mkdir
+from os import mkdir, remove
 from os.path import exists
 from shutil import rmtree
 from scipy.sparse import vstack
@@ -131,6 +131,19 @@ class Crossmap:
 
         self.indexer.load()
         self.diffuser = CrossmapDiffuser(self.settings, self.db)
+
+    def remove(self, dataset):
+        """remove a dataset, or entire instance"""
+
+        self.db.remove_dataset(dataset)
+        dataset_files = [self.settings.yaml_file(dataset),
+                         self.settings.index_file(dataset),
+                         self.settings.index_dat_file(dataset)]
+        for f in dataset_files:
+            if exists(f):
+                remove(f)
+        # reload the instance (updates indexer, diffuser)
+        self.load()
 
     def add(self, dataset, doc, id, metadata=None, rebuild=True):
         """add a new item into the db

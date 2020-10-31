@@ -31,6 +31,13 @@ max_distance = 1 - (1e-6)
 class CrossmapIndexer:
     """Indexing data for crossmap"""
 
+    # dictionary holding paths to nmslib indexes
+    index_files = dict()
+    # dictionary of nmslib indexes
+    indexes = dict()
+    # identifiers for data items in the indexes
+    item_ids = dict()
+
     def __init__(self, settings, db=None):
         """initialize indexes and their links with the crossmap db
 
@@ -44,16 +51,13 @@ class CrossmapIndexer:
         self.db = db if db is not None else CrossmapDB(settings)
         features_map = self.db.get_feature_map()
         self.encoder = CrossmapEncoder(features_map, tokenizer)
-        self.indexes = dict()
-        self.index_files = dict()
-        # cache holding string identifiers for items in the db
-        self.item_ids = dict()
-        # from settings, for easier lookup
         self.trim_search = self.settings.indexing.trim_search
+        self.clear()
 
     def clear(self):
         self.indexes = dict()
         self.index_files = dict()
+        self.item_ids = dict()
 
     def update(self, dataset, doc, id, rebuild=True):
         """augment an existing dataset with a new item
@@ -255,7 +259,7 @@ class CrossmapIndexer:
     def suggest(self, v, dataset, n=5):
         """suggest nearest neighbors using a composite algorithm
 
-        :param v:
+        :param v: vector
         :param dataset: string or integer, name of index/dataset
         :param n: integer, number of nearest neighbors
         :return: a list of items ids, a list of composite distances

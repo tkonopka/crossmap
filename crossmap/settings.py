@@ -80,6 +80,10 @@ class CrossmapSettingsDefaults:
         """path for a project indexer file"""
         return self._filepath(label, "-index")
 
+    def index_dat_file(self, label):
+        """path for a project indexer file"""
+        return self._filepath(label, "-index.dat")
+
 
 class CrossmapSettings(CrossmapSettingsDefaults):
     """Container with settings for a Crossmap project"""
@@ -105,7 +109,7 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if self.dir == "":
             self.dir = getcwd()
 
-        if self._load(self.dir, self.file):
+        if self._load():
             self.valid = all(list((self._validate()).values()))
 
         self.prefix = join(self.dir, self.name)
@@ -113,12 +117,12 @@ class CrossmapSettings(CrossmapSettingsDefaults):
         if create_dir and not exists(self.prefix):
             mkdir(self.prefix)
 
-    def _load(self, dirpath, filename):
+    def _load(self):
         """load settings from a file, return True/False of success"""
 
-        filepath = join(dirpath, filename)
-        status = require_file(dirpath, "configuration directory")
-        status = status and require_file(filepath, "configuration file")
+        filepath = join(self.dir, self.file)
+        status = require_file(self.dir, "configuration directory") and \
+                 require_file(filepath, "configuration file")
         if not status:
             return False
 

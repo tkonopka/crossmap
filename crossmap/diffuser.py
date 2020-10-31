@@ -29,7 +29,6 @@ class CrossmapDiffuser:
         self.threshold = self.settings.diffusion.threshold
         if db is None:
             self.db = CrossmapDB(settings)
-            self.db.build()
         else:
             self.db = db
         self.feature_map = self.db.get_feature_map()

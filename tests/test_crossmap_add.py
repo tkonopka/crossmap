@@ -11,7 +11,7 @@ from .tools import remove_crossmap_cache
 
 
 data_dir = join("tests", "testdata")
-config_file= join(data_dir, "config-simple.yaml")
+config_file = join(data_dir, "config-simple.yaml")
 similars_file = join(data_dir, "dataset-similars.yaml")
 
 
@@ -209,14 +209,14 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
         # diffused "Alice" should connect to A and B
         crossmap = self.crossmap
         d_Alice = crossmap.search(self.doc_Alice, "targets", n=2,
-                                        diffusion=dict(documents=1))
+                                  diffusion=dict(documents=1))
         self.assertFalse("U" in d_Alice["targets"])
         self.assertTrue("A" in d_Alice["targets"])
         self.assertTrue("B" in d_Alice["targets"])
 
         # diffused "A B" should connect to to "A" and "B"
         d_AB = crossmap.search(self.doc_AB, "targets", n=2,
-                                   diffusion=dict(documents=1))
+                               diffusion=dict(documents=1))
         self.assertFalse("U" in d_AB["targets"])
         self.assertListEqual(sorted(d_AB["targets"]), ["A", "B"])
 
@@ -232,7 +232,7 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
         docs_indexes.reverse()
         crossmap = self.crossmap
         for i in docs_indexes:
-            crossmap.add("pos", pos_docs[i], id="P"+str(i), rebuild=(i==0))
+            crossmap.add("pos", pos_docs[i], id="P"+str(i), rebuild=(i == 0))
 
         self.assertEqual(crossmap.db.dataset_size("pos"), len(pos_docs))
         d0_Alice = crossmap.search(self.doc_Alice, "targets", n=2,
@@ -261,9 +261,6 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
                                diffusion=dict(documents=0.5))
         d1_A = crossmap.search(self.doc_A, "targets", n=2,
                                diffusion=dict(documents=0.5, neg=1))
-        #print("querying A")
-        #print(str(d0_A))
-        #print(str(d1_A))
         self.assertEqual(d0_A["targets"][0], "A")
         self.assertEqual(d1_A["targets"][0], "A")
         self.assertTrue("B" in d0_A["targets"])
@@ -274,9 +271,6 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
                                diffusion=dict(documents=0.5))
         d1_B = crossmap.search(self.doc_B, "targets", n=2,
                                diffusion=dict(documents=0.5, neg=1))
-        #print("querying B")
-        #print(str(d0_B))
-        #print(str(d1_B))
         self.assertEqual(d0_B["targets"][0], "B")
         self.assertEqual(d1_B["targets"][0], "B")
         self.assertTrue("A" in d0_B["targets"])

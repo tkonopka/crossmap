@@ -62,7 +62,7 @@ class CrossmapFeatureMapTests(unittest.TestCase):
         self.assertEqual(len(map_const), len(map_ic))
         self.assertEqual(len(map_const), len(map_mid))
         # constant map has all the weights equal to 1
-        for k,v in map_const.items():
+        for k, v in map_const.items():
             self.assertEqual(v[1], 1)
         # information content map has certain features with less weight
         with_ic = map_ic["with"][1]

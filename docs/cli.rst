@@ -14,7 +14,7 @@ The interface is invoked with the following pattern:
                        --FLAG_1 ...
 
  
-The first argument is always an action code, and the latter settings are
+The first argument is always an action code and other settings are
 provided in parameter/value pairs or as flags.
  
 One of the parameters is usually ``--config`` and its value is a path to a
@@ -32,7 +32,7 @@ Assuming this file is called ``config.yaml``, the build command is
 
     python crossmap.py build --config config.yaml
 
-This provides a moderate level of logging that help track progress. It is
+By default, this provides a moderate level of logging. It is
 possible to adjust the level of logging via the ``--logging`` argument.
 
 
@@ -61,7 +61,7 @@ Because the above commands are minimalistic, the search and decomposition
 analyses are performed using a number of assumptions. In practice, several
 additional arguments help to adjust the analysis.
   
-- ``--dataset`` [path to file] - specifies the data collection to search
+- ``--dataset`` [dataset label] - specifies the data collection to search
   against. The provided value must match a collection name from the
   configuration file. The default behavior is to use the first data collection
   in the configuration file.
@@ -92,6 +92,34 @@ tedious. However, the formatting is convenient when the search is performed
 programmatically.
 
 
+Adding new data
+~~~~~~~~~~~~~~~
+
+The ``add`` action enables users to insert new data items into a running
+instance. This action
+
+New items must be prepared in the same yaml format as used during the build
+stage. The action requires two pieces of information.
+
+- ``--dataset`` [dataset label] - specifies a new data collection to create
+  with the supplied data, or an existing collection to augment.
+- ``--data`` [path to file] - new data items in yaml format.
+
+Example commands:
+
+.. code:: bash
+
+    python crossmap.py add --config config.yaml \
+                       --data data.yaml --dataset new_collection
+
+The `add` action has an important constraint. It is only possible to insert
+new data items into a new dataset (a new dataset label) or into an existing
+dataset that was created at run-time, i.e. after the build stage. In other
+words, datasets processed during the build stage remain static and unchanged.
+The reason for this constrain is partly for performance reasons, and partly
+to separate background datasets and user-specific datasets.
+
+
 Distances and matrix-breakdowns
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -100,54 +128,82 @@ the crossmap instance, it is also possible to query how external data
 related to specific objects. Two relevant actions are ``distances`` and
 ``matrix``.
    
-Here, let's assume the instance has a data collection called ``collection``,
-which contains objects ``obj:1`` and ``obj:2``. The distance utility is
+Here, let's assume the instance has a data collection called 'collection',
+which contains objects 'obj:1' and 'obj:2'. The distance utility is
 executed as follows
 
 .. code:: bash
 
     python crossmap.py distances --config config.yaml \
                        --data data.yaml \
-                       --ids obj:1,obj:2 \
+                       --dataset collection --ids obj:1,obj:2 \
                        --pretty --diffusion "{\"collection\":1}"
 
 
 The first two lines of this command provide the essential components; the
-third line tunes the calculation and output (see above).
- 
-The output is a json-formatted object with distance values.
+third line tunes the calculation and output (see above). The output is a
+json-formatted object with distance values.
  
 The ``matrix`` utility has a similar syntax, but provides a detailed
 breakdown of the the features that participate in the calculation of
 distances.
    
-**Note** the `distance` and `matrix` utilities only process the first object
+**Note:** the ``distance`` and ``matrix`` utilities only process the first object
 defined in the external data file.
 
 
 Diffusion
 ~~~~~~~~~
 
-Diffusion is a major component of the crossmap algorithms. The `diffuse`
-action provides a means to extract before-diffusion and after-diffusion data
-representations.
+The ``diffuse`` action provides a means to extract before-diffusion and
+after-diffusion data representations. Inputs can be specified as plain
+text or in data files.
 
-Inputs can be specified as plain text or in data files. 
- 
-- ``--data`` [path to file] specifies a path to a data file
+- ``--data`` [path to file] specifies a path to a data file.
 - ``--text`` [character string] comma-separated list of inputs, but limited
    to strings without spaces and special characters.
-   
+
 Example queries are as follows
- 
+
 .. code:: bash
 
     python crossmap.py diffuse --config config.yaml --text abcd \
                            --pretty --diffusion "{}"
     python crossmap.py diffuse --config config.yaml --text abcd \
-                           --pretty --diffusion "{\"collection\":0.5}" 
+                           --pretty --diffusion "{\"collection\":0.5}"
 
 
 The outputs are json-formatted tables that describe how each text input is
 broken into features, and how those features are weighted.
+
+
+Removing datasets
+~~~~~~~~~~~~~~~~~
+
+The ``remove`` action deletes a whole dataset from a crossmap instance. This
+action removes data from the database as well as dataset-specific files in
+the instance data directory.
+
+- ``--dataset`` [dataset label] specifies the databset to remove
+
+Assuming an instance has a dataset calld 'collection', removing those data
+is achieved with the following command.
+
+.. code:: bash
+
+    python crossmap.py remove --config config.yaml --dataset collection
+
+
+Removing instances
+~~~~~~~~~~~~~~~~~~
+
+The ``delete`` action deletes all datasets, the whole crossmap database, and
+the disk directory. In contrast to ``remove``, this action therefore affects
+all datasets in the instance.
+
+The ``delete`` action only requires the crossmap configuration file, e.g.
+
+.. code:: bash
+
+    python crossmap.py delete --config config.yaml
 

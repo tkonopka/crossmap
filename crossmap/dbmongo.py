@@ -5,7 +5,6 @@ Interface to a specialized db (implemented as monogodb)
 from pymongo import MongoClient
 from functools import wraps
 from logging import warning, error
-#from scipy.sparse import csr_matrix
 from .csr import FastCsrMatrix
 from .csr import csr_to_bytes, bytes_to_csr, bytes_to_arrays
 from .cache import CrossmapCache
@@ -13,7 +12,16 @@ from .subsettings import CrossmapCacheSettings
 
 
 # collections used in each CrossmapMongoDB instance
-crossmap_collection_types = {"features", "datasets", "data", "counts"}
+crossmap_collection_types = {"features", "datasets", "docs", "data", "counts"}
+
+
+class InvalidDatasetLabel(Exception):
+
+    def __init__(self, label):
+        self.message = "Invalid dataset label: " + str(label)
+
+    def __str__(self):
+        return self.message
 
 
 def valid_dataset(f):
@@ -23,13 +31,13 @@ def valid_dataset(f):
     def wrapped(self, dataset, *args, **kw):
         if type(dataset) is str:
             if dataset not in self.datasets:
-                raise Exception("Invalid dataset: "+str(dataset))
+                raise InvalidDatasetLabel(dataset)
             dataset = self.datasets[dataset]
         elif type(dataset) is int:
             if dataset not in set(self.datasets.values()):
-                raise Exception("Invalid dataset: "+str(dataset))
+                raise InvalidDatasetLabel(dataset)
         else:
-            raise Exception("Invalid dataset identifier type")
+            raise InvalidDatasetLabel(dataset)
         return f(self, dataset, *args, **kw)
 
     return wrapped
@@ -37,6 +45,10 @@ def valid_dataset(f):
 
 class CrossmapMongoDB:
     """Management of a DB for features and data vectors"""
+
+    counts_cache = None
+    titles_cache = None
+    data_cache = None
 
     def __init__(self, settings, cache_settings=None):
         """sets up a connection to a db and defines settings"""
@@ -60,9 +72,8 @@ class CrossmapMongoDB:
         self.datasets = self._dataset_labels()
         if cache_settings is None:
             cache_settings = CrossmapCacheSettings()
-        self.counts_cache = CrossmapCache(cache_settings.counts)
-        self.titles_cache = CrossmapCache(cache_settings.titles)
-        self.data_cache = CrossmapCache(cache_settings.data)
+        self.cache_settings = cache_settings
+        self._clear_cache()
 
     def _dataset_labels(self):
         """read dataset labels from db
@@ -74,6 +85,13 @@ class CrossmapMongoDB:
         for x in self._datasets.find():
             result[x["label"]] = x["dataset"]
         return result
+
+    def _clear_cache(self):
+        """resets cache objects"""
+        cache_settings = self.cache_settings
+        self.counts_cache = CrossmapCache(cache_settings.counts)
+        self.titles_cache = CrossmapCache(cache_settings.titles)
+        self.data_cache = CrossmapCache(cache_settings.data)
 
     @valid_dataset
     def _clear_table(self, dataset, collection="counts"):
@@ -100,16 +118,12 @@ class CrossmapMongoDB:
             return 0
         return self._db[collection].count_documents({"dataset": dataset})
 
-    def build(self):
-        """this exists for consistency with sqlite db"""
-        pass
-
     def rebuild(self):
         """empty the contents of the database tables"""
 
         warning("Removing existing database")
-        for x in crossmap_collection_types:
-            self._db[x].delete_many({})
+        for collection in crossmap_collection_types:
+            self._db[collection].delete_many({})
 
     def remove(self):
         """remove database"""
@@ -156,6 +170,14 @@ class CrossmapMongoDB:
         self._datasets.insert_one({"dataset": len(self.datasets),
                                    "label": label,
                                    "title": title})
+        self.datasets = self._dataset_labels()
+
+    @valid_dataset
+    def remove_dataset(self, dataset):
+        """remove all db entries pertaining to a dataset"""
+
+        for collection in crossmap_collection_types:
+            self._db[collection].delete_many({"dataset": dataset})
         self.datasets = self._dataset_labels()
 
     @valid_dataset

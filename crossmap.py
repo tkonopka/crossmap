@@ -31,8 +31,9 @@ sys.excepthook = concise_exception_handler
 parser = argparse.ArgumentParser(description="crossmap")
 parser.add_argument("action", action="store",
                     help="Name of utility",
-                    choices=["build", "remove",
-                             "search", "decompose", "add",
+                    choices=["build", "delete",
+                             "search", "decompose",
+                             "add", "remove",
                              "server", "gui",
                              "distances", "vectors", "matrix", "counts",
                              "diffuse", "features", "summary"])
@@ -40,13 +41,13 @@ parser.add_argument("--config", action="store",
                     help="configuration file",
                     default=None)
 parser.add_argument("--data", action="store",
-                    help="dataset with objects to map from")
+                    help="input dataset, list of objects")
 
 
 # fine-tuning of predictions and output
 parser.add_argument("--dataset", action="store",
                     default=None,
-                    help="name of dataset")
+                    help="name of dataset to query, remove, etc.")
 parser.add_argument("--n", action="store",
                     type=int, default=1,
                     help="number of targets")
@@ -104,7 +105,7 @@ if not settings.valid:
 crossmap = None
 if action in {"search", "decompose"}:
     logging.getLogger().setLevel(level=logging.ERROR)
-if action in {"build", "search", "decompose", "add"}:
+if action in {"build", "search", "decompose", "add", "remove"}:
     crossmap = Crossmap(settings)
 if action in {"features", "diffuse", "distances", "matrix",
               "counts", "summary"}:
@@ -116,9 +117,11 @@ if action in {"features", "diffuse", "distances", "matrix",
 
 if action == "build":
     crossmap.build()
+if action == "delete":
+    remove_db_and_files(settings)
 
 if action == "remove":
-    remove_db_and_files(settings)
+    crossmap.remove(config.dataset)
 
 if action in {"search", "decompose"}:
     crossmap.load()
