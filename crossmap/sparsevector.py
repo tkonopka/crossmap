@@ -30,7 +30,7 @@ class Sparsevector:
         :param multiplier: numeric, multiplier for values in v
         """
 
-        self.add(v.indices, v.data, multiplier)
+        self.add(v.indices, v.data*multiplier)
 
     def add_dense(self, v, multiplier=1.0):
         """add a dense vector
@@ -48,7 +48,7 @@ class Sparsevector:
                 data[i] = 0.0
             data[i] += d * multiplier
 
-    def add(self, indices, values, multiplier=1.0):
+    def add(self, indices, values):
         """add a small set of sparse data to this object
 
         :param indices: list of indices (integers)
@@ -59,9 +59,9 @@ class Sparsevector:
         data = self.data
         for i, d in zip(indices, values):
             try:
-                data[i] += d * multiplier
+                data[i] += d
             except KeyError:
-                data[i] = d * multiplier
+                data[i] = d
 
     def to_csr(self, n, threshold=None):
         """create a csr vector representation of the dictionary

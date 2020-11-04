@@ -4,8 +4,8 @@ Encoding documents into feature vectors
 
 import gzip
 from math import log2
-from numpy import array, zeros
-from .csr import normalize_csr, csr_vector
+from numpy import array
+from .csr import normalize_csr
 from .sparsevector import Sparsevector
 from .tools import yaml_document
 
@@ -81,34 +81,32 @@ class CrossmapEncoder:
         feature_map = self.feature_map
         result = Sparsevector()
         if "data" in tokens:
-            i, v = _text_to_vec(tokens, "data", feature_map)
+            i, v = _text_to_vec(tokens["data"], feature_map)
             result.add(i, v)
         if "data_pos" in tokens:
-            i, v = _text_to_vec(tokens, "data_pos", feature_map)
+            i, v = _text_to_vec(tokens["data_pos"], feature_map)
             result.add(i, v)
         if "data_neg" in tokens:
-            i, v = _text_to_vec(tokens, "data_neg", feature_map)
-            result.add(i, v, -1)
+            i, v = _text_to_vec(tokens["data_neg"], feature_map)
+            result.add(i, -v)
         if values is not None:
             i, v = _vector_to_vec(values, feature_map)
             result.add(i, v)
         return normalize_csr(result.to_csr(len(feature_map)))
 
 
-def _text_to_vec(tokens, component, feature_map):
+def _text_to_vec(tokencounter, feature_map):
     """transfer from a TokenCounter into a vector
 
-    :param tokens: a dict of TokenCounters
-    :param component: a key in the tokens dict
+    :param tokencounter: a TokenCounter object
     :param feature_map: dictionary mapping from keys to an index and weight
     :return: indices and values for a csr object
     """
 
-    component_data = tokens[component].data
-    component_counts = tokens[component].count
-    _indices, _values = [], []
-    for k, v in component_data.items():
-        c = component_counts[k]
+    data, counts = tokencounter.data, tokencounter.count
+    indices, values = [], []
+    for k, v in data.items():
+        ck = counts[k]
         try:
             k_index, k_weight = feature_map[k]
         except KeyError:
@@ -118,28 +116,28 @@ def _text_to_vec(tokens, component, feature_map):
             continue
         # these two branches are equivalent, but the first branch is a shortcut
         # for a common case
-        _indices.append(k_index)
-        if c == 1:
-            _values.append(k_weight * v)
+        indices.append(k_index)
+        if ck == 1:
+            values.append(k_weight * v)
         else:
-            _values.append(k_weight * (v/c) * (1 + log2(c)))
-    return _indices, _values
+            values.append(k_weight * (v/ck) * (1 + log2(ck)))
+    return indices, array(values)
 
 
-def _vector_to_vec(values, feature_map):
+def _vector_to_vec(d, feature_map):
     """transfer from a TokenCounter into a vector
 
-    :param values: a dict mapping features to values
+    :param d: a dict mapping features to values
     :param feature_map: dictionary mapping from keys to an index and weight
     :return: indices and values for a csr object
     """
 
-    _indices, _values = [], []
-    for k, v in values.items():
+    indices, values = [], []
+    for k, v in d.items():
         if k not in feature_map:
             continue
         ki, kw = feature_map[k]
-        _indices.append(ki)
-        _values.append(kw*v)
-    return _indices, _values
+        indices.append(ki)
+        values.append(kw*v)
+    return indices, array(values)
 

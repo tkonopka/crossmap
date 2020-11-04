@@ -223,7 +223,7 @@ class CrossmapInfo(Crossmap):
         """
 
         # convert features into indexes, and an inverse mapping
-        fm, ifm = self.indexer.feature_map, dict()
+        fm, ifm = self.feature_map, dict()
         idxs = []
         for f in features:
             if f in fm:

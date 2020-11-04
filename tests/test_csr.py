@@ -11,7 +11,7 @@ from crossmap.csr import \
     csr_vector, \
     normalize_csr, \
     threshold_csr, \
-    cap_csr, \
+    pos_neg_csr, \
     dimcollapse_csr, \
     add_sparse_skip, \
     harmonic_multiply_sparse, \
@@ -87,19 +87,22 @@ class CsrThresholdTests(unittest.TestCase):
         self.assertEqual(sum(sparse_to_dense(result)), 0)
         self.assertEqual(result.shape, (1, 8))
 
-    def test_cap(self):
-        """impose a ceiling on vector values, +ve and -ve"""
+    def test_pos_neg(self):
+        """split a vector into positive and negative components"""
 
-        x = csr_matrix([0.0, 0.0, 0.4, 0.2, -0.4, 0.0])
-        result = cap_csr(x, 0.3)
-        self.assertListEqual(list(result.data), [0.3, 0.2, -0.3])
+        x = csr_matrix([0.0, 0.0, 0.4, 0.2, -0.4, 0.0, -0.1])
+        result_pos, result_neg = pos_neg_csr(x)
+        self.assertListEqual(list(result_pos.data), [0.4, 0.2])
+        self.assertListEqual(list(result_pos.indices), [2, 3])
+        self.assertListEqual(list(result_neg.data), [-0.4, -0.1])
+        self.assertListEqual(list(result_neg.indices), [4, 6])
 
 
 class CsrAddTests(unittest.TestCase):
     """Adding a dense array and a sparse array"""
 
     def test_simple(self):
-        """simple adding"""
+        """simple addition of csr vectors"""
 
         arr = array([1.0, 1.0, 1.0, 1.0, 1.0])
         a = csr_matrix([0.5, 0.0, -0.5, 0.0, 2.5])

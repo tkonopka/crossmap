@@ -91,23 +91,28 @@ def threshold_csr(v, threshold=0.001):
     return FastCsrMatrix((data, indices, (0, len(indices))), shape=v.shape)
 
 
-def cap_csr(v, cap=0.1):
-    """impose a cap (floor and ceiling) on all elements in v
+@numba.jit
+def _pos_neg_csr_arrays(data, indices):
+    """helper to split a data vector into positive and negative components"""
+    pos_data, neg_data = [], []
+    pos_indices, neg_indices = [], []
+    for i in range(len(data)):
+        d = data[i]
+        if d > 0:
+            pos_data.append(d)
+            pos_indices.append(indices[i])
+        elif d < 0:
+            neg_data.append(d)
+            neg_indices.append(indices[i])
+    return pos_data, pos_indices, neg_data, neg_indices
 
-    :param v: csr vector
-    :param cap: threshold level
-    :return: new csr vector with some elements set to zero
-    """
 
-    data = []
-    for d in v.data:
-        if d > cap:
-            data.append(cap)
-        elif d < (-cap):
-            data.append(-cap)
-        else:
-            data.append(d)
-    return FastCsrMatrix((data, v.indices, [0, len(data)]), shape=v.shape)
+def pos_neg_csr(v):
+    """split a csr vector into two components with pos and neg values"""
+    p_dat, p_ind, n_dat, n_ind = _pos_neg_csr_arrays(v.data, v.indices)
+    v_shape = v.shape
+    return FastCsrMatrix((p_dat, p_ind, (0, len(p_dat))), shape=v_shape), \
+           FastCsrMatrix((n_dat, n_ind, (0, len(n_dat))), shape=v_shape)
 
 
 def dimcollapse_csr(v, indexes=(), normalize=True):

@@ -9,7 +9,7 @@ the diffusion spreads is controlled via connections stored in a db.
 from logging import info, warning, error
 from numpy import array, sign
 from .dbmongo import CrossmapMongoDB as CrossmapDB
-from .csr import FastCsrMatrix, normalize_csr, threshold_csr
+from .csr import FastCsrMatrix, normalize_csr, threshold_csr, pos_neg_csr
 from .csr import add_sparse, harmonic_multiply_sparse
 from .sparsevector import Sparsevector
 from .vectors import sparse_to_dense, ceiling_vec, sign_norm_vec
@@ -49,47 +49,46 @@ class CrossmapDiffuser:
         num_rows = self.db.count_rows(dataset, "counts")
         if num_rows > 0:
             warning("Resetting diffusion index: " + dataset)
-
         info("Setting empty diffusion index: " + dataset)
         nf = len(self.feature_map)
         empty = FastCsrMatrix([0.0]*nf)
         result = [empty for _ in range(nf)]
         self.db.set_counts(dataset, result)
 
-    def _build_counts(self, dataset=""):
+    def _build_counts(self, dataset):
         """construct co-occurrence records for one dataset
 
         :param dataset: string, identifier for dataset in db
         """
 
-        # check existing state of counts table
         num_rows = self.db.count_rows(dataset, "counts")
         if num_rows > 0:
             msg = "Skipping build of diffusion index: " + dataset
             warning(msg + " - already exists")
             return
-
         info("Building diffusion index: " + dataset)
         threshold = self.threshold
-        progress = self.settings.logging.progress
+        progress, total = self.settings.logging.progress, 0
         fm = self.feature_map
         nf = len(fm)
         result = [Sparsevector() for _ in range(nf)]
-        total = 0
         for row in self.db.all_data(dataset):
+            total += 1
             v = row["data"]
             if threshold > 0:
                 v = threshold_csr(v, threshold)
-            v.data = sign_norm_vec(v.data)
-            total += 1
-            for i, d in zip(v.indices, v.data):
-                result[i].add_csr(v, sign(d))
+            v_pos, v_indices = sign_norm_vec(v.data), v.indices
+            v_neg = -v_pos
+            for i, d in zip(v_indices, v_pos):
+                if d > 0:
+                    result[i].add(v_indices, v_pos)
+                else:
+                    result[i].add(v_indices, v_neg)
             if total % progress == 0:
                 info("Progress: " + str(total))
         # replace dictionaries by csr_matrix (in place to save memory)
-        threshold2 = threshold / 10
         for _ in range(nf):
-            result[_] = result[_].to_csr(nf, threshold2)
+            result[_] = result[_].to_csr(nf, threshold / 10)
         self.db.set_counts(dataset, result)
 
     def build(self):
@@ -114,15 +113,13 @@ class CrossmapDiffuser:
 
         for row in self.db.get_data(dataset, idxs=data_idxs):
             v = row["data"]
-            v.data = sign_norm_vec(v.data)
-            v_indices = [int(_) for _ in v.indices]
             if len(v.indices) == 0:
                 continue
-            v_dict = {i: d for i, d in zip(v_indices, v.data)}
+            v.data = sign_norm_vec(v.data)
+            v_indices = [int(_) for _ in v.indices]
             counts = self.db.get_counts(dataset, v_indices)
-            for k in list(counts.keys()):
-                d = v_dict[k]
-                counts[k] += v * sign(d)
+            for i, d in zip(v_indices, v.data):
+                counts[i] += v * sign(d)
             self.db.update_counts(dataset, counts)
 
     def diffuse(self, v, strength, weight=None):
