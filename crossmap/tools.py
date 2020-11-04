@@ -211,8 +211,14 @@ def print_pipesafe(x):
         pass
 
 
-def pretty_print(x, pretty=False):
-    """print an object as a json string, with pretty printing"""
+def json_print(x, pretty=False, **kwargs):
+    """print an object as a json string, with pretty printing
+
+    :param x: object to print
+    :param pretty: logical, set True to prettify json with spaces
+    :param kwargs: other arguments not used, here for consistency with tsv_print
+    """
+
     if pretty:
         x = dumps(x, indent=2)
     else:
@@ -254,20 +260,21 @@ def _tsv_one(x, keys, sep="\t"):
     return result
 
 
-def tsv_print(x, remove_s=True, sep="\t"):
+def tsv_print(x, remove_s=True, sep="\t", **kwargs):
     """print an array as a table
 
     :param x: array
     :param remove_s: logical, set True to remove final 's' in header
     :param sep: separator character
+    :param kwargs: other arguments, used for consistency with pretty_print
     """
     keys = list(x[0].keys())
     header = keys.copy()
     if remove_s:
         header = [re.sub("s$", "", _) for _ in keys]
-    print(sep.join(header))
+    print_pipesafe(sep.join(header))
     for xi in x:
         result = _tsv_one(xi, keys, sep=sep)
         for _ in result:
-            print(_)
+            print_pipesafe(_)
 

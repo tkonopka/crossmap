@@ -17,7 +17,7 @@ from crossmap.settings import CrossmapSettings
 from crossmap.crossmap import Crossmap, validate_dataset_label
 from crossmap.crossmap import remove_db_and_files
 from crossmap.info import CrossmapInfo
-from crossmap.tools import concise_exception_handler, pretty_print, tsv_print
+from crossmap.tools import concise_exception_handler, json_print, tsv_print
 
 # this is a command line utility
 if __name__ != "__main__":
@@ -95,6 +95,9 @@ action = config.action
 if config.logging is not None:
     logging.getLogger().setLevel(config.logging)
 
+# output as json or tsv
+output = tsv_print if config.tsv else json_print
+
 # for build, settings check all data files are available
 # for other actions, the settings can be lenient
 settings = CrossmapSettings(config.config,
@@ -137,10 +140,7 @@ if action in {"search", "decompose"}:
     result = action_fun(config.data, config.dataset,
                         n=config.n, diffusion=config.diffusion,
                         factors=factors)
-    if config.tsv:
-        tsv_print(result)
-    else:
-        pretty_print(result, config.pretty)
+    output(result, pretty=config.pretty)
 
 if action == "add":
     crossmap.load()
@@ -162,7 +162,7 @@ if action == "diffuse":
         result.extend(crossmap.diffuse_ids(config.dataset,
                                            config.ids.split(","),
                                            diffusion=config.diffusion))
-    pretty_print(result, config.pretty)
+    output(result, pretty=config.pretty)
 
 if action in {"distances", "vectors", "matrix"}:
     crossmap = CrossmapInfo(settings)
@@ -173,19 +173,19 @@ if action in {"distances", "vectors", "matrix"}:
         action_fun = crossmap.matrix
     result = action_fun(config.data, ids=config.ids.split(","),
                         diffusion=config.diffusion)
-    pretty_print(result, config.pretty)
+    output(result, pretty=config.pretty)
 
 if action == "counts":
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     result = crossmap.counts(config.dataset, features=config.ids.split(","))
-    pretty_print(result, config.pretty)
+    output(result, pretty=config.pretty)
 
 if action in {"features", "summary"}:
     crossmap.load()
     action_fun = crossmap.summary
     if config.action == "features":
         action_fun = crossmap.features
-    pretty_print(action_fun(), config.pretty)
+    output(action_fun(), pretty=config.pretty)
 
 
 # ############################################################################
