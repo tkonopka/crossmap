@@ -214,7 +214,7 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
         self.assertTrue("A" in d_Alice["targets"])
         self.assertTrue("B" in d_Alice["targets"])
 
-        # diffused "A B" should connect to to "A" and "B"
+        # "A B" with slight diffusion should connect to "A" and "B"
         d_AB = crossmap.search(self.doc_AB, "targets", n=2,
                                diffusion=dict(documents=1))
         self.assertFalse("U" in d_AB["targets"])
@@ -304,10 +304,10 @@ class CrossmapAddDiffusionTests(unittest.TestCase):
         crossmap = self.crossmap
         crossmap.diffuser.num_passes = 1
         a_1 = crossmap.search(self.doc_A, "targets", n=2,
-                              diffusion=dict(documents=0.1))
+                              diffusion=dict(documents=0.5))
         crossmap.diffuser.num_passes = 2
         a_2 = crossmap.search(self.doc_A, "targets", n=2,
-                              diffusion=dict(documents=0.1))
+                              diffusion=dict(documents=0.5))
         self.assertEqual(a_1["targets"][0], "A")
         self.assertEqual(a_2["targets"][0], "A")
         self.assertNotEqual(a_1["distances"][0], a_2["distances"][0])

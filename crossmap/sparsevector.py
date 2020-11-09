@@ -5,7 +5,7 @@ This class encode sparse vectors as a dictionary. The objective
 is to have decent space efficiency and allow quicker addition than csr_matrix.
 """
 
-from numpy import array
+from numpy import array, int32, float64
 from .csr import FastCsrMatrix, threshold_csr_arrays
 
 
@@ -72,9 +72,9 @@ class Sparsevector:
         :return: csr_matrix object
         """
 
-        self_data = self.data
-        indices = array(list(self_data.keys()))
-        data = array([self_data[_] for _ in indices])
+        _data = self.data
+        indices = array(list(_data.keys()), dtype=int32, copy=False)
+        data = array([_data[_] for _ in indices], dtype=float64, copy=False)
         if len(data) and threshold is not None and threshold != 0.0:
             threshold *= max(data)
             data, indices = threshold_csr_arrays(data, indices, threshold)

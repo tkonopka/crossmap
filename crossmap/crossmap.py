@@ -12,7 +12,6 @@ from scipy.sparse import vstack
 from .settings import CrossmapSettings
 from .dbmongo import CrossmapMongoDB as CrossmapDB
 from .indexer import CrossmapIndexer
-from .tokenizer import CrossmapDiffusionTokenizer
 from .diffuser import CrossmapDiffuser
 from .vectors import csr_residual
 from .vectors import vec_decomposition as vec_decomp
@@ -94,7 +93,6 @@ class Crossmap:
         self.db = self.indexer.db
         # two encoders - for the primary encoding and for diffusion weights
         self.encoder = self.indexer.encoder
-        self.diff_tokenizer = CrossmapDiffusionTokenizer(settings)
         self.diffuser = None
         # determine a default dataset for querying
         self.default_label = settings.data.default
@@ -209,8 +207,7 @@ class Crossmap:
         v = self.encoder.document(doc)
         if diffusion is None:
             return v, v
-        w = self.encoder.document(doc, tokenizer=self.diff_tokenizer)
-        return v, self.diffuser.diffuse(v, diffusion, weight=w)
+        return v, self.diffuser.diffuse(v, diffusion)
 
     def diffuse(self, doc, diffusion=None, query_name="", **kwdargs):
         """provide an explanation for diffusion of a document into features

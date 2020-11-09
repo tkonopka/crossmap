@@ -13,14 +13,13 @@ from .tools import remove_crossmap_cache
 from crossmap.vectors import sparse_to_dense
 from crossmap.distance import euc_dist
 
-
 data_dir = join("tests", "testdata")
 config_plain = join(data_dir, "config-simple.yaml")
 config_longword = join(data_dir, "config-longword.yaml")
 
 
 class CrossmapDiffuserBuildTests(unittest.TestCase):
-    """Managing co-occurance counts"""
+    """Managing co-occurrence counts"""
 
     @classmethod
     def setUpClass(cls):
@@ -122,10 +121,10 @@ class CrossmapDiffuserBuildTests(unittest.TestCase):
 
         doc = {"data": "alice"}
         doc_data = self.encoder.document(doc)
-        strength_weak = dict(targets=1, documents=1)
+        strength_weak = dict(targets=0.5, documents=0.5)
         result1 = self.diffuser.diffuse(doc_data, strength_weak)
         array1 = result1.toarray()[0]
-        strength_strong = dict(targets=10, documents=10)
+        strength_strong = dict(targets=2, documents=2)
         result2 = self.diffuser.diffuse(doc_data, strength_strong)
         array2 = result2.toarray()[0]
         # second result uses more aggressive diffusion,
@@ -186,7 +185,7 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         # extract data vectors
         cls.data = dict()
         temp = cls.db.get_data(dataset="targets",
-                                   ids=["L0", "L1", "L2", "L3", "L4"])
+                               ids=["L0", "L1", "L2", "L3", "L4"])
         for _ in temp:
             cls.data[_["id"]] = sparse_to_dense(_["data"])
 
@@ -226,30 +225,6 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         d1 = euc_dist(v_dense, self.data["L1"])
         self.assertLess(d0, d1)
 
-    def test_diffusion_shifts_away_from_longword(self):
-        """encoding is reasonable after diffusion"""
-
-        v = self.encoder.document(self.long_b, self.plain_tokenizer)
-        w = self.encoder.document(self.long_b, self.diff_tokenizer)
-        v_dense = sparse_to_dense(v)
-        # w_dense = sparse_to_dense(w)
-        vd = self.diffuser.diffuse(v, dict(targets=5))
-        vd_dense = sparse_to_dense(vd)
-        vd2 = self.diffuser.diffuse(v, dict(targets=5), weight=w)
-        vd2_dense = sparse_to_dense(vd2)
-        # distances from doc to targets before and after diffusion
-        before, after, after2 = dict(), dict(), dict()
-        for id, target in self.data.items():
-            before[id] = euc_dist(target, v_dense)
-            after[id] = euc_dist(target, vd_dense)
-            after2[id] = euc_dist(target, vd2_dense)
-        
-        # document should become closer to L1 than to L0
-        # i.e. opposite relation compared to previous test
-        d0 = euc_dist(vd2_dense, self.data["L0"])
-        d1 = euc_dist(vd2_dense, self.data["L1"])
-        self.assertLess(d1, d0)
-
     def test_diffusion_keeps_original_feature_strong(self):
         """diffusing from one feature should mantain that feature strong"""
 
@@ -261,9 +236,9 @@ class CrossmapDiffuserWeightsTests(unittest.TestCase):
         for w in [1, 2, 4, 8, 20]:
             result = self.diffuser.diffuse(v, dict(targets=w))
             result_dense = sparse_to_dense(result)
-            result_C = result_dense[c_index]
+            result_c = result_dense[c_index]
             result_max = max(result_dense)
-            self.assertEqual(result_max, result_C)
+            self.assertEqual(result_max, result_c)
 
 
 class CrossmapDiffuserMultistep(unittest.TestCase):

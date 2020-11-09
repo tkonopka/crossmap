@@ -81,8 +81,7 @@ class CsrThresholdTests(unittest.TestCase):
     def test_threshold_to_zeros(self):
         """threshold and all values are set to zero"""
 
-        x = csr_matrix([0.0, 0.0, 0.0, 0.4,
-                        0.2, 0.0, -0.8, 0.1])
+        x = csr_matrix([0.0, 0.0, 0.0, 0.4, 0.2, 0.0, -0.8, 0.1])
         result = threshold_csr(x, 2)
         self.assertEqual(sum(sparse_to_dense(result)), 0)
         self.assertEqual(result.shape, (1, 8))
@@ -121,7 +120,7 @@ class CsrMultiplicationTests(unittest.TestCase):
         arr = array([1.0, 2.0, 3.0, 4.0, 5.0])
         a = csr_matrix([0.5, 0.0, 0.5, 0.0, 1.0])
         result = harmonic_multiply_sparse(arr, a.data, a.indices, 2.0)
-        expected = [0.5*(2/3), 0.5*(6/5), 1.0*(10/7)]
+        expected = [0.5*(2/3)/2.0, 0.5*(6/5)/2.0, 1.0*(10/7)/2.0]
         self.assertListEqual(list(result), expected)
 
     def test_max_simple(self):

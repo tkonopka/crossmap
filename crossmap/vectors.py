@@ -104,6 +104,23 @@ def ceiling_vec(a, c):
 
 
 @numba.jit
+def cap_vec(a, cap):
+    """ensure that values in a vector are capped from above and below
+
+    Note this performs an operation in-place, i.e.
+    the original vector will change
+
+    :param a: vector, as an array or list
+    :param cap: numeric value for range [-cap, cap]
+    :return: vector with some modified values
+    """
+
+    for i in range(len(a)):
+        a[i] = min(cap, max(-cap, a[i]))
+    return a
+
+
+@numba.jit
 def add_three(a, b, c, wb, wc):
     """add three vectors with weights
 

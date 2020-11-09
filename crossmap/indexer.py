@@ -49,8 +49,8 @@ class CrossmapIndexer:
         CrossmapFeatures(settings, db=db)
         tokenizer = CrossmapTokenizer(settings)
         self.db = db if db is not None else CrossmapDB(settings)
-        features_map = self.db.get_feature_map()
-        self.encoder = CrossmapEncoder(features_map, tokenizer)
+        feature_map = self.db.get_feature_map()
+        self.encoder = CrossmapEncoder(feature_map, tokenizer)
         self.trim_search = self.settings.indexing.trim_search
         self.clear()
 

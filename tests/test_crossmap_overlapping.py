@@ -83,41 +83,13 @@ class CrossmapOverlappingTests(unittest.TestCase):
         result = cm.diffuser.diffuse(jl_vec, {"jl": 1})
         self.assertListEqual(round_list(jl_vec), round_list(result))
 
-    @unittest.skip
-    def test_self_diffuse_from_short_and_long_words(self):
-        """diffusing a document containing both long and short words"""
+    def test_diffuse_xyz(self):
+        """search based on straightforward token without diffusion"""
 
         cm = self.crossmap
-        # af_xz is a document with a long word and a short word
-        strengths = {"af_wy_xz": 1}
-        print("+++")
-        v = cm.encoder.document(af_wy_xz)
-        print("aaa "+str(v))
-        weights = cm.encoder.document(af_wy_xz, scale_fun="sq")
-        print("v\n"+str(v))
-        print("weights\n" + str(weights))
-        print("vv/weight ratio:")
-        for _ in range(len(v.data)):
-            print(str(_)+"\t"+str(weights.data[_]/v.data[_]))
-        result = cm.diffuser.diffuse(v, strengths, weight=weights)
-        print(str(result))
-        self.assertListEqual(round_list(result), round_list(v))
-
-    @unittest.skip
-    def test_self_diffuse_from_docs_with_long_words(self):
-        """diffusing a document containing long words"""
-
-        cm = self.crossmap
-        # af_xz is a document with a long word and a short word
-        strengths = {"af_xz": 10}
-        az_vec = cm.encoder.document(af_xz)
-        weights = cm.encoder.document(af_xz, scale_fun="sq")
-        print("vv\n"+str(az_vec))
-        print("weights\n"+str(weights))
-        print("vv/weight ratio:")
-        for _ in range(len(az_vec.data)):
-            print(str(_)+"\t"+str(weights.data[_]/az_vec.data[_]))
-        result = cm.diffuser.diffuse(az_vec, strengths, weight=weights)
-        print(str(result))
-        self.assertListEqual(round_list(az_vec), round_list(result))
+        a = dict(data="abc abc bcd xyz")
+        cm.add("ab", dict(data="abc bcd"), id="ab")
+        a_vec = cm.encoder.document(a)
+        a_diff_vec = cm.diffuser.diffuse(a_vec, {"ab": 1})
+        self.assertEqual(1-1, 0)
 

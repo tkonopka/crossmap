@@ -7,12 +7,21 @@ the diffusion spreads is controlled via connections stored in a db.
 """
 
 from logging import info, warning, error
-from numpy import array, sign
+from math import sqrt
+from numpy import array
 from .dbmongo import CrossmapMongoDB as CrossmapDB
-from .csr import FastCsrMatrix, normalize_csr, threshold_csr, pos_neg_csr
-from .csr import add_sparse, harmonic_multiply_sparse
+from .csr import FastCsrMatrix, normalize_csr, threshold_csr
+from .csr import harmonic_multiply_sparse, diffuse_sparse, get_value_csr
 from .sparsevector import Sparsevector
-from .vectors import sparse_to_dense, ceiling_vec, sign_norm_vec
+from .vectors import sparse_to_dense, sign_norm_vec, cap_vec
+
+
+def weights_arr(feature_map):
+    """create an array of weights from a feature dict"""
+    result = array([0.0]*len(feature_map))
+    for _, v in feature_map.items():
+        result[v[0]] = v[1]
+    return result
 
 
 class CrossmapDiffuser:
@@ -27,17 +36,11 @@ class CrossmapDiffuser:
 
         self.settings = settings
         self.threshold = self.settings.diffusion.threshold
-        if db is None:
-            self.db = CrossmapDB(settings)
-        else:
-            self.db = db
+        self.db = db if db is not None else CrossmapDB(settings)
         self.feature_map = self.db.get_feature_map()
         if len(self.feature_map) == 0:
             error("feature map is empty")
-        weights = array([0.0]*len(self.feature_map))
-        for _, v in self.feature_map.items():
-            weights[v[0]] = v[1]
-        self.feature_weights = weights / weights.mean()
+        self.feature_weights = weights_arr(self.feature_map)
         self.num_passes = settings.diffusion.num_passes
 
     def _set_empty_counts(self, dataset):
@@ -51,7 +54,7 @@ class CrossmapDiffuser:
             warning("Resetting diffusion index: " + dataset)
         info("Setting empty diffusion index: " + dataset)
         nf = len(self.feature_map)
-        empty = FastCsrMatrix([0.0]*nf)
+        empty = FastCsrMatrix(([], [], [0, 0]), shape=(1, nf))
         result = [empty for _ in range(nf)]
         self.db.set_counts(dataset, result)
 
@@ -119,63 +122,58 @@ class CrossmapDiffuser:
             v_indices = [int(_) for _ in v.indices]
             counts = self.db.get_counts(dataset, v_indices)
             for i, d in zip(v_indices, v.data):
-                counts[i] += v * sign(d)
+                if d > 0:
+                    counts[i] += v
+                else:
+                    counts[i] -= v
             self.db.update_counts(dataset, counts)
 
-    def diffuse(self, v, strength, weight=None):
+    def diffuse(self, v, strength):
         """create a new vector by diffusing values
 
         :param v: csr vector
         :param strength: dict, diffusion strength from each dataset
-        :param weight: csr vector with weights for each feature for diffusion.
-            Algorithm uses v if weight is unspecified, but this can give too
-            much emphasis to features that represent overlapping kmers from
-            long words.
         :return: csr vector
         """
 
+        if len(v.data) == 0:
+            return v
+
+        num_passes = self.num_passes
+        weights = self.feature_weights
         strength = _nonzero_strength(strength)
-        v_dense = sparse_to_dense(v)
-        if weight is not None:
-            w_dense = sparse_to_dense(weight)
-        else:
-            w_dense = v_dense
         result = sparse_to_dense(v)
 
         # fetch counts data from db, then re-use in multiple passes
         v_indexes = [int(_) for _ in v.indices]
         counts = dict()
-        for corpus in strength.keys():
-            counts[corpus] = self.db.get_counts_arrays(corpus, v_indexes)
-
-        num_passes = self.num_passes
-        f_weights = self.feature_weights
         hms = harmonic_multiply_sparse
-        for pass_weight in _pass_weights(num_passes):
-            last_result = result.copy()
-            for corpus, corpus_weight in strength.items():
-                diffusion_data = counts[corpus]
-                for di, ddata in diffusion_data.items():
-                    # ddata[0] - values from a sparse vector
-                    # ddata[1] - indexes matched to the values in ddata[0]
-                    # ddata[2] - a maximal value in values
-                    # ddata[3] - a runner-up
-                    row_norm = ddata[3]
-                    if row_norm == 0.0:
-                        continue
-                    # cap by row_norm (avoids over-diffusing into self)
-                    data = ceiling_vec(ddata[0].copy(), row_norm)
-                    # avoid diffusion from important feature to inflate value
-                    # of an unimportant feature
-                    data = hms(f_weights, data, ddata[1], f_weights[di])
-                    # penalize diffusion from overlapping tokens
-                    # multiplier = min(1.0, (w_dense[di]/v_dense[di]))
-                    multiplier = w_dense[di]/v_dense[di]
-                    multiplier *= last_result[di] / row_norm
-                    data *= pass_weight * corpus_weight * multiplier
-                    result = add_sparse(result, data, ddata[1])
+        for dataset in strength.keys():
+            temp = self.db.get_counts_arrays(dataset, v_indexes)
+            dataset_dict = dict()
+            for i, data in temp.items():
+                iv = get_value_csr(data[0], data[1], i)
+                norm = sqrt(iv)
+                adjusted = cap_vec(data[0], norm)
+                adjusted = hms(weights, adjusted, data[1], weights[i])
+                dataset_dict[i] = [adjusted, data[1], norm]
+            counts[dataset] = dataset_dict
 
-        return normalize_csr(FastCsrMatrix(result))
+        for pass_w in _pass_weights(num_passes):
+            last_result = result.copy()
+            for dataset, corpus_w in strength.items():
+                corpus_data = counts[dataset]
+                for i, idata in corpus_data.items():
+                    if idata[2] == 0.0:
+                        continue
+                    data = idata[0] * pass_w * corpus_w / idata[2]
+                    indices = idata[1]
+                    diffuse_sparse(result, last_result, i, data, indices)
+
+        # cut feature with very low weights
+        val_min = min(abs(v.data))
+        result = normalize_csr(FastCsrMatrix(result))
+        return normalize_csr(threshold_csr(result, val_min/50))
 
 
 def _pass_weights(tot):

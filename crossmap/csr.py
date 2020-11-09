@@ -3,7 +3,7 @@ Handling csr vectors
 """
 
 import numba
-from numpy import array
+from numpy import array, int32, float64
 from pickle import loads, dumps
 from scipy.sparse import csr_matrix
 from .vectors import normalize_vec, absmax2
@@ -38,6 +38,20 @@ def bytes_to_csr(x, ncol):
 
 
 def bytes_to_arrays(x):
+    """convert a bytes object into a pair of arrays
+
+    :param x: bytes object
+    :return: arrays with data, indices, and a sum of the data
+        Note the first two elements are ready to use with csr_matrix.
+        The abs max and abs-runner-up are ad-hoc extras.
+    """
+    raw = loads(x)
+    values = array(raw[0], dtype=float64, copy=False)
+    indices = array(raw[1], dtype=int32, copy=False)
+    return values, indices
+
+
+def bytes_to_arrays_old(x):
     """convert a bytes object into a pair of arrays
 
     :param x: bytes object
@@ -137,17 +151,40 @@ def dimcollapse_csr(v, indexes=(), normalize=True):
 
 
 @numba.jit
-def add_sparse(arr, data, indices):
-    """add sparse data to a dense array
+def get_value_csr(data, indices, index):
+    """get one value from a sparse vector"""
+    for i in range(len(indices)):
+        if indices[i] == index:
+            return data[i]
+    return 0.0
+
+
+@numba.jit
+def diffuse_sparse(arr, concentrations, origin_index, data, indices):
+    """add sparse data to a dense array with a gradient add
 
     :param arr: dense array of floats
-    :param data: array of floats
-    :param indices: array of integers
-    :return: array consisting of arr+data
+    :param concentrations: dense array of concentrations
+    :param origin_index: index in concentrations for the source of diffusion
+    :param data: array of floats with diffusion magnitudes
+    :param indices: array of integers for destination of diffusion
+    :return: array consisting of arr+magnitude*(delta concentration)
     """
-    for i in range(len(indices)):
-        arr[indices[i]] += data[i]
-    return arr
+    c0 = concentrations[origin_index]
+    if c0 > 0:
+        for i in range(len(indices)):
+            index = indices[i]
+            diff = c0-concentrations[index]
+            if diff > 0:
+                arr[index] += data[i] * diff
+                arr[index] = min(c0, arr[index])
+    else:
+        for i in range(len(indices)):
+            index = indices[i]
+            diff = c0-concentrations[index]
+            if diff < 0:
+                arr[index] += data[i] * diff
+                arr[index] = max(c0, arr[index])
 
 
 @numba.jit
@@ -173,18 +210,18 @@ def harmonic_multiply_sparse(factors, data, indices, harmonic_factor):
     """multiply sparse data by a harmonic-mean-scaled factor
 
     :param factors: dense array of floats
-    :param data: array of floats (from a sparse vector)
+    :param data: dense array of floats (from a sparse vector)
     :param indices: array of integers (from a sparse vector)
     :param harmonic_factor: float, factor for use with harmonic
         multiplication.
     :return: array consisting of factors*data in sparse format.
         When a harmonic factor is present, the multiplication is by
-        (factors*harmonic_factor)/(factors+harmonic_factor)
+        (factors)/(factors+harmonic_factor)
     """
 
     for i in range(len(indices)):
         fi = factors[indices[i]]
-        data[i] *= fi * harmonic_factor / (fi + harmonic_factor)
+        data[i] *= fi / (fi + harmonic_factor)
     return data
 
 

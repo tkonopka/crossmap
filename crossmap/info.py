@@ -10,6 +10,7 @@ from .vectors import sparse_to_dense
 from .tools import open_file, yaml_document
 from .crossmap import Crossmap
 
+
 # special constant
 sqrt2 = sqrt(2.0)
 
@@ -28,6 +29,8 @@ class CrossmapInfo(Crossmap):
         # set up a conversion from indexes into feature strings
         encoder = self.indexer.encoder
         self.feature_map = encoder.feature_map
+        # inv_feature_map is list of strings.
+        # Given an index i, inv_feature_map[i] gives the feature string
         self.inv_feature_map = encoder.inv_feature_map
 
     def diffuse(self, doc, diffusion=None):
@@ -173,13 +176,14 @@ class CrossmapInfo(Crossmap):
             return result
 
         # convert items from file into vectors
+        encoder = self.indexer.encoder
         with open_file(filepath, "rt") as f:
-            for id, doc in yaml_document(f):
-                v = self.indexer.encode_document(doc)
+            for doc_id, doc in yaml_document(f):
+                v = encoder.document(doc)
                 if diffusion is not None:
                     v = self.diffuser.diffuse(v, diffusion)
-                v = list(sparse_to_dense(v))
-                result.append(dict(dataset="_file_", id=id, vector=v))
+                result.append(dict(dataset="_file_", id=doc_id,
+                                   vector=list(sparse_to_dense(v))))
         return result
 
     def matrix(self, filepath=None, ids=[], diffusion=None):
@@ -193,10 +197,8 @@ class CrossmapInfo(Crossmap):
         :return: list
         """
 
-        # collect information in vectors
         vectors = self.vectors(filepath, ids, diffusion)
 
-        # format the vectors into a matrix with non-zero features
         inv_feature_map = self.inv_feature_map
         result = []
         vec_ids = [_["id"] for _ in vectors]
