@@ -131,15 +131,20 @@ if action in {"search", "decompose"}:
     config.dataset = validate_dataset_label(crossmap, config.dataset)
     if config.dataset is None:
         sys.exit()
-    action_fun = crossmap.search_file
-    if action == "decompose":
-        action_fun = crossmap.decompose_file
-    factors = None
-    if config.factors is not None:
-        factors = config.factors.split(",")
-    result = action_fun(config.data, config.dataset,
-                        n=config.n, diffusion=config.diffusion,
-                        factors=factors)
+    factors = None if config.factors is None else config.factors.split(",")
+    if config.text is None:
+        action_fun = crossmap.search_file
+        if action == "decompose":
+            action_fun = crossmap.decompose_file
+        result = action_fun(config.data, config.dataset, n=config.n,
+                            diffusion=config.diffusion, factors=factors)
+    else:
+        action_fun = crossmap.search
+        if action == "decompose":
+            action_fun = crossmap.decompose
+        result = [action_fun(dict(data=config.text), config.dataset,
+                             n=config.n, diffusion=config.diffusion,
+                             factors=factors, query_name=config.text)]
     output(result, pretty=config.pretty)
 
 if action == "add":

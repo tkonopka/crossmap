@@ -16,7 +16,7 @@ RUN python3.7 -m pip install -U pip setuptools wheel \
     && python3.7 -m pip install --no-cache-dir --compile \
                  numpy pyyaml scipy requests numba pymongo django \
     && python3.7 -m pip install --no-binary :all: nmslib
-RUN curl -sL https://deb.nodesource.com/setup_13.x  | bash - \
+RUN curl -sL https://deb.nodesource.com/setup_14.x  | bash - \
     && apt-get -y --no-install-recommends install nodejs \
     && npm install -g serve \
     && mkdir /crossmap

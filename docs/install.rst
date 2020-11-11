@@ -81,7 +81,7 @@ version using
 
     npm --version
 
-If you do not yet have ``npm``, or if your version is below 6.13, install it
+If you do not yet have ``npm``, or if your version is below 14.15, install it
 by following the instructions on the `node home page <https://nodejs.org/>`_.
 
 The front-end relies on some external javascript packages. To install all the
