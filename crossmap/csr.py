@@ -6,7 +6,7 @@ import numba
 from numpy import array, int32, float64
 from pickle import loads, dumps
 from scipy.sparse import csr_matrix
-from .vectors import normalize_vec, absmax2
+from .vectors import normalize_vec
 
 
 class FastCsrMatrix(csr_matrix):
@@ -51,22 +51,6 @@ def bytes_to_arrays(x):
     return values, indices
 
 
-def bytes_to_arrays_old(x):
-    """convert a bytes object into a pair of arrays
-
-    :param x: bytes object
-    :return: arrays with data, indices, and a sum of the data
-        Note the first two elements are ready to use with csr_matrix.
-        The abs max and abs-runner-up are ad-hoc extras.
-    """
-    raw = loads(x)
-    data_max, data_runnerup = 0.0, 0.0
-    values, indices = array(raw[0]), array(raw[1])
-    if len(raw[0]):
-        data_max, data_runnerup = absmax2(values)
-    return values, indices, data_max, data_runnerup
-
-
 def normalize_csr(v):
     """normalize a csr vector
 
@@ -93,6 +77,15 @@ def threshold_csr_arrays(data, indices, threshold):
     return result_data, result_indices
 
 
+def csr_vector(data, indices, n):
+    """create a csr_matrix with only one row, i.e. a vector"""
+    result = FastCsrMatrix(([], [], (0, 0)), shape=(1, n))
+    result.data = array(data, dtype=float64, copy=False)
+    result.indices = array(indices, dtype=int32, copy=False)
+    result.indptr = array([0, len(indices)], dtype=int32, copy=False)
+    return result
+
+
 def threshold_csr(v, threshold=0.001):
     """set elements in v below a threshold to zero
 
@@ -102,7 +95,7 @@ def threshold_csr(v, threshold=0.001):
     """
 
     data, indices = threshold_csr_arrays(v.data, v.indices, threshold)
-    return FastCsrMatrix((data, indices, (0, len(indices))), shape=v.shape)
+    return csr_vector(data, indices, v.shape[1])
 
 
 @numba.jit
@@ -119,14 +112,6 @@ def _pos_neg_csr_arrays(data, indices):
             neg_data.append(d)
             neg_indices.append(indices[i])
     return pos_data, pos_indices, neg_data, neg_indices
-
-
-def pos_neg_csr(v):
-    """split a csr vector into two components with pos and neg values"""
-    p_dat, p_ind, n_dat, n_ind = _pos_neg_csr_arrays(v.data, v.indices)
-    v_shape = v.shape
-    return FastCsrMatrix((p_dat, p_ind, (0, len(p_dat))), shape=v_shape), \
-           FastCsrMatrix((n_dat, n_ind, (0, len(n_dat))), shape=v_shape)
 
 
 def dimcollapse_csr(v, indexes=(), normalize=True):
@@ -262,15 +247,4 @@ def csr_data_indices(arr):
             data.append(arr[i])
             indices.append(i)
     return data, indices
-
-
-def csr_vector(arr):
-    """create a one-row csr_matrix object from a dense array
-
-    :param arr: numpy array
-    :return: csr matrix with one row
-    """
-
-    data, indices = csr_data_indices(arr)
-    return FastCsrMatrix((data, indices, (0, len(data))), shape=(1, len(arr)))
 

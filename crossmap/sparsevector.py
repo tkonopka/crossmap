@@ -6,7 +6,7 @@ is to have decent space efficiency and allow quicker addition than csr_matrix.
 """
 
 from numpy import array, int32, float64
-from .csr import FastCsrMatrix, threshold_csr_arrays
+from .csr import threshold_csr_arrays, csr_vector
 
 
 class Sparsevector:
@@ -78,7 +78,7 @@ class Sparsevector:
         if len(data) and threshold is not None and threshold != 0.0:
             threshold *= max(data)
             data, indices = threshold_csr_arrays(data, indices, threshold)
-        return FastCsrMatrix((data, indices, (0, len(data))), shape=(1, n))
+        return csr_vector(data, indices, n)
 
     def __str__(self):
         return str(self.data)

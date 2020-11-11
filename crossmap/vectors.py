@@ -138,27 +138,6 @@ def add_three(a, b, c, wb, wc):
     return a
 
 
-@numba.jit
-def absmax2(a):
-    """find the maximal and runner-up values in an array
-
-    :param a: array of numbers
-    :return: array of length 2, values of maximal and runner-up absolute values
-    """
-
-    result = [-1.0, -1.0]
-    for i in range(len(a)):
-        v = abs(a[i])
-        if v > result[0]:
-            result[1] = result[0]
-            result[0] = v
-        elif result[0] > v > result[1]:
-            result[1] = v
-    if result[1] < 0:
-        result[1] = result[0]
-    return result
-
-
 def csr_residual(v_t, b_t, weights):
     """get the residual of a vector after subtracting other vectors
 

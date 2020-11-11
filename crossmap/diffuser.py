@@ -150,25 +150,23 @@ class CrossmapDiffuser:
         hms = harmonic_multiply_sparse
         for dataset in strength.keys():
             temp = self.db.get_counts_arrays(dataset, v_indexes)
-            dataset_dict = dict()
+            dataset_counts = dict()
             for i, data in temp.items():
-                iv = get_value_csr(data[0], data[1], i)
-                norm = sqrt(iv)
-                adjusted = cap_vec(data[0], norm)
+                norm = sqrt(get_value_csr(data[0], data[1], i))
+                if norm == 0.0:
+                    continue
+                adjusted = cap_vec(data[0], norm) / norm
                 adjusted = hms(weights, adjusted, data[1], weights[i])
-                dataset_dict[i] = [adjusted, data[1], norm]
-            counts[dataset] = dataset_dict
+                dataset_counts[i] = (adjusted, data[1])
+            counts[dataset] = dataset_counts
 
         for pass_w in _pass_weights(num_passes):
             last_result = result.copy()
             for dataset, corpus_w in strength.items():
-                corpus_data = counts[dataset]
-                for i, idata in corpus_data.items():
-                    if idata[2] == 0.0:
-                        continue
-                    data = idata[0] * pass_w * corpus_w / idata[2]
-                    indices = idata[1]
-                    diffuse_sparse(result, last_result, i, data, indices)
+                for i, data in counts[dataset].items():
+                    diffuse_sparse(result, last_result, i,
+                                   data[0] * pass_w * corpus_w,
+                                   data[1])
 
         # cut feature with very low weights
         val_min = min(abs(v.data))

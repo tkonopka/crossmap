@@ -8,10 +8,8 @@ from scipy.sparse import csr_matrix
 from crossmap.csr import \
     bytes_to_csr, \
     csr_to_bytes, \
-    csr_vector, \
     normalize_csr, \
     threshold_csr, \
-    pos_neg_csr, \
     dimcollapse_csr, \
     add_sparse_skip, \
     harmonic_multiply_sparse, \
@@ -86,16 +84,6 @@ class CsrThresholdTests(unittest.TestCase):
         self.assertEqual(sum(sparse_to_dense(result)), 0)
         self.assertEqual(result.shape, (1, 8))
 
-    def test_pos_neg(self):
-        """split a vector into positive and negative components"""
-
-        x = csr_matrix([0.0, 0.0, 0.4, 0.2, -0.4, 0.0, -0.1])
-        result_pos, result_neg = pos_neg_csr(x)
-        self.assertListEqual(list(result_pos.data), [0.4, 0.2])
-        self.assertListEqual(list(result_pos.indices), [2, 3])
-        self.assertListEqual(list(result_neg.data), [-0.4, -0.1])
-        self.assertListEqual(list(result_neg.indices), [4, 6])
-
 
 class CsrAddTests(unittest.TestCase):
     """Adding a dense array and a sparse array"""
@@ -157,24 +145,3 @@ class CsrDimensionalCollapseTests(unittest.TestCase):
         self.assertEqual(result_dense[4], 0.0)
         self.assertGreater(result_dense[1], 0.1)
 
-
-class CsrVectorTests(unittest.TestCase):
-    """Construct a csr matrix representing one vector"""
-
-    def test_csr_vector(self):
-        """simple csr matrix with one row"""
-
-        arr = array([0.0, 2.0, 3.0, 4.0, 0.0])
-        result = csr_vector(arr)
-        expected = csr_matrix(arr)
-        self.assertListEqual(list(result.data), list(expected.data))
-        self.assertListEqual(list(result.indices), list(expected.indices))
-
-    def test_csr_vector_zeros(self):
-        """simple csr matrix from vector with zeros"""
-
-        arr = array([0.0, 0.0, 0.0, 0.0, 0.0])
-        result = csr_vector(arr)
-        expected = csr_matrix(arr)
-        self.assertListEqual(list(result.data), list(expected.data))
-        self.assertListEqual(list(result.indices), list(expected.indices))

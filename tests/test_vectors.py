@@ -17,8 +17,7 @@ from crossmap.vectors import \
     sign_norm_vec, \
     threshold_vec, \
     ceiling_vec, \
-    nonzero_indices, \
-    absmax2
+    nonzero_indices
 
 
 class VecNormTests(unittest.TestCase):
@@ -246,75 +245,6 @@ class VecIndicesTests(unittest.TestCase):
 
         result = nonzero_indices(self.v, 10)
         self.assertEqual(len(result), 3)
-
-
-class VecAbsMax2Tests(unittest.TestCase):
-    """Searching for values in a vector"""
-
-    def test_absmax2_1a(self):
-        """best and runner up in tiny array"""
-
-        result = absmax2(array([2.5]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 2.5)
-        self.assertEqual(result[0], 2.5)
-
-    def test_absmax2_1b(self):
-        """best and runner up in tiny array"""
-
-        result = absmax2(array([-0.5]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 0.5)
-        self.assertEqual(result[0], 0.5)
-
-    def test_absmax2_short(self):
-        """best and runner up, with positive and negative elements"""
-
-        result = absmax2(array([-2.5, 1.5]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 2.5)
-        self.assertEqual(result[1], 1.5)
-
-    def test_absmax2_long(self):
-        """best and runner up, with long input"""
-
-        result = absmax2(array([-2.5, 1.5, 0.2, 3.5, 0.5]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 3.5)
-        self.assertEqual(result[1], 2.5)
-
-    def test_absmax2_long2(self):
-        """best and runner up, another long input"""
-
-        result = absmax2(array([2.5, 1.5, 0.2, 3.5, 0.5, 4.5]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 4.5)
-        self.assertEqual(result[1], 3.5)
-
-    def test_absmax2_ties(self):
-        """best and runner up, with ties"""
-
-        result = absmax2(array([2.0, 2.0, 2.0, 3.0, 3.0,
-                                4.0, 3.0, 4.0, 2.0, 1.0]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 4.0)
-        self.assertEqual(result[1], 3.0)
-
-    def test_absmax2_ties_2(self):
-        """best and runner up, with ties, another example"""
-
-        result = absmax2(array([4.0, 4.0, 3.0, 2.0]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 4.0)
-        self.assertEqual(result[1], 3.0)
-
-    def test_absmax2_ties_only_max(self):
-        """best and runner up, but there is no runner up"""
-
-        result = absmax2(array([1.0, -1.0, -1.0]))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], 1.0)
-        self.assertEqual(result[1], 1.0)
 
 
 class SignNormTests(unittest.TestCase):

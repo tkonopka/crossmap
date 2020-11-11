@@ -323,12 +323,13 @@ class CrossmapMongoDB:
         if len(missing) == 0:
             return result
         find = self._counts.find
+        counts_cache = self.counts_cache
         for row in find({"dataset": dataset, "idx": {"$in": missing}},
                         {"_id": 0, "idx": 1, "data": 1}):
             row_data = bytes_to_arrays(row["data"])
             idx = row["idx"]
             result[idx] = row_data
-            self.counts_cache.set(dataset, idx, row_data)
+            counts_cache.set(dataset, idx, row_data)
         return result
 
     @valid_dataset
@@ -394,7 +395,8 @@ class CrossmapMongoDB:
         if queries is None or len(queries) == 0:
             return []
         # attempt to get results from cache
-        result, missing = self.data_cache.get(dataset, queries)
+        data_cache = self.data_cache
+        result, missing = data_cache.get(dataset, queries)
         result = [v for v in result.values()]
         if len(missing) == 0:
             return result
@@ -405,7 +407,7 @@ class CrossmapMongoDB:
             rowdict = dict(id=row["id"], idx=row["idx"],
                            data=bytes_to_csr(row["data"], n_features))
             result.append(rowdict)
-            self.data_cache.set(dataset, row[column], rowdict)
+            data_cache.set(dataset, row[column], rowdict)
         return result
 
     @valid_dataset

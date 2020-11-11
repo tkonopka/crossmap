@@ -91,7 +91,6 @@ class Crossmap:
         self.db = CrossmapDB(settings)
         self.indexer = CrossmapIndexer(settings, db=self.db)
         self.db = self.indexer.db
-        # two encoders - for the primary encoding and for diffusion weights
         self.encoder = self.indexer.encoder
         self.diffuser = None
         # determine a default dataset for querying
