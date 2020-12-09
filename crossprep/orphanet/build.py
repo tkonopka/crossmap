@@ -18,7 +18,7 @@ class OrphanetDisorderGenes:
         self.ensembl = []
 
         for child in node:
-            if child.tag == "OrphaNumber":
+            if child.tag in ("OrphaNumber", "OrphaCode"):
                 self.id = child.text
             elif child.tag == "Name":
                 self.name = child.text
@@ -79,7 +79,7 @@ class OrphanetDisorderPhenotypes:
         self.phenotypes = []
 
         for child in node:
-            if child.tag == "OrphaNumber":
+            if child.tag in ("OrphaNumber", "OrphaCode"):
                 self.id = child.text
             elif child.tag == "Name":
                 self.name = child.text
@@ -124,19 +124,21 @@ class OrphanetDisorder:
         self.description = []
         self.status = None
 
+        info_lists = ("TextualInformationList", "SummaryInformationList")
         for child in node:
-            if child.tag == "OrphaNumber":
+            if child.tag in ("OrphaNumber", "OrphaCode"):
                 self.id = child.text
             if child.tag == "Name":
                 self.name = child.text
             if child.tag == "Totalstatus":
                 self.status = child.text
-            elif child.tag == "TextualInformationList":
+            elif child.tag in info_lists:
                 self._parse_textinfo_list(child)
 
     def _parse_textinfo_list(self, node):
+        info_fields = ("TextualInformation", "SummaryInformation")
         for child in node:
-            if child.tag == "TextualInformation":
+            if child.tag in info_fields:
                 self._parse_textinfo(child)
 
     def _parse_textinfo(self, node):
@@ -173,8 +175,6 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
 
     # create blank entries for all disorders
     all_ids = list(disorder_data.keys())
-    #all_ids.extend(gene_data.keys())
-    #all_ids.extend(disorder_data.keys())
     result = dict()
     for id in all_ids:
         result[orpha_id(id)] = dict(title="",
@@ -230,6 +230,14 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
     # parse the phenotype data, then gene data
     phenotypes_root = XML.parse(phenotypes_path).getroot()
     for n1 in phenotypes_root:
+        # this ugly structure is a patch to handle two file formats (old & new)
+        if n1.tag == "HPODisorderSetStatusList":
+            for n2 in n1:
+                for disorder in n2:
+                    if disorder.tag != "Disorder":
+                        continue
+                    data = OrphanetDisorderPhenotypes(disorder)
+                    phen_data[data.id] = data
         if n1.tag != "DisorderList":
             continue
         for disorder in n1:
