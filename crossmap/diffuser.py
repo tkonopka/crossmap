@@ -142,6 +142,8 @@ class CrossmapDiffuser:
         num_passes = self.num_passes
         weights = self.feature_weights
         strength = _nonzero_strength(strength)
+        if len(strength) == 0:
+            return v
         result = sparse_to_dense(v)
 
         # fetch counts data from db, then re-use in multiple passes

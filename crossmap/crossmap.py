@@ -208,13 +208,13 @@ class Crossmap:
             return v, v
         return v, self.diffuser.diffuse(v, diffusion)
 
-    def diffuse(self, doc, diffusion=None, query_name="", **kwdargs):
+    def diffuse(self, doc, diffusion=None, query_name="", **kwargs):
         """provide an explanation for diffusion of a document into features
 
         :param doc: dict-like object with "data", "data_pos" and "data_neg"
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
-        :param kwdargs: other keyword arguments, ignored
+        :param kwargs: other keyword arguments, ignored
             (This is included for consistency with search() and decompose())
         :return: a dictionary containing an id, and feature weights
         """
@@ -229,7 +229,7 @@ class Crossmap:
         return dict(query=query_name, features=data)
 
     def search(self, doc, dataset, n=3, diffusion=None, query_name="query",
-               **kwdargs):
+               **kwargs):
         """identify targets that are close to the input query
 
         :param doc: dict-like object with "data", "data_pos" and "data_neg"
@@ -237,7 +237,7 @@ class Crossmap:
         :param n: integer, number of target to report
         :param diffusion: dict, map assigning diffusion weights
         :param query_name: character, a name for the document
-        :param kwdargs: other keyword arguments, ignored
+        :param kwargs: other keyword arguments, ignored
             (This is included for consistency with search() and decompose())
         :return: a dictionary containing an id, and lists to target ids and
             distances
@@ -313,14 +313,14 @@ class Crossmap:
         return _decomposition_result(ids, coefficients, query_name)
 
     def search_file(self, filepath, dataset, n, diffusion=None,
-                    **kwdargs):
+                    **kwargs):
         """find nearest targets for all documents in a file
 
         :param filepath: string, path to a file with documents
         :param dataset: string, identifier for target dataset
         :param n: integer, number of target to report for each input
         :param diffusion: dict, map with diffusion strengths
-        :param kwdargs: other keyword arguments, ignored
+        :param kwargs: other keyword arguments, ignored
             (This is included for consistency with decompose_file())
         :return: list with dicts, each as output by search()
         """
