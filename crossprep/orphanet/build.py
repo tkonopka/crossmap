@@ -98,15 +98,18 @@ class OrphanetDisorderPhenotypes:
     def _parse_association(self, node):
         """parse a node with association"""
 
-        result = ["", ""]
+        result = ["", "", ""]
         for child in node:
-            if child.tag != "HPO":
-                continue
-            for subchild in child:
-                if subchild.tag == "HPOId":
-                    result[0] = subchild.text
-                elif subchild.tag == "HPOTerm":
-                    result[1] = subchild.text
+            if child.tag == "HPO":
+                for subchild in child:
+                    if subchild.tag == "HPOId":
+                        result[0] = subchild.text
+                    elif subchild.tag == "HPOTerm":
+                        result[1] = subchild.text
+            if child.tag == "HPOFrequency":
+                for subchild in child:
+                    if subchild.tag == "Name":
+                        result[2] = subchild.text
         self.phenotypes.append(result)
 
     def __str__(self):
@@ -164,12 +167,33 @@ def orpha_id(id):
     return "ORPHA:" + str(id)
 
 
-def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
+def outprep_phenotypes_ids(disorder, weighted=False):
+    """prepare lists of phenotype names and ids"""
+    if not weighted:
+        terms = [_[1] for _ in disorder.phenotypes]
+        ids = [_[0] for _ in disorder.phenotypes]
+        return ids, terms
+    terms, ids = [], []
+    for phenotype in disorder.phenotypes:
+        phen_id, term, freq = phenotype[0], phenotype[1], phenotype[2]
+        ids.append((phen_id+" "+freq).strip())
+        n = 1
+        if "Frequent" in freq:
+            n = 2
+        if "Very frequent" in freq or "Obligate" in freq:
+            n = 3
+        terms.extend([term]*n)
+    return ids, terms
+
+
+def combine_phenotypes_genes(phen_data, gene_data, disorder_data,
+                             weighted=False):
     """Transfer data for objects into a crossmap format
 
     :param phen_data: dict mapping ids to OrphanetDisorderPhenotypes
     :param gene_data: dict mapping ids to OrphanetDisorderGenes
     :param disorder_data: dict mapping ids to OrphanetDisorder
+    :param weighted: logical set True to use record phenotype frequencies
     :return: dict with a crossmap dataset
     """
 
@@ -188,8 +212,9 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
     for disorder in phen_data.values():
         if disorder.id not in all_ids:
             continue
-        terms = [_[1] for _ in disorder.phenotypes]
-        ids = [_[0] for _ in disorder.phenotypes]
+        ids, terms = outprep_phenotypes_ids(disorder, weighted)
+        #terms = [_[1] for _ in disorder.phenotypes]
+        #ids = [_[0] for _ in disorder.phenotypes]
         data = result["ORPHA:" + str(disorder.id)]
         data["title"] = data["data"]["title"] = disorder.name
         data["data"]["phenotypes"].extend(terms)
@@ -216,13 +241,16 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
     return result
 
 
-def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
+def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path,
+                           weighted=False):
     """create a dict containing orphanet discorders
 
     :param phenotypes_path: character, path to xml with disorder-phenotypes
     :param genes_path: character, path to xml with disorder gene associations
     :param nomenclature_path: character, path to xml with disorder
         descriptions
+    :param weighted: logical, set True to use repetition to capture phenotype
+        frequency
     :return: dictionary
     """
 
@@ -258,5 +286,7 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
             data = OrphanetDisorder(disorder)
             if data.status == "Active" and len(data.description) > 0:
                 nomenclature_data[data.id] = data
-    return combine_phenotypes_genes(phen_data, gene_data, nomenclature_data)
+    result = combine_phenotypes_genes(phen_data, gene_data,
+                                      nomenclature_data, weighted=weighted)
+    return result
 
