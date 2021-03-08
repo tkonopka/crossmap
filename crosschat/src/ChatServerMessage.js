@@ -62,7 +62,8 @@ class HitsMessage extends ChatMessage {
             <TableCell>{this.state.value_header}</TableCell>
         </TableRow>;
         let content = values.map(function(x, i) {
-            let url = "/document/" + dataset + "/" + targets[i];
+            let url = "/document/" + encodeURIComponent(dataset) + "/" +
+                encodeURIComponent(targets[i]);
             return (
                 <TableRow key={i}>
                     <TableCell>

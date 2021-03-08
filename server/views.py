@@ -7,6 +7,7 @@ from json import dumps, loads
 from crossmap.crossmap import Crossmap
 from crossmap.settings import CrossmapSettings
 from os import environ
+from urllib.parse import unquote
 from django.http import HttpResponse
 from logging import info
 import yaml
@@ -157,6 +158,7 @@ def add(request):
 def document(request):
     """process an http request to map a document onto nearest targets"""
     data = loads(request.body)
-    result = crossmap.db.get_document(data["dataset"], data["id"])
+    result = crossmap.db.get_document(unquote(data["dataset"]),
+                                      unquote(data["id"]))
     return yaml.dump(result)
 

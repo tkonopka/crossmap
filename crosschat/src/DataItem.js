@@ -38,8 +38,8 @@ class DataItem extends React.Component {
         }
         return(
             <Box className="data-item">
-                <Box>Dataset: {params.dataset}</Box>
-                <Box>ID: {params.id}</Box>
+                <Box>Dataset: {decodeURIComponent(params.dataset)}</Box>
+                <Box>ID: {decodeURIComponent(params.id)}</Box>
                 <SyntaxHighlighter language="yaml" style={docco}>{doc}</SyntaxHighlighter>
             </Box>
         );
