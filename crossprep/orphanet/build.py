@@ -167,33 +167,31 @@ def orpha_id(id):
     return "ORPHA:" + str(id)
 
 
-def outprep_phenotypes_ids(disorder, weighted=False):
-    """prepare lists of phenotype names and ids"""
-    if not weighted:
-        terms = [_[1] for _ in disorder.phenotypes]
-        ids = [_[0] for _ in disorder.phenotypes]
-        return ids, terms
-    terms, ids = [], []
+def disorder_phenotypes(disorder, excluded=False):
+    """prepare lists of phenotype ids and names
+
+    :param disorder: OrphanetDisorderPhenotypes object
+    :param excluded: logical, set True to get results for excluded phenotypes
+    :return: two arrays with phenotype ids and names
+    """
+    ids, terms = [], []
     for phenotype in disorder.phenotypes:
         phen_id, term, freq = phenotype[0], phenotype[1], phenotype[2]
+        if excluded and "Excluded" not in freq:
+            continue
+        if not excluded and "Excluded" in freq:
+            continue
         ids.append((phen_id+" "+freq).strip())
-        n = 1
-        if "Frequent" in freq:
-            n = 2
-        if "Very frequent" in freq or "Obligate" in freq:
-            n = 3
-        terms.extend([term]*n)
+        terms.append(term)
     return ids, terms
 
 
-def combine_phenotypes_genes(phen_data, gene_data, disorder_data,
-                             weighted=False):
+def combine_phenotypes_genes(phen_data, gene_data, disorder_data):
     """Transfer data for objects into a crossmap format
 
     :param phen_data: dict mapping ids to OrphanetDisorderPhenotypes
     :param gene_data: dict mapping ids to OrphanetDisorderGenes
     :param disorder_data: dict mapping ids to OrphanetDisorder
-    :param weighted: logical set True to use record phenotype frequencies
     :return: dict with a crossmap dataset
     """
 
@@ -205,6 +203,7 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data,
                                     data=dict(title="",
                                               description="",
                                               genes=[], phenotypes=[]),
+                                    data_neg=dict(phenotypes=[]),
                                     metadata=dict(id=orpha_id(id)))
     all_ids = set(all_ids)
 
@@ -212,13 +211,14 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data,
     for disorder in phen_data.values():
         if disorder.id not in all_ids:
             continue
-        ids, terms = outprep_phenotypes_ids(disorder, weighted)
-        #terms = [_[1] for _ in disorder.phenotypes]
-        #ids = [_[0] for _ in disorder.phenotypes]
+        ids, terms = disorder_phenotypes(disorder, excluded=False)
+        ids_neg, terms_neg = disorder_phenotypes(disorder, excluded=True)
         data = result["ORPHA:" + str(disorder.id)]
         data["title"] = data["data"]["title"] = disorder.name
         data["data"]["phenotypes"].extend(terms)
+        data["data_neg"]["phenotypes"].extend(terms_neg)
         data["metadata"]["phenotype_ids"] = ids
+        data["metadata"]["neg_phenotype_ids"] = ids_neg
     for disorder in gene_data.values():
         if disorder.id not in all_ids:
             continue
@@ -241,16 +241,13 @@ def combine_phenotypes_genes(phen_data, gene_data, disorder_data,
     return result
 
 
-def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path,
-                           weighted=False):
+def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
     """create a dict containing orphanet discorders
 
     :param phenotypes_path: character, path to xml with disorder-phenotypes
     :param genes_path: character, path to xml with disorder gene associations
     :param nomenclature_path: character, path to xml with disorder
         descriptions
-    :param weighted: logical, set True to use repetition to capture phenotype
-        frequency
     :return: dictionary
     """
 
@@ -286,7 +283,6 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path,
             data = OrphanetDisorder(disorder)
             if data.status == "Active" and len(data.description) > 0:
                 nomenclature_data[data.id] = data
-    result = combine_phenotypes_genes(phen_data, gene_data,
-                                      nomenclature_data, weighted=weighted)
+    result = combine_phenotypes_genes(phen_data, gene_data, nomenclature_data)
     return result
 

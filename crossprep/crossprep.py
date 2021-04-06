@@ -78,8 +78,6 @@ parser.add_argument("--orphanet_genes", action="store",
                     help="path to orphanet disorder-gene xml")
 parser.add_argument("--orphanet_nomenclature", action="store",
                     help="path to orphanet disorder-nomenclature xml")
-parser.add_argument("--orphanet_weighted", action="store_true",
-                    help="use phenotype frequencies", default=False)
 
 
 # setting for pubmed baseline
@@ -256,8 +254,7 @@ elif config.action == "orphanet":
         sys.exit()
     result = build_orphanet_dataset(config.orphanet_phenotypes,
                                     config.orphanet_genes,
-                                    config.orphanet_nomenclature,
-                                    weighted=config.orphanet_weighted)
+                                    config.orphanet_nomenclature)
 
 elif config.action == "genesets":
     if missing_arguments(["gmt"]):
