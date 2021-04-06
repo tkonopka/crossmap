@@ -145,7 +145,8 @@ The ``orphanet`` utility parses these files and prepare diseases summaries.
 
     python crossprep.py orphanet --outdir /output/dir \
                         --name orphanet \
-                        --orphanet_phenotypes en_product4_HPO.xml \
+                        --orphanet_nomenclature en_product1.xml \
+                        --orphanet_phenotypes en_product4.xml \
                         --orphanet_genes en_product6.xml
 
 

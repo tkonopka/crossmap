@@ -6,7 +6,7 @@ import xml.etree.ElementTree as XML
 
 
 class OrphanetDisorderGenes:
-    """Container for disease gene associations"""
+    """Container for disease gene associations (en_product6.xml)"""
 
     def __init__(self, node):
         """create a new container, parse data from an xml node"""
@@ -69,7 +69,7 @@ class OrphanetDisorderGenes:
 
 
 class OrphanetDisorderPhenotypes:
-    """Container for disease phenotypes."""
+    """Container for disease phenotypes (en_product4.xml)"""
 
     def __init__(self, node):
         """Create a new disease container, parse data from an xml node."""
@@ -117,15 +117,14 @@ class OrphanetDisorderPhenotypes:
 
 
 class OrphanetDisorder:
-    """Container for disease description"""
+    """Container for disease description (en_product1.xml)"""
 
     def __init__(self, node):
         """create a new container, parse data from an xml node"""
 
-        self.id = 0
+        self.id = None
         self.name = ""
         self.description = []
-        self.status = None
 
         info_lists = ("TextualInformationList", "SummaryInformationList")
         for child in node:
@@ -133,8 +132,6 @@ class OrphanetDisorder:
                 self.id = child.text
             if child.tag == "Name":
                 self.name = child.text
-            if child.tag == "Totalstatus":
-                self.status = child.text
             elif child.tag in info_lists:
                 self._parse_textinfo_list(child)
 
@@ -245,9 +242,11 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
     """create a dict containing orphanet discorders
 
     :param phenotypes_path: character, path to xml with disorder-phenotypes
+        (en_product4.xml)
     :param genes_path: character, path to xml with disorder gene associations
+        (en_product6.xml)
     :param nomenclature_path: character, path to xml with disorder
-        descriptions
+        descriptions (en_product1.xml)
     :return: dictionary
     """
 
@@ -281,7 +280,7 @@ def build_orphanet_dataset(phenotypes_path, genes_path, nomenclature_path):
             continue
         for disorder in n1:
             data = OrphanetDisorder(disorder)
-            if data.status == "Active" and len(data.description) > 0:
+            if data.id is not None and len(data.name) > 0:
                 nomenclature_data[data.id] = data
     result = combine_phenotypes_genes(phen_data, gene_data, nomenclature_data)
     return result
