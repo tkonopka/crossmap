@@ -60,7 +60,11 @@ img.controller-icon {
 .col-send {
   text-align: center;
 }
-
+#controller-head-filler {
+  minHeight: 24px;
+  align-text: center;
+  padding: 12px;
+}
 
 /** Settings panel **/
 td.column-dataset {
@@ -130,6 +134,16 @@ td.diffusion-slider {
   padding: 1em;
 }
 
+/** Message boxes delta **/
+.chat-th-sortable {
+  cursor: pointer;
+}
+.chat-th {
+  min-width: 7rem;
+}
+.chat-td-delta {
+  background-color: #f2f2f2;
+}
 
 /** detail view of a data item **/
 .data-item pre {

@@ -8,12 +8,12 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
+import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableRow from "@material-ui/core/TableRow";
 import TableHead from '@material-ui/core/TableHead';
 import TableCell from "@material-ui/core/TableCell";
 import TablePagination from '@material-ui/core/TablePagination';
-import Table from "@material-ui/core/Table";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
 import ChatMessage from "./ChatMessage";
@@ -87,7 +87,7 @@ class HitsMessage extends ChatMessage {
                 <Box visibility={this.state.mouseover ? "visible": "hidden"}>
                 <Grid container direction="row" justify="flex-end" alignItems="flex-end">
                     <Button onClick={this.handleClipboard}>
-                        <img src="icons/clipboard.svg" alt="copy results to clipboard"
+                        <img src="/icons/clipboard.svg" alt="copy results to clipboard"
                              className="chat-icon"/>
                     </Button>
                 </Grid>
@@ -202,8 +202,8 @@ class DiffusionMessage extends ChatMessage {
     render() {
         let rows = this.props.data["features"];
         let header = <TableRow>
-            <TableCell>Feature</TableCell>
-            <TableCell>Value</TableCell>
+            <TableCell>feature</TableCell>
+            <TableCell>value</TableCell>
         </TableRow>;
         let page = this.state.page;
         let rowsPerPage = this.state.rowsPerPage;
@@ -226,6 +226,129 @@ class DiffusionMessage extends ChatMessage {
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
                     count={rows.length}
+                    rowsPerPage={this.state.rowsPerPage}
+                    page={this.state.page}
+                    onChangePage={this.handleChangePage}
+                    onChangeRowsPerPage={this.handleChangeRowsPerPage}
+                />
+            </div>)
+    }
+}
+
+
+/** ting helper functions from material-ui **/
+function descendingAbsComparator(a, b, orderBy) {
+    const abs = Math.abs
+    if (abs(b[orderBy]) < abs(a[orderBy])) {
+        return -1;
+    }
+    if (abs(b[orderBy]) > abs(a[orderBy])) {
+        return 1;
+    }
+    return 0;
+}
+function getComparator(orderBy, order) {
+    return order === -1
+        ? (a, b) => descendingAbsComparator(a, b, orderBy)
+        : (a, b) => -descendingAbsComparator(a, b, orderBy);
+}
+function stableSort(array, comparator) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) return order;
+        return a[1] - b[1];
+    });
+    return stabilizedThis.map((el) => el[0]);
+}
+
+
+/** Box showing features and values in two tables with pagination **/
+class DeltaMessage extends ChatMessage {
+    constructor(props) {
+        super(props);
+        props.setHeader("Comparison with an expected hit");
+        this.handleSortUpdate = this.handleSortUpdate.bind(this);
+        this.handleChangePage = this.handleChangePage.bind(this);
+        this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
+        this.state = {page: 0, rowsPerPage: 10, sort_by: "query"}
+    }
+
+    handleSortUpdate(event, sort_by) {
+        this.setState({sort_by: sort_by})
+    };
+
+    handleChangePage(event, newPage) {
+        this.setState({page: newPage})
+    };
+
+    handleChangeRowsPerPage(event) {
+        this.setState({page: 0, rowsPerPage: parseInt(event.target.value, 10)});
+    };
+
+    render() {
+        if (this.props.data.error !== undefined) {
+            return <>{this.props.data.error}</>
+        }
+        const hit_cols = Object.keys(this.props.data[0])
+            .filter((x) => x.startsWith("hit_"))
+        const delta_cols = Object.keys(this.props.data[0])
+            .filter((x) => x.startsWith("delta_"))
+        const numeric_cols = ["query", "diffused", "expected", "error"]
+        const header_cols = numeric_cols.concat(hit_cols).concat(delta_cols)
+        let header = <TableRow>
+            <TableCell className={"chat-th"}>feature</TableCell>
+            {header_cols.map((x) =>
+                <TableCell key={x}
+                           className={x.startsWith("delta_") ?
+                               "chat-th chat-th-sortable chat-td-delta"
+                               :
+                               "chat-th chat-th-sortable"
+                           }
+                           onClick={(e) => this.handleSortUpdate(e, x) }>
+                    {x.startsWith("delta_") ?
+                        x.replace("delta_", "")+ " - expected"
+                        :
+                        x
+                    }
+                </TableCell>)}
+        </TableRow>
+        let page = this.state.page;
+        let rowsPerPage = this.state.rowsPerPage;
+        const data = stableSort(this.props.data, getComparator(this.state.sort_by, -1))
+        let content = data.slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage)
+            .map(function(x, i) {
+                return (<TableRow key={x["feature"]}>
+                    <TableCell>
+                        <Typography color={"secondary"}>{x["feature"]}</Typography>
+                    </TableCell>
+                    {numeric_cols.map((d) =>
+                        <TableCell key={d} className="chat-td-numeric">
+                            <Typography color={"secondary"}>{x[d].toPrecision(4)}</Typography>
+                        </TableCell>
+                    )}
+                    {hit_cols.map((d) =>
+                        <TableCell key={d} className="chat-td-numeric">
+                            <Typography color={"secondary"}>{x[d].toPrecision(4)}</Typography>
+                        </TableCell>
+                    )}
+                    {delta_cols.map((d) =>
+                        <TableCell key={d} className="chat-td-numeric chat-td-delta">
+                            <Typography color={"secondary"}>{x[d].toPrecision(4)}</Typography>
+                        </TableCell>
+                    )}
+                </TableRow>)
+            });
+        return (
+            <div onMouseEnter={this.handleMouseEnter} onMouseLeave={this.handleMouseLeave}>
+                <Table size={"small"}>
+                    <TableHead>{header}</TableHead>
+                    <TableBody>{content}</TableBody>
+                </Table>
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={data.length}
                     rowsPerPage={this.state.rowsPerPage}
                     page={this.state.page}
                     onChangePage={this.handleChangePage}
@@ -261,8 +384,10 @@ class ChatServerMessage extends React.Component {
             content = <HitsMessage data={this.props.data} setHeader={this.setHeader}/>
         } else if (type === "diffuse") {
             content = <DiffusionMessage data={this.props.data} setHeader={this.setHeader}/>
-        } else if (type==="add") {
+        } else if (type === "add") {
             content = <AddMessage data={this.props.data} setHeader={this.setHeader}/>
+        } else if (type === "delta") {
+            content = <DeltaMessage data={this.props.data} setHeader={this.setHeader}/>
         }
         return(<div className="chat-response">
             <List component="nav">

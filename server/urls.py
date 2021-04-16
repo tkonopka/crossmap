@@ -13,4 +13,5 @@ urlpatterns = [
     path('decompose/', views.decompose, name='decompose'),
     path('diffuse/', views.diffuse, name='diffuse'),
     path('search/', views.search, name='search'),
+    path('delta/', views.delta, name='delta'),
 ]

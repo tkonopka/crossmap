@@ -54,7 +54,6 @@ class Chat extends React.Component {
      * @param api character, api endpoint, e.g. "search/" or "decompose/"
      */
     sendQuery(query, api) {
-        // augment the query with settings
         const chat = this;
         chat.addMessage(query, "user");
         let xhr = new XMLHttpRequest();

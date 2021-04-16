@@ -27,6 +27,7 @@ class DataItem extends React.Component {
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
         let query = {"dataset": params.dataset, "id": params.id};
+        document.title = "item: "+decodeURIComponent(params.id)
         xhr.send(JSON.stringify(query));
     }
 

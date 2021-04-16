@@ -1,7 +1,7 @@
-import React from 'react';
-import { Switch, Route } from 'react-router-dom';
-import Chat from "./Chat";
-import DataItem from "./DataItem";
+import React from 'react'
+import { Switch, Route } from 'react-router-dom'
+import Chat from "./Chat"
+import DataItem from "./DataItem"
 
 
 class Crosschat extends React.Component {

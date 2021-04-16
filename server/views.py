@@ -6,6 +6,7 @@ from functools import wraps
 from json import dumps, loads
 from crossmap.crossmap import Crossmap
 from crossmap.settings import CrossmapSettings
+from crossmap.vectors import sparse_to_dense
 from os import environ
 from urllib.parse import unquote
 from django.http import HttpResponse
@@ -20,10 +21,33 @@ crossmap.load()
 info("database collections: "+str(crossmap.db._db.list_collection_names()))
 
 
-def get_or_default(data, k, default=None):
-    if k in data:
-        return data[k]
-    return default
+def get_vector(dataset, item_id):
+    db = crossmap.indexer.db
+    result = db.get_data(dataset, ids=[item_id])
+    return result[0]["data"]
+
+
+def decr_by_query(a):
+    return -a["query"]
+
+
+def find_vector(item_id, dataset=None):
+    """find an item in some unspecified dataset
+
+    :param item_id: identifier for a data item
+    :param dataset: label for a dataset. The function attempts to to find
+        the item in this dataset first, but also checks other datasets as
+        a fallback
+    :return: csr vector for the item, or None if not found
+    """
+
+    db = crossmap.db
+    if dataset is not None and db.has_id(dataset, item_id):
+        return get_vector(dataset, item_id)
+    for d in db.datasets.keys():
+        if db.has_id(d, item_id):
+            return get_vector(d, item_id)
+    return None
 
 
 def access_http_response(f):
@@ -56,9 +80,10 @@ def parse_request(request):
     data = loads(request.body)
     doc = dict()
     for k in ["dataset", "data_pos", "data_neg"]:
-        doc[k] = data[k] if k in data else []
-    doc["n"] = get_or_default(data, "n", 1)
-    doc["diffusion"] = get_or_default(data, "diffusion", None)
+        doc[k] = data.get(k, [])
+    doc["n"] = data.get("n", 1)
+    for k in ["diffusion", "expected_id", "query_id"]:
+        doc[k] = data.get(k, None)
     return doc
 
 
@@ -86,7 +111,18 @@ def process_search_decompose(request, process_function):
 
     doc = parse_request(request)
     dataset = doc["dataset"]
-    result = process_function(doc, dataset=dataset, n=doc["n"],
+    db = crossmap.db
+
+    # try to use data_pos as an item_id
+    doc_input = doc
+    item_id = doc["data_pos"]
+    if len(item_id.split(" ")) == 1:
+        for d in db.datasets.keys():
+            if db.has_id(d, item_id):
+                doc_input = db.get_document(d, item_id)
+
+    # process the input
+    result = process_function(doc_input, dataset=dataset, n=doc["n"],
                               diffusion=doc["diffusion"], query_name="query")
     targets = result["targets"]
     target_titles = crossmap.db.get_titles(dataset, ids=targets)
@@ -162,3 +198,51 @@ def document(request):
                                       unquote(data["id"]))
     return yaml.dump(result)
 
+
+@access_http_response
+def delta(request):
+    """suggest features for user-driven learning
+
+    :param request: object with data_pos, data_neg, expected_id
+    :return: dictionary with top features, suggest_pos, suggest_neg
+    """
+
+    doc = parse_request(request)
+    dataset = doc["dataset"]
+    db = crossmap.db
+    # process a query
+    query_id = doc["query_id"]
+    query_raw = find_vector(query_id, dataset)
+    if query_raw is None:
+        return {"error": "invalid item id: " + query_id}
+    query_diffused = crossmap.diffuser.diffuse(query_raw, doc["diffusion"])
+    diffused = sparse_to_dense(query_diffused)
+    # get hits
+    targets, _ = crossmap.indexer.suggest(diffused, dataset=dataset, n=doc["n"])
+    # get feature vectors for the expected_id and top_hits
+    expected_raw = find_vector(doc["expected_id"], dataset)
+    if expected_raw is None:
+        return {"error": "invalid item id: "+doc["expected_id"]}
+    expected = sparse_to_dense(expected_raw)
+    vectors = {
+        "query": sparse_to_dense(query_raw),
+        "diffused": diffused,
+        "expected": expected,
+        "error": expected-diffused
+    }
+    for i, hit_id in enumerate(targets):
+        i_vector = sparse_to_dense(get_vector(dataset, hit_id))
+        vectors["hit_"+str(i+1)] = i_vector
+        vectors["delta_"+str(i+1)] = i_vector - expected
+    inv_feature_map = crossmap.indexer.encoder.inv_feature_map
+    result = []
+    for i in range(len(inv_feature_map)):
+        i_data = [abs(_[i]) for _ in vectors.values()]
+        if sum(i_data) == 0:
+            continue
+        i_result = dict(feature=inv_feature_map[i])
+        for vector_id, vector_values in vectors.items():
+            i_result[vector_id] = vector_values[i]
+        result.append(i_result)
+    result = sorted(result, key=decr_by_query)
+    return result

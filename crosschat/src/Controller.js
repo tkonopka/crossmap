@@ -5,9 +5,10 @@ import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Fab from '@material-ui/core/Fab';
 import Box from '@material-ui/core/Box';
-import ControllerAddForm from './ControllerAddForm';
-import ControllerQueryForm from './ControllerQueryForm';
-import ControllerSettingsForm from './ControllerSettingsForm';
+import ControllerAddForm from './ControllerAddForm.js';
+import ControllerQueryForm from './ControllerQueryForm.js';
+import ControllerSettingsForm from './ControllerSettingsForm.js';
+import ControllerDeltaForm from './ControllerDeltaForm.js';
 
 
 /** a chat message with a response provided by the server **/
@@ -37,6 +38,8 @@ class Controller extends React.Component {
             n: 1,
             data_pos: "",
             data_neg: "",
+            query_id: "",
+            expected_id: "",
             id: "",
             title: "",
             metadata: "",
@@ -51,7 +54,7 @@ class Controller extends React.Component {
     };
     handleChangeAction = function(event) {
         let action = event.target.value;
-        let view = (action === "add") ? "add" : "search";
+        let view = ["add", "delta"].indexOf(action) <0 ? "search" : action;
         this.setState({"action": action, "view": view});
     };
     showSearchView = function() {
@@ -87,6 +90,8 @@ class Controller extends React.Component {
         }
         if (["search", "decompose", "diffuse"].includes(action)) {
             result = makeQueryPayload(this.state, this.props.datasets);
+        } else if (action === "delta") {
+            result = makeDeltaPayload(this.state)
         } else if (action === "add") {
             result = makeTrainPayload(this.state)
         } else {
@@ -94,7 +99,8 @@ class Controller extends React.Component {
         }
         this.props.send(result, action);
         this.setState({"data_pos": "", "data_neg": "",
-                       "id": "", "title": "", "metadata": ""})
+            "id": "", "title": "", "metadata": "",
+            "query_id": "", "expected_id": ""})
     };
 
     componentDidUpdate() {
@@ -111,53 +117,62 @@ class Controller extends React.Component {
                                                 extended={this.state.extended}
                                                 update={this.handleStateUpdate}
                                                 send={this.composeAndSend}/>)
+        } else if (view === "delta") {
+            middle.push(<ControllerDeltaForm key={1}
+                                             datasets={this.props.datasets}
+                                             settings={this.state}
+                                             update={this.handleStateUpdate}/>)
         } else if (view === "add") {
-            middle.push(<ControllerAddForm key={1}
+            middle.push(<ControllerAddForm key={2}
                                               settings={this.state}
                                               datasets={this.props.datasets}
                                               update={this.handleStateUpdate}/>)
         } else if (view === "settings") {
-            middle.push(<ControllerSettingsForm key={2}
+            middle.push(<ControllerSettingsForm key={3}
                                                    datasets={this.props.datasets}
                                                    settings={this.state}
                                                    update={this.handleStateUpdate}/>)
         }
-        return(<div width={1} id="chat-controller"
-                    ref={(divElement) => this.controllerElement = divElement}>
-            <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
-                <Grid item xs={2}>
-                    <TextField select id="controller-action" variant="filled" label="Action"
-                               value={this.state.action} onChange={this.handleChangeAction}
-                               fullWidth margin="normal">
-                        <MenuItem value="search">Search</MenuItem>
-                        <MenuItem value="decompose">Decompose</MenuItem>
-                        <MenuItem value="diffuse">Diffuse</MenuItem>
-                        <MenuItem value="add">Train</MenuItem>
-                    </TextField>
-                    <Box m={1}>
-                    <Grid container direction="row" justify="space-around" alignItems="baseline">
-                        <Box display={view === "add" ? "none" : "block"}>
-                        <Button>
-                            <img src="icons/search.svg" alt="toggle small/extended search view"
-                                 className="controller-icon"
-                                 onClick={this.showSearchView}/>
-                        </Button>
-                        <Button>
-                            <img src="icons/sliders-h.svg"
-                                 alt="Configuration"
-                                 className="controller-icon"
-                                 onClick={this.showSettingsView}/>
-                        </Button></Box>
+        return(
+            <div width={1} id="chat-controller"
+                 ref={(divElement) => this.controllerElement = divElement}>
+                <Grid container direction="row" justify="flex-start" alignItems="flex-start" spacing={2}>
+                    <Grid item xs={2}>
+                        <TextField select id="controller-action" variant="filled" label="Action"
+                                   value={this.state.action} onChange={this.handleChangeAction}
+                                   fullWidth margin="normal">
+                            <MenuItem value="search">Search</MenuItem>
+                            <MenuItem value="decompose">Decompose</MenuItem>
+                            <MenuItem value="diffuse">Diffuse</MenuItem>
+                            <MenuItem value="add">Train</MenuItem>
+                            <MenuItem value="delta">Delta</MenuItem>
+                        </TextField>
+                        <Box m={1}>
+                            <Grid container direction="row" justify="space-around" alignItems="baseline">
+                                <Box display={view === "add" ? "none" : "block"}>
+                                    <Button>
+                                        <img src="/icons/search.svg" alt="toggle small/extended search view"
+                                             className="controller-icon"
+                                             onClick={this.showSearchView}/>
+                                    </Button>
+                                    <Button>
+                                        <img src="/icons/sliders-h.svg"
+                                             alt="Configuration"
+                                             className="controller-icon"
+                                             onClick={this.showSettingsView}/>
+                                    </Button>
+                                </Box>
+                            </Grid>
+                        </Box>
                     </Grid>
-                    </Box>
+                    <Grid item xs={9}>{middle}</Grid>
+                    <Grid item xs={1} className="col-send" margin="normal">
+                        <Box m={1}>
+                            <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
+                        </Box>
+                    </Grid>
                 </Grid>
-                <Grid item xs={9}>{middle}</Grid>
-                <Grid item xs={1} className="col-send" margin="normal">
-                    <Box m={1}>
-                        <Fab color="primary" aria-label="add" onClick={this.composeAndSend}>Send</Fab>
-                    </Box>
-                </Grid>
-            </Grid></div>);
+            </div>);
     }
 }
 
@@ -174,25 +189,35 @@ let JSONcopy = function(x) {
 
 /** Helper determines if query boxes have some nonempty values **/
 let hasPayload = function(state) {
+    if (state["query_id"] !== "" && state["expected_id"]!== "") return true
     return (state["data_pos"].trim() !== "");
 };
 
-/**
- * Helper to prepare a payload for search/ or decompose/
- */
+/** Helper to prepare a payload for search or decompose API **/
 let makeQueryPayload = function(state, datasets) {
     let dataset = state.dataset;
     if (dataset === "" && datasets.length>0) {
         dataset = datasets[0].label
     }
     if (dataset === "") return null;
-    if (state.data_pos === "" && state.data_neg === "") return null;
     let result = {};
     let fields = ["action", "dataset", "n",
                   "data_pos", "data_neg", "diffusion"];
     fields.forEach((x)=> { result[x] = JSONcopy(state[x])});
     return result
 };
+
+
+/** Helper to prepare a payload for suggest API **/
+let makeDeltaPayload = function(state, datasets) {
+    let result = makeQueryPayload(state, datasets)
+    delete result["data_pos"]
+    delete result["data_neg"]
+    result["query_id"] = state["query_id"]
+    result["expected_id"] = state["expected_id"]
+    return result
+}
+
 
 /**
  * Helper to prepare a payload for train/

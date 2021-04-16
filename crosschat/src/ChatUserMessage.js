@@ -40,7 +40,7 @@ class UserQueryMessage extends ChatMessage {
     render() {
         let data = this.props.data;
         // console.log("rendering user message with data: "+JSON.stringify(data));
-        let rows = ["data_pos", "data_neg"].map((x) => {
+        let rows = ["data_pos", "data_neg", "query_id", "expected_id"].map((x) => {
             if (data[x]===undefined) {
                 return null;
             }
@@ -100,17 +100,17 @@ class UserQueryMessage extends ChatMessage {
                 <Box visibility={this.state.mouseover ? "visible": "hidden"}>
                     <Grid container direction="row" justify="flex-end" alignItems="flex-end">
                         <Button onClick={this.sendClone}>
-                            <img src="icons/clone.svg"
+                            <img src="/icons/clone.svg"
                                  alt="clone - text only"
                                  className="chat-icon"/>
                         </Button>
                         <Button onClick={this.sendDeepClone}>
-                            <img src="icons/deepclone.svg"
+                            <img src="/icons/deepclone.svg"
                                  alt="deep clone - text and settings"
                                  className="chat-icon"/>
                         </Button>
                         <Button onClick={this.toggleExtendedView}>
-                            <img src="icons/cog.svg"
+                            <img src="/icons/cog.svg"
                                  alt="toggle display of query details"
                                  className="chat-icon"/>
                         </Button>
@@ -167,7 +167,7 @@ class UserAddMessage extends ChatMessage {
 class ChatUserMessage extends React.Component {
     render() {
         let action = this.props.data["action"];
-        if (["search", "decompose", "diffuse"].includes(action)) {
+        if (["search", "decompose", "diffuse", "delta"].includes(action)) {
             return (<UserQueryMessage data={this.props.data} clone={this.props.clone} />);
         } else if (action === "add") {
             return (<UserAddMessage data={this.props.data} />);
