@@ -58,7 +58,7 @@ parser.add_argument("--obo_root", action="store",
                     default=None)
 parser.add_argument("--obo_aux", action="store",
                     help="types of auxiliary data to include",
-                    default="parents,comments")
+                    default="none")
 parser.add_argument("--obo_only_meta", action="store_true",
                     help="output only metadata")
 
