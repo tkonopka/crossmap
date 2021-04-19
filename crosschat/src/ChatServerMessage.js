@@ -237,20 +237,15 @@ class DiffusionMessage extends ChatMessage {
 
 
 /** ting helper functions from material-ui **/
-function descendingAbsComparator(a, b, orderBy) {
-    const abs = Math.abs
-    if (abs(b[orderBy]) < abs(a[orderBy])) {
-        return -1;
-    }
-    if (abs(b[orderBy]) > abs(a[orderBy])) {
-        return 1;
-    }
+function descendingComparator(a, b, orderBy) {
+    if (b[orderBy] < a[orderBy]) return -1;
+    if (b[orderBy] > a[orderBy]) return 1;
     return 0;
 }
 function getComparator(orderBy, order) {
     return order === -1
-        ? (a, b) => descendingAbsComparator(a, b, orderBy)
-        : (a, b) => -descendingAbsComparator(a, b, orderBy);
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy)
 }
 function stableSort(array, comparator) {
     const stabilizedThis = array.map((el, index) => [el, index]);
@@ -271,11 +266,21 @@ class DeltaMessage extends ChatMessage {
         this.handleSortUpdate = this.handleSortUpdate.bind(this);
         this.handleChangePage = this.handleChangePage.bind(this);
         this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
-        this.state = {page: 0, rowsPerPage: 10, sort_by: "query"}
+        this.state = {
+            page: 0, rowsPerPage: 10,
+            sort_by: "query", sort_order: -1
+        }
     }
 
     handleSortUpdate(event, sort_by) {
-        this.setState({sort_by: sort_by})
+        this.setState(prevState => {
+            return {
+                ...prevState,
+                page: 0,
+                sort_by: sort_by,
+                sort_order: prevState.sort_order>0 ? -1 : 1
+            }
+        })
     };
 
     handleChangePage(event, newPage) {
@@ -295,27 +300,34 @@ class DeltaMessage extends ChatMessage {
         const delta_cols = Object.keys(this.props.data[0])
             .filter((x) => x.startsWith("delta_"))
         const numeric_cols = ["query", "diffused", "expected", "error"]
-        const header_cols = numeric_cols.concat(hit_cols).concat(delta_cols)
         let header = <TableRow>
-            <TableCell className={"chat-th"}>feature</TableCell>
-            {header_cols.map((x) =>
-                <TableCell key={x}
-                           className={x.startsWith("delta_") ?
-                               "chat-th chat-th-sortable chat-td-delta"
-                               :
-                               "chat-th chat-th-sortable"
-                           }
+            <TableCell className={"chat-th chat-th-sortable"}
+                       onClick={(e) => this.handleSortUpdate(e, "feature") }>
+                feature
+            </TableCell>
+            {numeric_cols.map((x) =>
+                <TableCell key={x} className={"chat-th chat-th-sortable"}
                            onClick={(e) => this.handleSortUpdate(e, x) }>
-                    {x.startsWith("delta_") ?
-                        x.replace("delta_", "")+ " - expected"
-                        :
-                        x
-                    }
-                </TableCell>)}
+                    {x}
+                </TableCell>
+            )}
+            {hit_cols.map((x) =>
+                <TableCell key={x} className={"chat-th chat-th-sortable chat-th-hit"}
+                           onClick={(e) => this.handleSortUpdate(e, x) }>
+                    {x}
+                </TableCell>
+            )}
+            {delta_cols.map((x) =>
+                <TableCell key={x} className={"chat-th chat-th-sortable chat-th-delta"}
+                           onClick={(e) => this.handleSortUpdate(e, x) }>
+                    {x.replace("delta_", "hit_")+ " - expected"}
+                </TableCell>
+            )}
         </TableRow>
         let page = this.state.page;
         let rowsPerPage = this.state.rowsPerPage;
-        const data = stableSort(this.props.data, getComparator(this.state.sort_by, -1))
+        const data = stableSort(this.props.data,
+            getComparator(this.state.sort_by, this.state.sort_order))
         let content = data.slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage)
             .map(function(x, i) {
                 return (<TableRow key={x["feature"]}>
@@ -328,7 +340,7 @@ class DeltaMessage extends ChatMessage {
                         </TableCell>
                     )}
                     {hit_cols.map((d) =>
-                        <TableCell key={d} className="chat-td-numeric">
+                        <TableCell key={d} className="chat-td-numeric chat-td-hit">
                             <Typography color={"secondary"}>{x[d].toPrecision(4)}</Typography>
                         </TableCell>
                     )}

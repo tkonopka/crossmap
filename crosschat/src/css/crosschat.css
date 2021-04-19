@@ -141,9 +141,13 @@ td.diffusion-slider {
 .chat-th {
   min-width: 7rem;
 }
-.chat-td-delta {
-  background-color: #f2f2f2;
+.chat-td-delta, .chat-th-delta {
+  background-color: #f0f0f0;
 }
+.chat-td-hit, .chat-th-hit {
+  background-color: #f6f6f6;
+}
+
 
 /** detail view of a data item **/
 .data-item pre {

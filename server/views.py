@@ -206,34 +206,33 @@ def delta(request):
     :param request: object with data_pos, data_neg, expected_id
     :return: dictionary with top features, suggest_pos, suggest_neg
     """
-
     doc = parse_request(request)
-    dataset = doc["dataset"]
-    db = crossmap.db
     # process a query
     query_id = doc["query_id"]
+    dataset = doc["dataset"]
     query_raw = find_vector(query_id, dataset)
     if query_raw is None:
         return {"error": "invalid item id: " + query_id}
     query_diffused = crossmap.diffuser.diffuse(query_raw, doc["diffusion"])
     diffused = sparse_to_dense(query_diffused)
-    # get hits
     targets, _ = crossmap.indexer.suggest(diffused, dataset=dataset, n=doc["n"])
-    # get feature vectors for the expected_id and top_hits
+    # get feature vector for the expected result
     expected_raw = find_vector(doc["expected_id"], dataset)
     if expected_raw is None:
         return {"error": "invalid item id: "+doc["expected_id"]}
     expected = sparse_to_dense(expected_raw)
+    # prepare a collection of dense vectors
     vectors = {
         "query": sparse_to_dense(query_raw),
         "diffused": diffused,
         "expected": expected,
-        "error": expected-diffused
+        "error": diffused - expected
     }
     for i, hit_id in enumerate(targets):
         i_vector = sparse_to_dense(get_vector(dataset, hit_id))
         vectors["hit_"+str(i+1)] = i_vector
         vectors["delta_"+str(i+1)] = i_vector - expected
+    # prepare a smaller table that includes only features with non-zero values
     inv_feature_map = crossmap.indexer.encoder.inv_feature_map
     result = []
     for i in range(len(inv_feature_map)):
