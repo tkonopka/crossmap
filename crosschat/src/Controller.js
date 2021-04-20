@@ -97,7 +97,8 @@ class Controller extends React.Component {
         } else {
             return null;
         }
-        this.props.send(result, action);
+        result["action"] = action
+        this.props.send(result);
         this.setState({"data_pos": "", "data_neg": "",
             "id": "", "title": "", "metadata": "",
             "query_id": "", "expected_id": ""})
@@ -201,8 +202,7 @@ let makeQueryPayload = function(state, datasets) {
     }
     if (dataset === "") return null;
     let result = {};
-    let fields = ["action", "dataset", "n",
-                  "data_pos", "data_neg", "diffusion"];
+    let fields = ["dataset", "n", "data_pos", "data_neg", "diffusion"];
     fields.forEach((x)=> { result[x] = JSONcopy(state[x])});
     return result
 };

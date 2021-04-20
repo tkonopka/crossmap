@@ -15,9 +15,15 @@ class Chat extends React.Component {
         this.cloneQuery = this.cloneQuery.bind(this);
         this.sendQuery = this.sendQuery.bind(this);
         this.onresize = this.onresize.bind(this);
-        this.state = {history: [], datasets: [],
-            chatHeight: '400', controllerHeight: 0};
+        this.onkeydown = this.onkeydown.bind(this);
+        this.state = {
+            history: [],
+            datasets: [],
+            chatHeight: '400',
+            controllerHeight: 0
+        };
         window.addEventListener('resize', this.onresize)
+        window.addEventListener('keydown', this.onkeydown)
     }
 
     /**
@@ -50,19 +56,20 @@ class Chat extends React.Component {
 
     /**
      * submit a query to the server
-     * @param query object, payload sent to the api
-     * @param api character, api endpoint, e.g. "search/" or "decompose/"
+     * @param query object, payload sent to the api, must include "action"
+     * to specify the api endpoint
      */
-    sendQuery(query, api) {
+    sendQuery(query) {
         const chat = this;
+        const action = query["action"]
         chat.addMessage(query, "user");
         let xhr = new XMLHttpRequest();
         xhr.onload = function(){
             let result = JSON.parse(xhr.response);
-            result["_type"] = api;
+            result["_type"] = action;
             chat.addMessage(result, "server")
         };
-        xhr.open("POST", api_url + "/" + api + "/", true);
+        xhr.open("POST", api_url + "/" + action + "/", true);
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send(JSON.stringify(query));
@@ -94,6 +101,21 @@ class Chat extends React.Component {
         let chatHeight = parseInt(this.chatElement.clientHeight);
         if (controllerHeight !== this.state.controllerHeight | chatHeight !== this.state.chatHeight) {
             this.setState({controllerHeight: controllerHeight, chatHeight: chatHeight});
+        }
+    }
+
+    /** called when user presses a key in the window **/
+    onkeydown(event) {
+        if (event.keyCode === 113) {
+            // F2 on keyboard - repeat the last user query
+            const lastQuery = this.state.history.filter((x) => x[0]=="user").slice(-1)[0]
+            this.sendQuery(lastQuery[1])
+        }
+        if (event.keyCode === 114) {
+            // F3 on keyboard - reset history
+            const lastQuery = this.state.history.filter((x) => x[0]=="user").slice(-1)[0]
+            this.setState({"history": []})
+            this.sendQuery(lastQuery[1])
         }
     }
 
