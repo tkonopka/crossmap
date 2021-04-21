@@ -231,6 +231,14 @@ let makeTrainPayload = function(state) {
             result[x] = "";
         }
     });
+    // set a default title, if title was left blank
+    if (result["title"]==="") {
+        if (result["data_neg"] !== "") {
+            result["title"] = result["data_pos"]+ " - "+result["data_neg"]
+        } else {
+            result["title"] = result["data_pos"]
+        }
+    }
     return result
 };
 

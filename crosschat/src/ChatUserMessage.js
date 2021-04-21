@@ -9,6 +9,7 @@ import ChatMessage from "./ChatMessage"
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
+import Link from "@material-ui/core/Link";
 
 
 /** a chat message with information provided by a user **/
@@ -41,16 +42,24 @@ class UserQueryMessage extends ChatMessage {
         let data = this.props.data;
         // console.log("rendering user message with data: "+JSON.stringify(data));
         let rows = ["data_pos", "data_neg", "query_id", "expected_id"].map((x) => {
-            if (data[x]===undefined) {
+            if (data[x] === undefined || data[x] === "") {
                 return null;
             }
-            if (data[x] !== "") {
+            if (x === "expected_id") {
+                let url = "/document/" + encodeURIComponent(data["dataset"]) + "/" +
+                    encodeURIComponent(data[x]);
+                return(<TableRow key={x}>
+                    <TableCell>
+                        <Link href={url} target="_blank" color={"secondary"}>{data[x]}</Link>
+                    </TableCell>
+                    <TableCell className="chat-td-label"><Typography color="secondary">{x}</Typography></TableCell>
+                </TableRow>)
+            } else {
                 return(<TableRow key={x}>
                     <TableCell><Typography>{data[x]}</Typography></TableCell>
                     <TableCell className="chat-td-label"><Typography color="secondary">{x}</Typography></TableCell>
                 </TableRow>)
             }
-            return null;
         });
         let settings_datasets = Object.keys(data.diffusion);
         let diffusion_marks = [0, 0.5, 1, 1.5, 2].map((x) => ({value: x, label: x}));

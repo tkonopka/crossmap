@@ -108,12 +108,12 @@ class Chat extends React.Component {
     onkeydown(event) {
         if (event.keyCode === 113) {
             // F2 on keyboard - repeat the last user query
-            const lastQuery = this.state.history.filter((x) => x[0]=="user").slice(-1)[0]
+            const lastQuery = this.state.history.filter((x) => x[0]==="user").slice(-1)[0]
             this.sendQuery(lastQuery[1])
         }
         if (event.keyCode === 114) {
             // F3 on keyboard - reset history
-            const lastQuery = this.state.history.filter((x) => x[0]=="user").slice(-1)[0]
+            const lastQuery = this.state.history.filter((x) => x[0]==="user").slice(-1)[0]
             this.setState({"history": []})
             this.sendQuery(lastQuery[1])
         }
