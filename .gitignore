@@ -6,6 +6,7 @@
 *.iml
 htmlcov
 profiling
+venv
 
 # ignore data files
 *xml

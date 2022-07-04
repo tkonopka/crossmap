@@ -1,7 +1,8 @@
 django
 numba
-numpy
+numpy==1.22.0
 pymongo
 pyyaml
 requests
 scipy
+nmslib
